@@ -429,8 +429,8 @@ class Tools
 			★ Indicateur de message (Status Icône).  
 			★ Date de naissance + Âge affiché si celle-ci renseignée.
 			★ Date picker (Inscription et édition du profil). 
-			★ Méta description pour le SEO.[/c]',
-			'WELCOME_TXT' => '<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql). <br />Le concept est un peu différent des autres forums puisque l'information la plus importante mise en avant pour reconnaître un utilisateur est son avatar (pour une fois qu'il sert à quelque chose..) <br /> <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
+			★ Méta description pour le SEO.[/c]",
+			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql). <br />Le concept est un peu différent des autres forums puisque l'information la plus importante mise en avant pour reconnaître un utilisateur est son avatar (pour une fois qu'il sert à quelque chose..) <br /> <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
 			'GENERAL_PARAM' => 'Paramètre Général',
@@ -1845,7 +1845,7 @@ class Init
 			$this->siteName = $siteName;
 			$this->siteBase = $siteBase;
 		}
-		if(!is_file('css/main.css')) {$this->mkcss();}
+		//if(!is_file('css/main.css')) {$this->mkcss();}
 		if(!is_file('version') || file_get_contents('version')!=VERSION) {
 			file_put_contents('version', VERSION);
 			if(!$this->mkressources()) {
@@ -2252,7 +2252,7 @@ class Init
 			file_put_contents('config.php', utf8_encode($config));
 			$errors='';
 			$errors.= (@mkdir(MU_CSS))? sprintf("&#10004;&nbsp;".MKCSS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKCSS." .\n");
-	        $errors.= (is_file(MU_LANG))? sprintf("&#10004;&nbsp;".MKLANG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKLANG.".\n");
+	        $errors.= (is_file(MU_LANG.LANG.'.php'))? sprintf("&#10004;&nbsp;".MKLANG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKLANG.".\n");
 	        $errors.= (@mkdir(MU_BACK))? sprintf("&#10004;&nbsp;".MKBAK.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKBAK.".\n");
 	        $errors.= (@mkdir(MU_UPLOAD))? sprintf("&#10004;&nbsp;".MKUPL.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKUPL.".\n");
 			$errors.= (@mkdir(MU_DATA))? sprintf("&#10004;&nbsp;".MKDATA.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKDATA.".\n");
@@ -2344,7 +2344,7 @@ class Init
 
 		if(!file_exists(MU_CSS.'main.css')) {
 			$css = $main."\n".$halflings;
-			file_put_contents(MU_CSS.'main.css', $css);
+			@file_put_contents(MU_CSS.'main.css', $css);
 		}
 	}
 
