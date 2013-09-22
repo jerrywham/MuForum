@@ -3,21 +3,44 @@ MuForum
 
 Fork of µForum (http://uforum.byethost5.com/)
 
-Améliorations actuelles par rapport à la version 0.9.6
+Nouveautés
+---
+    * Refonte totale du code
+
+    * Pagination (topics, messages, membres)
+
+    * Nouveau captcha dérivé de celui de Lion wiki que je trouve vraiment bien fait (simple et efficace)
+
+    * Obfuscation du nom des dossiers
+
+    * Séparation des dossiers de téléchargement des dossiers de messages et de données
+
+    * Simplification du javascript
+
+    * Utilisation des sessions pour la propagation de messages et éviter de soumettre plusieurs fois le même formulaire
+
+    * Ajout d'un fil d'ariane
+
+    * Recherche d'un membre dans la liste des membres
+
+    * Plusieurs autres corrections mineures que je vous laisse découvrir
+
+Je me suis basé sur le code de µForum 0.9.6. J'ai repris l'essentiel des fonctions natives que j'ai réorganisées et corrigées.
+Les objets sont plus lisibles. Les appels de propriétés sont facilité (plus d'index obscurs dans les tableaux). Le code a été rafraichi (plus de variables globales).
+
+TODO
 ---
 
-* Fichier de langue pour traduction possible de toute l'interface.
+J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionnalités encore manquantes :
 
-* Décodage des fichiers css et js.
+    * liens vers nouveaux messages,
 
-* Les images étant initialement base64 codées, les fichiers images ne sont pas créés.
-On utilise à la place le code base64 pour les afficher.
+    * vers les différentes pages d'une conversation,
 
-* Corrections orthographiques et de certaines portions du code
+    * flux rss,
 
+    * Revoir le css pour l'alléger encore,
 
-Améliorations futures prévues
----
+    * voir les messages d'un membre
 
-* Abandon de Boostrap, jQuery et jQuery-ui, beaucoup trop volumineux
-* Utilisation de la syntaxe objet de php 5
+Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
