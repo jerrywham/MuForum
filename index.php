@@ -3,8 +3,8 @@
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     03-06-2013
-# @copyright  2011-2013  Frédéric Kaplon and contributors
+# @update     23-09-2013
+# @copyright  2011-2013  Frédéric Kaplon, Cyril MAGUIRE and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
 # @link       http://uforum.byethost5.com   µForum
