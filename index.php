@@ -3,8 +3,8 @@
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     03-06-2013
-# @copyright  2011-2013  Frédéric Kaplon and contributors
+# @update     23-09-2013
+# @copyright  2011-2013  Frédéric Kaplon, Cyril MAGUIRE and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
 # @link       http://uforum.byethost5.com   µForum
@@ -1834,9 +1834,9 @@ class Init
 			$this->uforum = $uforum;
 			$this->lang = $lang;
 			$this->metaDesc = $metaDesc;
-			$this->nbrMsgIndex = abs($nbrMsgIndex);
-			$this->nbMsgTopic = abs($nbMsgTopic);
-			$this->nbrMb = abs($nbrMb);
+			$this->nbrMsgIndex = $nbrMsgIndex;
+			$this->nbMsgTopic = $nbMsgTopic;
+			$this->nbrMb = $nbrMb;
 			$this->extensionsAutorises = $extensionsAutorises;
 			$this->maxAvatarSize = $maxAvatarSize;
 			$this->forumMode = $forumMode;
@@ -1855,9 +1855,9 @@ class Init
 				\$uforum='$this->uforum';\n
 				\$lang='$this->lang';\n
 				\$metaDesc='$this->metaDesc';\n
-				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";\n
-				\$nbMsgTopic=".abs($this->nbMsgTopic).";\n
-				\$nbrMb=".abs($this->nbrMb).";\n
+				\$nbrMsgIndex=$this->nbrMsgIndex;\n
+				\$nbMsgTopic=$this->nbMsgTopic;\n
+				\$nbrMb=$this->nbrMb;\n
 				\$extensionsAutorises='$this->extensionsAutorises';\n
 				\$maxAvatarSize=$this->maxAvatarSize;\n
 				\$forumMode=$this->forumMode;\n
@@ -2124,9 +2124,9 @@ class Init
 					if(file_exists($this->uforum)) unlink($this->uforum);
 					$this->uforum=$tmp?$tmp:$uftitle;
 				}
-				$this->nbrMsgIndex=$nbmess?abs($nbmess):abs($this->nbrMsgIndex);
-				$this->nbMsgTopic=$nbmessTopic?abs($nbmessTopic):abs($this->nbMsgTopic);
-				$this->nbrMb=$nbmb?abs($nbmb):abs($this->nbrMb);
+				$this->nbrMsgIndex=$nbmess?$nbmess:$this->nbrMsgIndex;
+				$this->nbMsgTopic=$nbmessTopic?$nbmessTopic:$this->nbMsgTopic;
+				$this->nbrMb=$nbmb?$nbmb:$this->nbrMb;
 				$this->extStr=$exts?$exts:$this->extStr;
 				$this->maxAvatarSize=$maxav?($maxav*1024):$this->maxAvatarSize;
 				$this->forumMode=($fmode=='on')?1:0;
@@ -2140,9 +2140,9 @@ class Init
 				\$uforum='$this->uforum';
 				\$lang='$this->lang';
 				\$metaDesc='$this->metaDesc';
-				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";
-				\$nbMsgTopic=".abs($this->nbMsgTopic).";
-				\$nbrMb=".abs($this->nbrMb).";
+				\$nbrMsgIndex=$this->nbrMsgIndex;
+				\$nbMsgTopic=$this->nbMsgTopic;
+				\$nbrMb=$this->nbrMb;
 				\$extensionsAutorises='$this->extStr';
 				\$maxAvatarSize=$this->maxAvatarSize;
 				\$forumMode=$this->forumMode;
