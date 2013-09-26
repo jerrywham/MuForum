@@ -1160,12 +1160,12 @@ chat = Tom, souris = ?
 Jerry, jerry
 
 --
-On me prend la température avec un ...?
+On prend la température avec un ...?
 Thermomètre, thermomètre, thermometre, termometre, termomètre
 
 --
-Corrigez le mot : omcaulogie
-Oncologie, oncologie
+Corrigez le mot : aurtografe
+Orthographe, orthographe
 
 --
 22 moins 17?
@@ -1173,19 +1173,19 @@ Oncologie, oncologie
 
 --
 Je pense donc je ... ?
-suis
+suis, SUIS
 
 --
 Prénom d'Einstein?
-Albert
-
---
-Les neutrophiles sont des globules ...?
-Blancs, blancs
+Albert, albert, ALBERT
 
 --
 Qui est le frère de Mario ?
-Luiggi, luiggi";
+Luiggi, luiggi
+
+--
+Où se trouve la Tour Eiffel ?
+Paris, paris, PARIS";
 
 		if(!file_exists($this->question_file."fr_questions.txt")) {
 			file_put_contents($this->question_file."fr_questions.txt", $txt);
