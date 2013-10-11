@@ -1,25 +1,25 @@
 <?php
+		
+# ------------------ BEGIN LICENSE BLOCK ------------------
+#
+# This file is part of µForum project: http://uforum.byethost5.com
+#
+# @update     2013-10-10 (Thanks to Stephen Taylor http://stephentaylor.x10.mx)
+# @copyright  2013  Frédéric Kaplon, Cyril MAGUIRE and contributors
+# @copyright  2011-2013  Frédéric Kaplon and contributors
+# @copyright   ~   2008  Okkin  Avetenebrae
+# @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
+# @link       http://uforum.byethost5.com   µForum
+# @version    Release: @package_version@
+#
+# ------------------- END LICENSE BLOCK -------------------
 
-# BEGIN LICENSE BLOCK ------------------ ------------------
-#
-# This file is μForum share of project: http://uforum.byethost5.com
-#
-# @ Update 2013-10-10
-# @ Copyright 2013 Frederick Kaplon , Cyril MAGUIRE and contributors
-# @ Copyright 2011-2013 Frederick Kaplon and contributors
-~ # @ Copyright 2008 Okkin ? Avetenebrae
-# @ License http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) Version 3
-# @ Link http://uforum.byethost5.com μForum
-# @ Version Release: @ @ package_version
-#
-# END LICENSE BLOCK # ------------------- -------------------
-
-$LANG = array (
+$LANG = array(
 'PHP_VERIF'=>"You must have a server with PHP 5.3 or greater !",
 'THEME'=>"Theme",
 'LANGUAGE'=>"Language",
 'PLUGIN'=>"Plugin",
-'SETUP'=>"Configuration",
+'CONFIG'=>"Configuration",
 'REDIRECT'=>"Redirect",
 'POWEREDBY'=>"Powered by <a id =\"bottom\"name =\"bottom\"href =\"http://uforum.byethost5.com\"rel =\"tooltip\"title =\"Forum without Sql\"> μForum < / a>",
 'BBCODE_WELCOM_TXT'=>"[b ] [i] Welcome to μforum [/ i] [ / b]
@@ -51,7 +51,8 @@ The concept is a little different from other forums as the most important inform
 ★ Birthday + Age displayed if it blank.
 ★ Date picker (Registration and profile editing ) .
 ★ Meta description for SEO. [/ C ]",
-'WELCOME_TXT'=>"Welcome to <b> <i> μforum </ i> < / b > <br /> <br /> This forum is single-threaded file-based only (no sql database ) . < br / > the concept is a little different from other forums as the most important information put forward is to recognize a user's avatar (for once there is something ..) <br /> < br / > <ins> <b> It has several features : </ b > < / ins > <i> ( ★ = New ) </ i > <br /> <br /> <pre> ✔ Management by Member login / password (for cookies) <br /> ✔ 4 levels of users: . . Administrator , Moderator, User , Anonymous <br /> Fashion ✔ private / public, to allow non - members <br /> ✔ List . members . <br /> ✔ user Profile ( + edition). <br /> ✔ private messaging between members . <br /> ✔ Upload avatar and attachments ( with extensions filter). < br / > ✔ Smileys and BBCodes ( automatically adding closing tags missing ) . <br /> ★ cut too long chains without cutting the sentences! <br /> ✔ Skins . <br /> ✔ automatic links . <br /> ★ Html5 and css3 ( Bootstrap twitter ) . <br /> ✔ display connected. <br /> ✔ Highlighting code. <br /> ✔ Management administration options . <br /> ✔ Simple system backup and restore . (revised ) <br /> ★ Captcha at registration . <br /> ★ Protection mails on the list of members to counter spam. <br /> ★ Message Indicator ( Status Icon ) . < br / > ★ Birthday + Age displayed if it blank. <br /> ★ Date picker (Registration and profile editing ) . <br /> ★ meta description for SEO. <br /> </ pre> </ div>",
+'WELCOME_TXT'=>"Welcome to <b> <i> μforum </ i> < / b > <br /> <br /> This forum is single-threaded file-based only (no sql database ) . < br / > the concept is a little different from other forums as the most important information put forward is to recognize a user's avatar (for once there is something ..) <br /> < br / > <ins> <b> It has several features : </ b > < / ins > <i> ( ★ = New ) </ i > <br /> <br /> <pre> ✔ Management by Member login / password (for cookies) <br /> ✔ 4 levels of users: . . Administrator , Moderator, User , Anonymous <br /> Fashion ✔ private / public, to allow non - members <br /> ✔ List . members . <br /> ✔ user Profile ( + edition). <br /> ✔ private messaging between members . <br /> ✔ Upload avatar and attachments ( with extensions filter). < br / > ✔ Smileys and BBCodes ( automatically adding closing tags missing ) . <br /> ★ cut too long chains without cutting the sentences! <br /> ✔ Skins . <br /> ✔ automatic links . <br /> ★ Html5 and css3 ( Bootstrap twitter ) . <br /> ✔ display connected. <br /> ✔ Highlighting code. <br /> ✔ Management administration options . <br /> ✔ Simple system backup and restore . (revised ) <br /> ★ Captcha at registration . <br /> ★ Protection mails on the list of members to counter spam. <br /> ★ Message Indicator ( Status Icon ) . < br / > ★ Birthday + Age displayed if it blank. <br /> ★ Date picker (Registration and profile editing ) . <br /> ★ meta description for SEO. <br />&nbsp;</ pre>
+	&nbsp;</ div>",
 'INFORMATION'=>"Information",
 'PARAMS'=>"Settings",
 'GENERAL_PARAM'=>"General Settings",
@@ -67,11 +68,10 @@ The concept is a little different from other forums as the most important inform
 'CONFIG_OPTIONS'=>"Configuration Options",
 'TITLE_LOGO'=>"Forum title / Logo",
 'NAME_AND_URL'=>"Name & Site URL",
-'Meta_description'=>"Meta description"
+'META_DESCRIPTION'=>"Meta description",
 'INDEX_MAX_MSG'=>"Max . Messages index",
 'TOPIC_MAX_MSG'=>"Max . Messages by topic",
 'MEM_MAX_DISP'=>"Max . Members displayed",
-'LANG'=>"Language",
 'MAX_AVATAR_WEIGHT'=>"Max. An avatar",
 'ALLOWED_EXT'=>"Allowed Extensions",
 'PRIVATE_MODE'=>"Forum privately",
@@ -92,7 +92,7 @@ The concept is a little different from other forums as the most important inform
 'BIRTH'=>"Birth",
 'YEARS_OLD'=>"year",
 'CONNECT'=>"Login",
-'EMAIL'=>"Mail Address"
+'EMAIL'=>"Mail Address",
 'WEBSITE'=>"Web Site",
 'SIGNATURE'=>"Signature",
 'SIGNATURE_MSG'=>"No formatting as possible and limited to 150 characters",
@@ -105,7 +105,7 @@ The concept is a little different from other forums as the most important inform
 'EDIT_PROFIL'=>"Edit Profile",
 'EDIT_MY_PROFIL'=>"Edit Profile",
 'SAVE_PROFIL'=>"Save my profile",
-'PROFILE'=>"Profile",
+'PROFIL'=>"Profile",
 'PROFIL_OF'=>"Profile",
 'REGISTRED_ON'=>"Registered ( e)",
 'DISPLAY_PROFIL'=>"View Profile",
@@ -119,17 +119,17 @@ The concept is a little different from other forums as the most important inform
 'PRIVATE_INBOX'=>"Private Messaging",
 'PRIVATE_MSG'=>"Private Message",
 'EMPTY_MAILBOX'=>"Empty your mailbox",
-'POST'=>"Article"
+'POST'=>"Article",
 'REPLY'=>"Comment",
 'ADD'=>"Add",
-'EDIT'=>'Edit'
+'EDIT'=>'Edit',
 'EDIT_TITLE'=>"Edit Title",
-'DEL'=>'Delete'
+'DEL'=>'Delete',
 'TITLE'=>"Title",
 'CONTENT'=>"Message",
 'MORE'=>"Read more ...",
 'TRIP'=>"Leave blank if Anonymous",
-'NONE'=>"No current data"
+'NONE'=>"No current data",
 'L_NONE'=>'none',
 'UNCATEGORIZED'=>"Uncategorized",
 'REPLIED'=>"answered",
@@ -146,7 +146,7 @@ The concept is a little different from other forums as the most important inform
 'ANSWER_FROM'=>"response",
 'WHOLE_TOPIC'=>"All About",
 'QUOTE_MSG_FROM'=>"Quote the message",
-'DOWNLOAD'=>"Download"
+'DOWNLOAD'=>"Download",
 'TOPIC_UNKNONW'=>"Topic does not exist",
 'BLOCKQUOTE'=>"Quote",
 'EDIT_BY'=>"Modified By",
@@ -163,7 +163,7 @@ The concept is a little different from other forums as the most important inform
 'SEND'=>"Send",
 'WE_HAVE'=>"We",
 'IN'=>"in",
-'TOPIC'=>"subject"
+'TOPIC'=>"subject",
 'WELCOME_TO'=>"Welcome to our newest member ,",
 'TOTAL_MB'=>"Total Member",
 'WHO_IS_ONLINE'=>"Who's online ?",
@@ -180,7 +180,7 @@ The concept is a little different from other forums as the most important inform
 'UNDERLINE'=>"Underline",
 'STROKE_THROUGH'=>"Block",
 'QUOTE'=>"Quote",
-'CODE'=>"Code"
+'CODE'=>"Code",
 'LINK'=>"Link",
 'PICTURE'=>"Insert Image",
 'VIDEO'=>"Insert Video",
@@ -189,7 +189,7 @@ The concept is a little different from other forums as the most important inform
 'WINK'=>"Wink",
 'ICON'=>"Icon",
 'LAUGH'=>"Laughter",
-'IRRELEVANT'=>"Indifferent",
+'INDIFFERENT'=>'Irrelevant',
 'SAD'=>"Sad",
 'WRY'=>"Ironic",
 'TONGUE'=>"Tire language",
@@ -200,34 +200,34 @@ The concept is a little different from other forums as the most important inform
 'WINDOW'=>"Window",
 'LOGOUT'=>"Logout",
 'LOGIN'=>"Login",
-'VIEW'=>"Display"
-'SEARCH'=>"Search"
+'VIEW'=>"Display",
+'SEARCH'=>"Search",
 'CATEGORY'=>"Category",
 'ARCHIVE'=>"Archive",
 'URL'=>"URL",
 'FEED'=>"Fil rss",
 'WELCOME'=>"Welcome",
-'ARCHIVES'=>"Archives"
+'ARCHIVES'=>"Archives",
 'QUIT'=>"Logout",
 'LIST_OF_MEMBERS'=>"List of Members",
 'MEMBERS'=>"Members",
 'MEMBER'=>"Member",
 'CLOSE'=>"Close",
-'HOME_FORUM'=>"Home Forum"
+'HOME_FORUM'=>"Home Forum",
 'HOME'=>"Home",
 'FORUMS'=>"Forums",
 'STATISTICS'=>"Statistics",
 'TOP'=>"Top",
 'L_PAGINATION_FIRST_TITLE'=>"Go to the first page",
-'L_PAGINATION_FIRST'=>"",
+'L_PAGINATION_FIRST'=>"«",
 'L_PAGINATION_PREVIOUS_TITLE'=>"Previous Page",
 'L_PAGINATION_PREVIOUS'=>"Previous",
 'L_PAGINATION_NEXT_TITLE'=>"next page",
 'L_PAGINATION_NEXT'=>"Next",
 'L_PAGINATION_LAST_TITLE'=>"Go to the last page",
-'L_PAGINATION_LAST'=>"",
+'L_PAGINATION_LAST'=>"»",
 'L_PAGINATION'=>"Page% s of% s",
-'MESSAGE'=>"Messages",
+'MESSAGES'=>"Messages",
 'MESSAGE'=>"Message",
 'LAST_MSG'=>"Last Post",
 'CONFIRM'=>"Ok",
@@ -320,6 +320,6 @@ The concept is a little different from other forums as the most important inform
 'L_SUND'=>"Sun",
 'GET'=>"Answer the question :",
 'CANT_OPEN_CAPTCHA_FILE'=>"Can not open file issues :",
-'CAPTCHA_WRONG_ANSWER'=>"The answer is not correct. Please try again .",
+'CAPTCHA_WRONG_ANSWER'=>"The answer is not correct. Please try again ."
 );
 ?>
