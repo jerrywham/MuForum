@@ -1,10 +1,20 @@
 <?php
+
 # ------------------ BEGIN LICENSE BLOCK ------------------
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     23-09-2013
-# @copyright  2011-2013  Frédéric Kaplon, Cyril MAGUIRE and contributors
+<<<<<<< HEAD
+<<<<<<< HEAD
+# @update     2013-10-15 
+# @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
+=======
+# @update     03-06-2013
+>>>>>>> b1656633070e670f402e006e785832d061c047b1
+=======
+# @update     03-06-2013
+>>>>>>> 5689f6c646f5bd6f193d7c41007f07c9cddab69b
+# @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
 # @link       http://uforum.byethost5.com   µForum
@@ -12,6 +22,7 @@
 #
 # ------------------- END LICENSE BLOCK -------------------
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+define('DEBUG',1); // 0 = pas de débugage, 1 = débugage activé
 
 # ---------------- DEFINITIONS ----------------------------
 # Définition des constantes d'adressage
@@ -61,7 +72,7 @@ $trademarkBlock = '
 # This file is part of µForum project: http://uforum.byethost5.com
 #
 # @update     '.date('Y-m-d').'
-# @copyright  2013  Frédéric Kaplon, Cyril MAGUIRE and contributors
+# @copyright  2013  Cyril MAGUIRE and contributors
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
@@ -74,14 +85,6 @@ define('TM',$trademarkBlock);
 
 # ---------------- TRADUCTION ----------------------
 Tools::mklang();
-if(!file_exists(MU_LANG.LANG.'.php')) {
-	require MU_LANG.'fr.php';
-} else {
-	require MU_LANG.LANG.'.php';
-}
-foreach($LANG as $key => $value) {
-	if(!defined($key)) define($key,$value);
-}
 /**
 *
 * Vérification de la version de php
@@ -185,14 +188,26 @@ function ban_canLogin()
 /**
  * Outils
  */
-class Tools
-{
+class Tools {
+	/**
+	 * TRADUCTIONS
+	 */
+	public static function loadlang($lang) {
+		$LANG=array();		
+		if(!file_exists(MU_LANG.$lang.'.php')) {
+			require MU_LANG.'fr.php';
+		} else {
+			require MU_LANG.$lang.'.php';
+		}
+		foreach($LANG as $key => $value) {
+			if(!defined($key)) define($key,$value);
+		}
+	}
 	/**
 	*
 	* NETTOIE LES NOMS D'UTILISATEURS
 	*/
-	public static function cleanUser($str,$charset='utf-8') 
-	{
+	public static function cleanUser($str,$charset='utf-8') {
 			$str = htmlentities($str, ENT_NOQUOTES, $charset);
 			$str = str_replace(array(" ", '"', "'", "/", "&", ".", "!", "?", ":"), array("", '', "", "", "", "", "", "", ""), $str);
 		    return $str;
@@ -201,8 +216,7 @@ class Tools
 	*
 	* SUPPRIME LES CARACTERES SPÉCIAUX
 	*/
-	public static function removeAccents($str,$charset='utf-8') 
-	{
+	public static function removeAccents($str,$charset='utf-8') {
 			$str = htmlentities($str, ENT_NOQUOTES, $charset);
 			$str = str_replace(array(" ", '"', "'", "/", "&", ".", "!", "?", ":"), array("", '', "", "", "", "", "", "", ""), $str);
 		    $str = preg_replace('#\&([A-za-z])(?:acute|cedil|circ|grave|ring|tilde|uml|uro)\;#', '\1', $str);
@@ -214,8 +228,7 @@ class Tools
 	*
 	* RETOURNE L'URL de base
 	*/
-	public static function baseURL()
-	{
+	public static function baseURL() {
 		$dir = dirname($_SERVER['SCRIPT_NAME']);
 		$protocol = (!empty($_SERVER['HTTPS']) AND $_SERVER['HTTPS'] == 'on')?	'https://' : "http://";
 		$servername = $_SERVER['HTTP_HOST'];
@@ -227,14 +240,16 @@ class Tools
 	*
 	* RETOURNE LES PARAMETRES DE L'URL
 	*/
-	public static function getURLParams()
-	{
+	public static function getURLParams() {
 		$params = false;
 		if (!empty($_GET)) {
 			foreach ($_GET as $key => $value) {
 				$params .= $key.'='.$value.'&';
 			}
 			$params = substr($params,0,-1);
+		}
+		if (!empty($_SERVER['QUERY_STRING']) && empty($_GET)) {
+			$params = $_SERVER['QUERY_STRING'];
 		}
 	    return ($params == false ? '' : '?'.$params);
 	} 
@@ -252,98 +267,6 @@ class Tools
 	        $imgbinary = fread(fopen($filename, "r"), filesize($filename));
 	        return 'data:image/' . $filetype . ';base64,' . base64_encode($imgbinary);
 	    }
-	}
-	/**
-	* Méthode de debugage
-	* 
-	* @param var  la variable à analyser
-	* @param html bool affiche la sortie au format html ou modifie les balises html par leur équivalent unicode
-	* @param return bool affiche ou non le résultat qui peut ainsi être récupéré dans une variable
-	* @param sub integer affiche le résultat entre des balises pre
-	* @param way string sens de lecture du tableau debug_backtrace
-	* @return string le résultat
-	* 
-	* @author unknown, JeromeJ, Cyril MAGUIRE
-	*/
-	public static function explain($var = null, $html = false, $return = false, $sub = 0, $way = 'normal'){
-		$debug = debug_backtrace();
-		$msg = '';
-		if ($var === null && $sub == 0) {
-			$msg = 'Variables globales';
-			$var = array('_POST' => $_POST, '_GET' => $_GET, '_COOKIE' => $_COOKIE, '_SERVER' => $_SERVER);
-			if (isset($_SESSION)) {
-				$var['_SESSION'] = $_SESSION;
-			}
-			if (isset($_GLOBAL)) {
-				$var['_GLOBAL'] = $_GLOBAL;
-			}
-		}
-			// Recherche du nom de la variable passée en paramètre
-			if ($way == 'normal') {
-				$d = $debug;
-			} else {
-				$d = array_reverse($debug);
-			}
-			
-			$file = fopen( $d[0]['file'], 'r' );
-			$line = 0;
-			$calledVar = '';
-			while ( ( $row = fgets( $file ) ) !== false ) {
-				if ( ++$line == $d[0]['line'] ) {
-					if ($way == 'normal') {
-						$row = str_replace(array('<','>'), '', $row);
-						preg_match('/(?:.*)*explain\((.*)\);(?:.*)*/U',$row, $match);
-						if (isset($match[1])) $calledVar = $match[1];
-					} else {
-						$f = preg_match('/(?:.*)*e\((.*)\);(?:.*)*/U', $row, $match);
-						if (isset($match[1])) $calledVar = $match[1];
-					}
-					break;
-				}
-			}
-			fclose( $file );
-		if($sub == 0) {
-			$r = '<pre style="border: 1px solid #e3af43; background-color: #f8edd5; padding: 10px; overflow: auto;">';
-			$r .= '<p>Appel du debug dans le fichier <br/>"<strong>'.$debug[0]['file'].'</strong>" ligne '.$debug[1]['line'].'</p>
-			<h2 style="margin-top:-30px;">Traces&nbsp;<span id="expfolderclose" onclick="document.getElementById(\'id-debug-backtrace\').className=\'expshow\';document.getElementById(\'expfolderclose\').className=\'expclose\';document.getElementById(\'expfolderopen\').className=\'expshow\';" style="font-size:1px;cursor:pointer;">&#9654;</span>&nbsp;<span id="expfolderopen" onclick="document.getElementById(\'id-debug-backtrace\').className=\'expclose\';document.getElementById(\'expfolderopen\').className=\'expclose\';document.getElementById(\'expfolderclose\').className=\'expshow\';" class="expclose" style="font-size:1px;cursor:pointer;">&#9660;</span></h2>
-			<ol style="margin-top:-30px" id="id-debug-backtrace" class="expclose">';
-			foreach ($debug as $k => $v) {
-				if ($k>0 && isset($v['file']) && isset($v['line']) ) {
-					$r .= '<li><strong>'.$v['file'].'</strong> ligne '.$v['line'].'</li>';
-				}
-			}
-			$r .= '</ol><br/><strong><span style="color:#8bb5eb;">'.$calledVar.$msg.'</span></strong> = ';
-		}else{
-			$r = '';
-		}
-		$type = htmlentities(gettype($var));
-		switch ($type) {
-			case 'NULL':$r .= '<em style="color: #0000a0; font-weight: bold;">NULL</em>';break;
-			case 'boolean':if($var) $r .= '<span style="color: #327333; font-weight: bold;">TRUE</span>';
-			else $r .= '<span style="color: #327333; font-weight: bold;">FALSE</span>';break;
-			case 'integer':$r .= '<span style="color: red; font-weight: bold;">'.$var.'</span>';break;
-			case 'double':$r .= '<span style="color: #e8008d; font-weight: bold;">'.$var.'</span>';break;
-			case 'string':$r .= '<span style="color: #e84a00;">\''.($html ? $var:htmlentities($var)).'\'</span>';break;
-			case 'array':$r .= 'Tableau('.count($var).')'."\r\n".str_repeat("\t", $sub).'{'."\r\n";
-				foreach($var AS $k => $e) $r .= str_repeat("\t", $sub+1).'['.self::explain($k, $html, true, $sub+1).'] =&gt; '.($k === 'GLOBALS' ? '* RECURSION *':self::explain($e, $html, true, $sub+1, $var)).",\r\n";
-				$r .= str_repeat("\t", $sub).'}';
-			break;
-			case 'object':$r .= 'Objet «<strong>'.htmlentities(get_class($var)).'</strong>»'."\r\n".str_repeat("\t", $sub).'{'."\r\n";
-				$prop = get_object_vars($var);
-				foreach($prop AS $name => $val){
-					if($name == 'privates_variables'){ # Hack (PS: il existe des biblio interne permettant d'étuexitr une classe)
-						for($i = 0, $count = count($var->privates_variables); $i < $count; $i++) $r .= str_repeat("\t", $sub+1).'<strong>'.htmlentities($get = $var->privates_variables[$i]).'</strong> =&gt; '.self::explain($var->$get, $html, true, $sub+1)."\r\n";
-						continue;
-					}
-
-					$r .= str_repeat("\t", $sub+1).'<strong>'.htmlentities($name).'</strong> =&gt; '.self::explain($val, $html, true, $sub+1)."\r\n";
-				}
-				$r .= str_repeat("\t", $sub).'}';break;
-			default:$r .= 'Variable de type <strong>'.$type.'</strong>.';break;
-		}
-		if($sub == 0) $r .= '</pre>';
-		if($return) return $r;
-		else echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><style type="css"> .expshow{display:block;border:1px solid red;} .expclose{display:none;} pre {white-space: pre;white-space: pre-wrap;white-space: pre-line;white-space: -pre-wrap;white-space: -o-pre-wrap;white-space: -moz-pre-wrap;white-space: -hp-pre-wrap;word-wrap: break-word;}</style></head><body><div style="font-family: Helvetica, Arial, sans-serif;">'.$r.'</div></body></html>';
 	}
 	
 	static	$names = array('smile'=> SMILE,'wink'=> WINK,'laugh'=> LAUGH,'indifferent'=> INDIFFERENT,'sad'=> SAD,'wry'=> WRY,'tongue'=> TONGUE,'sorry'=> SORRY,'arrow'=> ARROW,'icon'=> ICON,'icon-big'=> PROJECT,'mail' => MAIL,'window' => WINDOW,'clip' => CLIP,'avatar'=> AVATAR);
@@ -383,15 +306,14 @@ class Tools
 	*
 	* CRÉATION DES IMAGES
 	*/
-	public static function img($nr, $class='',$icon = false,$smile=false) 
-	{
+	public static function img($nr, $class='',$icon = false,$smile=false) {
+		
 		return  ($icon === true) ? 'data:image/png;base64,'.self::$img[$nr] :'<img src="data:image/png;base64,'.self::$img[$nr].'" alt="'.self::$names[$nr].'"'.($class!=''?' class="' .$class. '"':'').''.($smile!=''?' rel="'.$nr.'"':'').' />';
 	}
 	/**
 	* CRÉATION DU FICHIER LANG
 	*/
-	public static function mklang() 
-	{
+	public static function mklang() {
 		$LANG = array(
 			# Installation & Configuration
 			'PHP_VERIF' => 'Vous devez disposer d\'un serveur équipé de PHP 5.3 ou plus !',
@@ -433,7 +355,7 @@ class Tools
 			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql). <br />Le concept est un peu différent des autres forums puisque l'information la plus importante mise en avant pour reconnaître un utilisateur est son avatar (pour une fois qu'il sert à quelque chose..) <br /> <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
-			'GENERAL_PARAM' => 'Paramètre Général',
+			'GENERAL_PARAM' => 'Paramètres Généraux',
 			'SAVE_BACKUP' => 'Créer une sauvegarde',
 			'SAVE' => 'Sauvegarde',
 			'RESTORE_FROM_BACKUP' => 'Restaurer depuis une sauvegarde',
@@ -527,7 +449,7 @@ class Tools
 			'DEL_MSG' => 'Supprimer le sujet ?',
 			'FOUNDER' => 'Fondateur',
 			'MODERATOR' => 'Modérateur',
-			'ANSWER_FROM' => 'Réponse de',
+			'ANSWER_FROM' => 'La réponse postée par',
 			'WHOLE_TOPIC' => 'Tout le sujet',
 			'QUOTE_MSG_FROM' => 'Citer le message de',
 			'DOWNLOAD' => 'Télécharger',
@@ -723,6 +645,18 @@ class Tools
 			'CAPTCHA' => 'Répondez à la question :',
 			'CANT_OPEN_CAPTCHA_FILE' => 'Impossible d\'ouvrir le fichier de questions : ',
 			'CAPTCHA_WRONG_ANSWER' => 'La réponse n\'est pas la bonne. Merci de réessayer.',
+
+			# Debug
+			'L_ARRAY'                     => 'Tableau',
+			'L_OBJECT'                    => 'Objet',
+			'L_TYPE'                      => 'Variable de type',
+			'L_CALL'                      => 'Appel de la méthode de debug',
+			'L_LINE'                      => 'ligne',
+			'L_OF_FILE'                   => 'du fichier',
+			'L_YOUR_TRAC'                 => 'VOTRE TRACEUR',
+			'L_YOUR_FLOW'                 => 'VOTRE FLUX',
+			'L_TRAC'                      => 'TRACEUR',
+			'L_FLOW'                      => 'FLUX',
 		);
 
 		$fr ='<?php
@@ -768,7 +702,6 @@ class Tools
 	 *
 	**/	
 	public static function textarea($label, $name, $value='', $cols='', $rows='', $placeholder='', $maxlength='', $readonly=false, $class='') {
-	    global $lang;
 	    $form = '<label class="control-label" for="'.$name.'">'.$label.'</label>';
 		if($readonly)
 			$form .= '<textarea id="'.$name.'" name="'.$name.'" class="readonly" cols="'.$cols.'" rows="'.$rows.'"'.($maxlength!=''?' maxlength="'.$maxlength.'"':'').($placeholder!=''?' placeholder="'.$placeholder.'"':'').' readonly="readonly">'.$value.'</textarea>';
@@ -815,27 +748,17 @@ class Tools
 	 * Méthode qui nettoie les champs
 	 *
 	**/
-	public static function clean($text)
-	{
+	public static function clean($text) {
 		if(get_magic_quotes_gpc())
 			$text = stripslashes($text);
 		return htmlspecialchars(trim($text), ENT_QUOTES);
 	}
 
 }
-// Raccourcis debug
-function e($var=null, $html = false, $return = false, $sub = 0, $way = 'reverse') {
-	Tools::explain($var, $html, $return, $sub, $way);
-}
-function ed($var=null, $html = false, $return = false, $sub = 0, $way = 'reverse') {
-	Tools::explain($var, $html, $return, $sub, $way);
-	exit();
-}
 /**
 * BBCode
 */
-class BBCHelper
-{
+class BBCHelper {
 	/**
 	*
 	* AIDE FORMATTAGE BBCODE (Éditeur)
@@ -869,7 +792,7 @@ class BBCHelper
 	}
 	/**
 	*
-	* SYNTAXE HILGHTER
+	* SYNTAXE HIGHLITER
 	*/
 	public static function colorSyntax($txt) { 
 		if(preg_match('%\&lt;\?[php]?%',$txt)) {
@@ -896,12 +819,10 @@ class BBCHelper
 	*
 	* PARSER BBcode 
 	*/
-	public static function bbCode($text, $summary = true)
-	{
+	public static function bbCode($text, $summary = true) {
 		//the pattern to be matched
 		//the replacement
-		//global $pattern, $replace,$image_array,$img_names;
-
+		
 		$pattern[] = '%\[c\]([^\a]+?)\[/c\]%U';
 		$replace[] = $summary? '\'[...]\'' : '\'<pre class="prettyprint linenums">\'.str_replace(\'<br />\', \'\', \'$1\').\'</pre>\'';
 
@@ -969,8 +890,7 @@ class BBCHelper
 	* @param integer $nbreCar Longueur à garder en nbre de caractères
 	* @return string
 	*/
-	public static function tronquer_texte($texte, $nbchar)
-	{
+	public static function tronquer_texte($texte, $nbchar) {
 	    return (strlen($texte) > $nbchar ? substr(substr($texte,0,$nbchar),0,
 	    strrpos(substr($texte,0,$nbchar),' ')).'…' : $texte);
 	}
@@ -993,14 +913,14 @@ class BBCHelper
 	}
 
 	public function parse($msg) {
+	
 		return str_replace(array('<b>','<i>','<ins>','<pre>','</b>','</i>','</ins>','</pre>','<br />','&nbsp;','</div>'), array('[b]','[i]','[u]','[c]','[/b]','[/i]','[/u]','[/c]',"\n",' ',''), stripslashes($msg));
 	}
 }
 /**
 * Mise en forme des dates
 */
-class MuDate
-{
+class MuDate {
 	/**
 	 * Méthode qui retourne la date en Français
 	 * Exemple : 
@@ -1012,8 +932,7 @@ class MuDate
 	 *   echo "<p>le 1/03/2012 donne ".datefr($lepremiermars2012); 
 	 *
 	**/
-	public static function datefr($arg)
-	{ 
+	public static function datefr($arg) { 
 	    $Jour = array('Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi','Samedi');
 	    $Mois = array('Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre');
 	    $datefr = $Jour[date('w')].' '.date('d').' '.$Mois[date('n')].' '.date('Y');
@@ -1023,8 +942,7 @@ class MuDate
 	 * Méthode qui retourne l'âge i18n
 	 *
 	**/
-	public static function birthday($birthdate, $pattern = 'eu')
-	{
+	public static function birthday($birthdate, $pattern = 'eu') {
 	    $patterns = array(
 	        'eu'    => 'd/m/Y',
 	        'mysql' => 'Y-m-d',
@@ -1039,6 +957,438 @@ class MuDate
 }
 
 # ---------------- CLASSES ----------------------
+/**
+ * Cette classe permet de sécuriser le debugage PHP dans vos scripts (locaux
+ * et distant).
+ * 
+ * A l'utilisation il vous suffit de l'inclure dans vos script.
+ *
+ * @author Jacksay<studio@jacksay.com>
+ * @author Cyril MAGUIRE<contact@ecyseo.net>
+ */
+class Debug {
+
+		private static $DEBUG_FLOW = '';
+		private static $DEBUG_OUTPUT = '';
+		private static $TRAC_NUM = 0;
+		private static $debug_instance;
+		private static $debug = false;
+		protected $version='3.0';
+
+		public function __construct() {
+
+		}
+
+		/****************************************************************************/
+		/** CONFIGURATION **/
+
+		// Vous pouvez ajouter votre ip pour un debuggage distant
+		// attention cependant
+		public static $allow_IP = array('::1','127.0.0.1');
+		/* array('::1','127.0.0.1','88.161.204.85'); */
+
+		/****************************************************************************/
+		/**
+	    * Equivalent à un var_dump mais en version sécurisée et en couleur.
+	    *
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 1.0
+	    */
+	    private static function _trac( $mixedvar, $comment='',  $sub = 0, $index = false ){
+	      $type = htmlentities(gettype($mixedvar),ENT_NOQUOTES,'UTF-8');
+
+	      $r ='';
+	      switch ($type) {
+	        case 'NULL':$r .= '<em style="color: #0000a0; font-weight: bold;">NULL</em>';break;
+	        case 'boolean':if($mixedvar) $r .= '<span style="color: #327333; font-weight: bold;">TRUE</span>';
+	        else $r .= '<span style="color: #327333; font-weight: bold;">FALSE</span>';break;
+	        case 'integer':$r .= '<span style="color: red; font-weight: bold;">'.$mixedvar.'</span>';break;
+	        case 'double':$r .= '<span style="color: #e8008d; font-weight: bold;">'.$mixedvar.'</span>';break;
+	        case 'string':$r .= '<span style="color: '.($index === true ? '#e84a00':'#000').';">\''.$mixedvar.'\'</span>';break;
+	        case 'array':$r .= L_ARRAY.'('.count($mixedvar).') &nbsp;{'."\r\n\n";
+	        foreach($mixedvar AS $k => $e) $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'['.self::_trac($k, $comment, $sub+1, true).'] =&gt; '.($k === 'GLOBALS' ? '* RECURSION *':self::_trac($e, $comment, $sub+1)).",\r\n";
+	            $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub).'}';
+	            break;
+	        case 'object':$r .= L_OBJECT.' «<strong>'.htmlentities(get_class($mixedvar),ENT_NOQUOTES,'UTF-8').'</strong>»&nbsp;{'."\r\n\n";
+	          $prop = get_object_vars($mixedvar);
+	          foreach($prop AS $name => $val){
+	            if($name == 'privates_variables'){
+	              for($i = 0, $count = count($mixedvar->privates_variables); $i < $count; $i++) $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'<strong>'.htmlentities($get = $mixedvar->privates_variables[$i],ENT_NOQUOTES,'UTF-8').'</strong> =&gt; '.self::_trac($mixedvar->$get, $comment, $sub+1)."\r\n\n";
+	              continue;
+	            }
+	            $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub+1).'<strong>'.htmlentities($name,ENT_NOQUOTES,'UTF-8').'</strong> =&gt; '.self::_trac($val, $comment, $sub+1)."\r\n\n";
+	          }
+	          $r .= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $sub).'}';break;
+	        default:$r .= L_TYPE.' <strong>'.$type.'</strong>.';break;
+	      }
+	      $r = preg_replace('/\[(.*)\]/', '[<span class="jcktraker-id">$1</span>]', $r);
+	      return $r;
+	    }
+	    /**
+	    * Pour tracer une variable
+	    *
+	    * @author  Jacksay<studio@jacksay.com>
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 2.0
+	    */
+	    public static function trac( $mixedvar, $comment='',  $sub = 0 ) {
+	      $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+	      $printDebug = '';
+	      foreach ($debug as $key => $value) {
+	        if ($value['function'] == 'trac') {
+	          $function = 'trac';
+	          if (isset($value['line'])) {
+	         	 	$line = $value['line'];
+	          		$file = $value['file'];
+	          } else {
+	          		$line = $file = '';
+	          }
+	        }
+	        if ($line == '') {
+	          if ($value['function'] == 'd') {
+	            $function = 'd';
+	            $line = $value['line'];
+	            $file = $value['file'];
+	            break;
+	          }
+	        }
+	      }
+	      $printDebug .=  '<p class="jcktraker-backtrace">'."\n".'&nbsp;'.L_CALL.' <strong>'.$function.'()</strong> '.L_LINE.' '.$line. ' '.L_OF_FILE."\n\n".'&nbsp;<strong><em>'.$file.'</em></strong>'."\n\n".'<br/></p><br/>';
+	      
+	      $FILE = fopen( $file, 'r' );
+	      $LINE = 0;
+	      if ($comment == '') {
+	          while ( ( $row = fgets( $FILE ) ) !== false ) {
+	            if ( ++$LINE == $line ) {
+	                $row = str_replace(array('<','>'), '', $row);
+	                preg_match('/(?:.*)*d\((.*)\);(?:.*)*/U', $row, $match);
+	                if (isset($match[1])) $comment = $match[1];
+	                preg_match('/(?:.*)*Debug::trac\((.*)\);(?:.*)*/U',$row, $match);
+	                if (isset($match[1])) $comment = $match[1];
+	              break;
+	            }
+	          }
+	          fclose( $FILE );
+	      }
+	      $r = self::_trac( $mixedvar, $comment, $sub);
+	      $r .= "\n\n\n"; 
+	      self::$DEBUG_OUTPUT .= '<pre id="jcktraker-backtrace-'.self::$TRAC_NUM.'">'."\n\n".$printDebug.'<strong class="jcktraker-blue">'.$comment.'</strong> = '. $r ."</pre>\n";
+	      self::$TRAC_NUM++;
+	    }
+	    /**
+	    * Pour décomposer une variable globale
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 1.0
+	    */
+	    private static function _color($value) {
+	      return "\n\n".self::_trac($value)."\n\n\n";
+	    }
+
+	    /**
+	    * Affiche une petite ligne pour suivre le fil de l'exécution.
+	    * A utiliser dans un foreach par exemple pour savoir quel valeur prend une variable
+	    *
+	    * @author  Jacksay<studio@jacksay.com>
+	    * @version 1.0
+	    */
+	    public static function flow( $message, $type=1 ) {
+	      $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+	      $printDebug = '';
+	      foreach ($debug as $key => $value) {
+	        if ($value['function'] == 'flow') {
+	        	$function = 'flow';
+	          if (isset($value['line'])) {
+  	         	 	$line = $value['line'];
+  	          		$file = $value['file'];
+  	          } else {
+  	          		$line = $file = '';
+  	          }
+	        }
+	        if ($line == '') {
+	          if ($value['function'] == 'f') {
+	            $function = 'f';
+	            $line = $value['line'];
+	            $file = $value['file'];
+
+	          }
+	        }
+	      }
+	      $printDebug .=  '<p class="jcktraker-backtrace">'."\n".'&nbsp;'.L_CALL.' <strong>'.$function.'()</strong> '.L_LINE.' '.$line. ' '.L_OF_FILE."\n\n".'&nbsp;<strong><em>'.$file.'</em></strong>'."\n\n".'<br/></p><br/>';
+	      
+
+	      $FILE = fopen( $file, 'r' );
+	      $LINE = 0;
+	      $comment = '';
+	          while ( ( $row = fgets( $FILE ) ) !== false ) {
+	            if ( ++$LINE == $line ) {
+	                $row = str_replace(array('<','>'), '', $row);
+	                preg_match('/(?:.*)*f\((.*)\);(?:.*)*/U', $row, $match);
+	                if (isset($match[1])) $comment = $match[1];
+	                preg_match('/(?:.*)*Debug::flow\((.*)\);(?:.*)*/U',$row, $match);
+	                if (isset($match[1])) $comment = $match[1];
+	              break;
+	            }
+	          }
+	          fclose( $FILE );
+	     if ( self::$DEBUG_FLOW!=$printDebug ) {
+	        self::$DEBUG_FLOW = $printDebug;
+	        self::$DEBUG_OUTPUT .= self::$DEBUG_FLOW.'<p class="jcktraker-flow-'.$type.'">'.$comment.' = '.htmlentities($message,ENT_NOQUOTES,'UTF-8')."</p>\n";     
+	     } else {
+	        self::$DEBUG_OUTPUT .= '<p class="jcktraker-flow-'.$type.'">'.$comment.' = '.htmlentities($message,ENT_NOQUOTES,'UTF-8')."</p>\n";
+	     }
+	      self::$TRAC_NUM++;
+	    }
+
+	    /**
+	    * Cette méthode est automatiquement appelée lorsque vous importez le fichier
+	    * JckTraker.php dans votre script.
+	    *
+	    * @author  Jacksay<studio@jacksay.com>
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 2.0
+	    */
+	    public function init() {
+	      if(in_array($_SERVER['REMOTE_ADDR'], self::$allow_IP)){
+	        self::$debug = true;
+	        //error_reporting(E_ALL);
+	      } else {
+	        self::$debug = false;
+	        error_reporting(0);
+	      }
+	    }
+
+
+	    /**
+	    * Accesseur
+	    *
+	    * @author  Jacksay<studio@jacksay.com>
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 2.0
+	    */
+	    public static function getDebugInstance($default_lang) {
+	      if(!isset (self::$debug_instance) ){
+	        self::$debug_instance = new Debug($default_lang);self::$debug = true;
+	        self::init();
+	      }
+	      return self::$debug_instance;
+	    }
+
+	    /**
+	    * Elément clef, va afficher la barre de debug dans votre page.
+	    * A placer juste avant la balise </body>
+	    *
+	    * @author  Jacksay<studio@jacksay.com>
+	    * @author  Cyril MAGUIRE<contact@ecyseo.net>
+	    * @version 2.0
+	    */
+	    public function printBar() {
+	      if( !self::$debug ) return;
+	      ?>
+	      <!-- JCK TRAKER BOX v1.0 -->
+	      <script type="text/javascript">
+	      function jcktraker_hide(){
+	        var sections = document.getElementsByName('jcktraker-section');
+	        var num_sections = sections.length;
+	        for( var i=0; i<num_sections; i++ ){
+	          sections[i].style.display = 'none';    
+	        }
+	      }
+	      function jcktraker_toogle( section, dispatcher ){
+	        var section_blk = document.getElementById(section);
+	        if( section_blk.style.display != 'block'){
+	          jcktraker_hide();
+	          section_blk.style.display = 'block';
+	          dispatcher.style.fontWeight = 'bold';
+	          dispatcher.style.backgroundColor = '#990000';
+	          dispatcher.style.color = '#FFFFFF';
+	        }
+	        else {
+	          section_blk.style.display = 'none';
+	          dispatcher.style.fontWeight = "normal";
+	          dispatcher.style.backgroundColor = '#000000';
+	          dispatcher.style.color = '#FFFFFF';
+	        }
+	      }
+	      </script>
+	      <style type="text/css">
+	      .jcktraker-blue {
+	        color:#8bb5eb;
+	      }
+	      .jcktraker-id {
+	        color:#e8008d;
+	      }
+	      #jcktraker-box {
+	        z-index:99999;
+	        position: fixed;
+	        bottom: 0;
+	        right: 0;
+	        font-size: 10px;
+	        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	        max-height: 100%;
+	        max-width: 75%;
+	        margin: 0;
+	        padding: 0;
+	        -moz-border-radius: .4em;
+	        -moz-box-shadow: 0 0 5em #000;
+	        border-radius: .4em;
+	        box-shadow: 0 0 5em #000;
+	      }
+	      #jcktraker-box *{
+	        margin: 0;
+	        padding: 0;
+	        border-radius: .4em;
+	        -moz-border-radius: .4em;
+	      }
+	      #jcktraker-box pre{
+	        color:#000;
+	        margin: 0 2em;
+	        border: dotted thin #999;
+	        border-radius: .4em;
+	        box-shadow: 0 0 1em #000 inset;
+	        -moz-border-radius: .4em;
+	        -moz-box-shadow: 0 0 5em #000 inset;
+	        padding: .4em .6em;
+	        background-color: #e4e4e4;
+	        font-size: 1.2em;
+	        white-space: pre;           /* CSS 2.0 */
+	        white-space: pre-wrap;      /* CSS 2.1 */
+	        white-space: pre-line;      /* CSS 3.0 */
+	        white-space: -pre-wrap;     /* Opera 4-6 */
+	        white-space: -o-pre-wrap;   /* Opera 7 */
+	        white-space: -moz-pre-wrap; /* Mozilla */
+	        white-space: -hp-pre-wrap;  /* HP Printers */
+	        word-wrap: break-word;      /* IE 5+ */
+	      }
+	      #jcktraker-box p{
+	        margin: 0 1em;
+	      }
+	      ul#jcktraker-menu li {
+	        display: inline;
+	        padding: 0 .4em;
+	        line-height: 2em;
+	      }
+	      ul#jcktraker-menu li[onclick]:hover {
+	        background: #990000;cursor: pointer;
+	      }
+
+	      #jcktraker-box div[name="jcktraker-section"] {
+	        display: none;
+	        white-space: pre-wrap;
+	        overflow: hidden;
+	        max-width: 100%;
+	        max-height: 580px;
+	        background: #111;
+	        color: #fff;
+	        opacity: .7;
+	      }
+	      #jcktraker-box div[name="jcktraker-section"]:hover {
+	        opacity: 1;
+	      }
+	      #jcktraker-box div[name="jcktraker-section"] pre {
+	        height: 460px;
+	        overflow: scroll;
+	      }
+	      #jcktraker-own {
+	        padding-bottom: 30px;
+	      }
+	      #jcktraker-menu {
+	        background: #000;
+	        color: #fff;
+	        white-space:nowrap;
+	        text-align: right;
+	        -moz-border-radius: .4em 0 0 0;
+	        border-radius: .4em 0 0 0;
+	      }
+	      .jcktraker-backtrace {
+	        background-color: #e4a504;
+	      }
+	      .jcktraker-backtrace-close {
+	        display: block;
+	        position: relative;
+	        background-color: red;
+	        padding:5px;
+	        float:right;
+	        cursor: pointer;
+	      }
+	      #jcktraker-pre {
+	        height: 530px;
+	        overflow: scroll;
+	      }
+
+	      </style>
+	      <div id="jcktraker-box">
+	        <div id="jcktraker-post" name="jcktraker-section">
+	          <strong>$_POST</strong>
+	          <pre><?php echo self::_color($_POST); ?></pre>
+	        </div>
+	        <div id="jcktraker-files" name="jcktraker-section">
+	          <strong>$_FILES</strong>
+	          <pre><?php echo self::_color($_FILES); ?></pre>
+	        </div>
+	        <div id="jcktraker-get" name="jcktraker-section">
+	          <strong>$_GET</strong>
+	          <pre><?php echo self::_color($_GET); ?></pre>
+	        </div>
+	        <div id="jcktraker-server" name="jcktraker-section">
+	          <strong>$_SERVER</strong>
+	          <pre><?php echo self::_color($_SERVER); ?></pre>
+	        </div>
+	        <div id="jcktraker-session" name="jcktraker-section">
+	          <strong>$_SESSION</strong>
+	          <pre><?php if(isset($_SESSION)) echo self::_color($_SESSION); ?></pre>
+	        </div>
+	        <div id="jcktraker-cookie" name="jcktraker-section">
+	          <strong>$_COOKIE</strong>
+	          <pre><?php echo self::_color($_COOKIE); ?></pre>
+	        </div>
+	        <div id="jcktraker-request" name="jcktraker-section">
+	          <strong>$_REQUEST</strong>
+	          <pre><?php echo self::_color($_REQUEST); ?></pre>
+	        </div>
+	        <div id="jcktraker-own" name="jcktraker-section">
+	          <strong><?php echo (self::$DEBUG_FLOW == '') ? L_YOUR_TRAC : L_YOUR_FLOW ?></strong>
+	          <div id="jcktraker-pre">
+	            <?php echo self::$DEBUG_OUTPUT; ?>
+
+	          </div>
+	        </div>
+	        <ul id="jcktraker-menu">
+	          <li><strong>ToolBarDebug <span>v <?php echo $this->version ?> </span></strong></li>
+	          <li id="jacktraker_own_button" onclick="jcktraker_toogle('jcktraker-own', this)"><?php echo (self::$DEBUG_FLOW == '') ? L_TRAC : L_FLOW ?>(<?php echo self::$TRAC_NUM ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-post', this)">$_POST(<?php echo count($_POST) ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-files', this)">$_FILES(<?php echo count($_FILES) ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-get', this)">$_GET(<?php echo count($_GET) ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-server', this)">$_SERVER(<?php echo count($_SERVER) ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-session', this)"><?php if(isset ($_SESSION)) { echo '$_SESSION(',count($_SESSION),')'; } else { echo '<del>$_SESSION</del>';} ?></li>
+	          <li onclick="jcktraker_toogle('jcktraker-cookie', this)">$_COOKIE(<?php echo count($_COOKIE) ?>)</li>
+	          <li onclick="jcktraker_toogle('jcktraker-request', this)">$_REQUEST(<?php echo count($_REQUEST) ?>)</li>
+	        </ul>
+	      </div>
+	      <?php if(!empty (self::$DEBUG_OUTPUT) ): ?>
+	      <script type="text/javascript">jcktraker_toogle('jcktraker-own', document.getElementById('jacktraker_own_button'));</script>
+    	<?php endif;
+    }
+}
+if (DEBUG == 1) {
+/**
+* Dump variable
+* Alias of Debug::trac()
+*/
+if ( !function_exists( 'd' ) ) {
+  function d() {
+    call_user_func_array( array( 'Debug', 'trac' ), func_get_args() );
+  }
+}
+/**
+* Dump variable
+* Alias of Debug::flow()
+*/
+if ( !function_exists( 'f' ) ) {
+  function f() {
+    call_user_func_array( array( 'Debug', 'flow' ), func_get_args() );
+  }
+}
+}
 /**
  * Sessions
  */
@@ -1114,13 +1464,12 @@ class Session {
  * D'après LionWiki 3.2.9, (c) Adam Zivner, licensed under GNU/GPL v2 (Plugin Captcha)
  */
 
-class Captcha
-{
+class Captcha {
+
 	private $question_file;
 	public $session;
 	
-	public function __construct($lang,$session)
-	{
+	public function __construct($lang,$session) {
 		$this->session = $session;
 
 		$this->question_file = "captcha".DS;
@@ -1140,6 +1489,53 @@ class Captcha
 	}
 
 	private function mkFrQuest() {
+<<<<<<< HEAD
+		$txt = "# File for turing test questions. Structure of the file is very simple, first\n";
+		$txt .= "# line of a record is \"--\" which indicates new record (question). Second line\n";
+		$txt .= "# is question and third line is right answer. You can add more answers to third\n";
+		$txt .= "# separated by comma. Everything else is ignored, so you can use it as comments.\n";
+		$txt .= "# In that case, please use something like \"#\" or \"//\" to make it clear it\n";
+		$txt .= "# is comment. Comparing answers is case insensitive.\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "De quelle couleur est le citron?\n";
+		$txt .= "Jaune, jaune\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Combien font 4 fois 4?\n";
+		$txt .= "16, seize, Seize, SEIZE\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "chat = Tom, souris = ?\n";
+		$txt .= "Jerry, jerry\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "On prend la température avec un ...?\n";
+		$txt .= "Thermomètre, thermomètre, thermometre, termometre, termomètre\n";
+		$txt .= "--\n";
+		$txt .= "Corrigez le mot : aurtografe\n";
+		$txt .= "Orthographe, orthographe\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "22 moins 17?\n";
+		$txt .= "5, cinq, Cinq, CINQ\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Je pense donc je ... ?\n";
+		$txt .= "suis, SUIS\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Prénom d'Einstein?\n";
+		$txt .= "Albert, albert, ALBERT\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Qui est le frère de Mario ?\n";
+		$txt .= "Luiggi, luiggi\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Où se trouve la Tour Eiffel ?\n";
+		$txt .= "Paris, paris, PARIS";
+=======
 		$txt = "# File for turing test questions. Structure of the file is very simple, first
 # line of a record is \"--\" which indicates new record (question). Second line
 # is question and third line is right answer. You can add more answers to third
@@ -1160,12 +1556,12 @@ chat = Tom, souris = ?
 Jerry, jerry
 
 --
-On me prend la température avec un ...?
+On prend la température avec un ...?
 Thermomètre, thermomètre, thermometre, termometre, termomètre
 
 --
-Corrigez le mot : omcaulogie
-Oncologie, oncologie
+Corrigez le mot : aurtografe
+Orthographe, orthographe
 
 --
 22 moins 17?
@@ -1173,78 +1569,81 @@ Oncologie, oncologie
 
 --
 Je pense donc je ... ?
-suis
+suis, SUIS
 
 --
 Prénom d'Einstein?
-Albert
-
---
-Les neutrophiles sont des globules ...?
-Blancs, blancs
+Albert, albert, ALBERT
 
 --
 Qui est le frère de Mario ?
-Luiggi, luiggi";
+Luiggi, luiggi
+
+--
+Où se trouve la Tour Eiffel ?
+Paris, paris, PARIS";
+<<<<<<< HEAD
+>>>>>>> b1656633070e670f402e006e785832d061c047b1
+=======
+>>>>>>> 5689f6c646f5bd6f193d7c41007f07c9cddab69b
 
 		if(!file_exists($this->question_file."fr_questions.txt")) {
 			file_put_contents($this->question_file."fr_questions.txt", $txt);
 		}
 	}
 	private function mkEnQuest() {
-		$txt = "# File for turing test questions. Structure of the file is very simple, first
-# line of a record is \"--\" which indicates new record (question). Second line
-# is question and third line is right answer. You can add more answers to third
-# separated by comma. Everything else is ignored, so you can use it as comments.
-# In that case, please use something like \"#\" or \"//\" to make it clear it
-# is comment. Comparing answers is case insensitive.
-
---
-What color is lemon?
-Yellow
-
---
-How much is 4 times 4?
-16, sixteen
-
---
-cat - Tom, mouse -
-Jerry
-
---
-Shortcut of World War 2?
-WW2, WWII
-
---
-Correct spelling: univrsity
-University
-
---
-Difference between 22 and 17?
-5, five
-
---
-I think, therefore I...
-am
-
---
-First name of Einstein?
-Albert
-
---
-How many moons has the Earth?
-1, one
-
---
-Name of partner of Eve of Eden?
-Adam";
+		$txt = "# File for turing test questions. Structure of the file is very simple, first\n";
+		$txt .= "# line of a record is \"--\" which indicates new record (question). Second line\n";
+		$txt .= "# is question and third line is right answer. You can add more answers to third\n";
+		$txt .= "# separated by comma. Everything else is ignored, so you can use it as comments.\n";
+		$txt .= "# In that case, please use something like \"#\" or \"//\" to make it clear it\n";
+		$txt .= "# is comment. Comparing answers is case insensitive.\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "What color is lemon?\n";
+		$txt .= "Yellow\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "How much is 4 times 4?\n";
+		$txt .= "16, sixteen\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "cat - Tom, mouse -\n";
+		$txt .= "Jerry\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Shortcut of World War 2?\n";
+		$txt .= "WW2, WWII\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Correct spelling: univrsity\n";
+		$txt .= "University\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Difference between 22 and 17?\n";
+		$txt .= "5, five\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "I think, therefore I...\n";
+		$txt .= "am\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "First name of Einstein?\n";
+		$txt .= "Albert\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "How many moons has the Earth?\n";
+		$txt .= "1, one\n";
+		$txt .= "\n";
+		$txt .= "--\n";
+		$txt .= "Name of partner of Eve of Eden?\n";
+		$txt .= "Adam";
 
 		if(!file_exists($this->question_file."en_questions.txt")) {
 			file_put_contents($this->question_file."en_questions.txt", $txt);
 		}
 	}
-	public function actionBegin()
-	{
+	public function actionBegin() {
 		if(isset($_REQUEST["qid"]))
 			$this->checkCaptcha();
 	}
@@ -1254,8 +1653,7 @@ Adam";
 	 * number of occurence of "--" at the begining of the line.
 	 */
 
-	private function questionCount()
-	{
+	private function questionCount() {
 		$count = 0;
 		$q = fopen($this->question_file, "r");
 
@@ -1278,8 +1676,7 @@ Adam";
 	 * second line is answer(s). Numbering is Pascal-like, that means that getQuestion(1, 1) returns 1. line of 1. question.
 	 */
 
-	private function getQuestion($i, $line)
-	{
+	private function getQuestion($i, $line) {
 		$count = 0;
 		$q = fopen($this->question_file, "r");
 		if(!$q) {
@@ -1303,8 +1700,7 @@ Adam";
 		return $str;
 	}
 
-	private function checkCaptcha()
-	{
+	private function checkCaptcha() {
 		$question_id = $_REQUEST["qid"];
 		$answer = trim($_REQUEST["ans"]);
 
@@ -1329,8 +1725,7 @@ Adam";
 		return !$equals;
 	}
 
-	public function template()
-	{
+	public function template() {
 		$question_count = $this->questionCount();
 		$question_id = rand(1, $question_count);
 		$question_text = trim($this->getQuestion($question_id, 1));
@@ -1344,8 +1739,7 @@ Adam";
 *
 * SAUVEGARDE LES OBJETS
 */
-class SaveObj
-{
+class SaveObj {
 	public $name= '';
 	public function __construct() {
 		if (!empty($this->name)) {
@@ -1367,10 +1761,9 @@ class SaveObj
 }
 /**
 *
-* CLASSE GLOBALE RETOURNANT TABLEAUX
+* CLASSE GLOBALE DE GESTION DU FORUM
 */
-class Forum extends SaveObj
-{
+class Forum extends SaveObj {
 	public $name;
 	public $topics=array();
 	public $members=array();
@@ -1444,6 +1837,7 @@ class Forum extends SaveObj
 			return $obj;
 		} else {
 			$nbPages = ceil($obj->nbPosts/$nbrMax);
+			if ($nbPages == 0) $nbPages = 1;
 			if ($fromPage>$nbPages) $fromPage = $nbPages;
 			$to = $fromPage*$nbrMax;
 			if ($to>$obj->nbPosts) $to = $obj->nbPosts;
@@ -1472,6 +1866,7 @@ class Forum extends SaveObj
 		else {
 			$nbMb = count($tmp);
 			$nbPages = ceil($nbMb/$nbrMax);
+			if ($nbPages == 0) $nbPages = 1;
 			if ($fromPage>$nbPages) $fromPage = $nbPages;
 			$to = $fromPage*$nbrMax;
 			if ($to>$nbMb) $to = $nbMb;
@@ -1588,7 +1983,8 @@ class Forum extends SaveObj
 		} else {
 			$nbTopics = count($tmp);
 			$nbPages = ceil($nbTopics/$nbrMax);
-			if ($fromPage>$nbPages) $fromPage = $nbPages;
+			if ($nbPages == 0) $nbPages = 1;
+			if ($fromPage>$nbPages && $nbPages) $fromPage = $nbPages;
 			$to = $fromPage*$nbrMax;
 			if ($to>$nbTopics) $to = $nbTopics;
 			$from = ($fromPage*$nbrMax)-$nbrMax;
@@ -1623,8 +2019,7 @@ class Forum extends SaveObj
 *
 * CLASSE DE GESTION DES DISCUSSIONS
 */
-class Topic extends SaveObj
-{
+class Topic extends SaveObj {
 	public $title;
 	public $time;
 	public $auth;
@@ -1632,6 +2027,7 @@ class Topic extends SaveObj
 	public $type=false;
 	public $reply=array();
 	public $pos=0;
+	public $infos;
 
 	public function __construct($auth,$title,$content,$attach='',$type=false) {
 		parent::__construct();
@@ -1699,15 +2095,24 @@ class Topic extends SaveObj
 			$posts++;
 		}
 		if($type) return array(count($auths),$auths);
-		else return array($this->time,$this->title,$auths[0],$posts,$last->auth,$last->time,$attach,$this->type);
+		else {
+			$this->infos->time = $this->time;
+			$this->infos->title = $this->title;
+			$this->infos->auth = $auths[0];
+			$this->infos->posts = $posts;
+			$this->infos->lastAuth = $last->auth;
+			$this->infos->lastTime = $last->time;
+			$this->infos->attach = $attach;
+			$this->infos->type = $this->type;
+			return $this->infos;//array($this->time,$this->title,$auths[0],$posts,$last->auth,$last->time,$attach,$this->type);
+		}
 	}
 }
 /**
 *
 * STATISTIQUES (Online)
 */
-class Visit extends saveObj
-{
+class Visit extends saveObj {
 	public $name;
 	public $conn=array();
 	public function __construct() {
@@ -1738,8 +2143,7 @@ class Visit extends saveObj
 *
 * INSCRIPTION DES MESSAGES PRIVÉS DES MEMBRES
 */
-class Messages extends saveObj
-{
+class Messages extends saveObj {
 	public $mess=array();
 	public $name;
 	public function __construct() {
@@ -1764,8 +2168,7 @@ class Messages extends saveObj
 /**
 * Initialisation du forum
 */
-class Init
-{
+class Init {
 	public $errors;
 	public $colors;
 	public $cNames=array();
@@ -1777,7 +2180,7 @@ class Init
 	public $session=null;
 
 	public $uforum='[b]&micro;[/b]Forum';
-	public $lang='fr';
+	public $lang=LANG;
 	public $metaDesc='Lightweight bulletin board without sql';
 	public $nbrMsgIndex=15;
 	public $nbMsgTopic=15;
@@ -1813,8 +2216,7 @@ class Init
 	public $showAll;
 	public $searchMember;
 	
-	protected function __construct()
-	{
+	protected function __construct() {
 		/**
 		*
 		* Choix du style (en feature)
@@ -1834,9 +2236,9 @@ class Init
 			$this->uforum = $uforum;
 			$this->lang = $lang;
 			$this->metaDesc = $metaDesc;
-			$this->nbrMsgIndex = $nbrMsgIndex;
-			$this->nbMsgTopic = $nbMsgTopic;
-			$this->nbrMb = $nbrMb;
+			$this->nbrMsgIndex = abs($nbrMsgIndex);
+			$this->nbMsgTopic = abs($nbMsgTopic);
+			$this->nbrMb = abs($nbrMb);
 			$this->extensionsAutorises = $extensionsAutorises;
 			$this->maxAvatarSize = $maxAvatarSize;
 			$this->forumMode = $forumMode;
@@ -1845,7 +2247,9 @@ class Init
 			$this->siteName = $siteName;
 			$this->siteBase = $siteBase;
 		}
-		//if(!is_file('css/main.css')) {$this->mkcss();}
+
+		Tools::loadlang($this->lang);
+
 		if(!is_file('version') || file_get_contents('version')!=VERSION) {
 			file_put_contents('version', VERSION);
 			if(!$this->mkressources()) {
@@ -1855,9 +2259,9 @@ class Init
 				\$uforum='$this->uforum';\n
 				\$lang='$this->lang';\n
 				\$metaDesc='$this->metaDesc';\n
-				\$nbrMsgIndex=$this->nbrMsgIndex;\n
-				\$nbMsgTopic=$this->nbMsgTopic;\n
-				\$nbrMb=$this->nbrMb;\n
+				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";\n
+				\$nbMsgTopic=".abs($this->nbMsgTopic).";\n
+				\$nbrMb=".abs($this->nbrMb).";\n
 				\$extensionsAutorises='$this->extensionsAutorises';\n
 				\$maxAvatarSize=$this->maxAvatarSize;\n
 				\$forumMode=$this->forumMode;\n
@@ -1894,6 +2298,9 @@ class Init
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
 			if(!$$o) $$o=(isset($_POST[$o]) && is_string($_POST[$o]))?$_POST[$o]:'';
 		}
+
+		if(isset($page) && $page != ''){ $this->page = $page;} else {$this->page = 1;}
+
 		if(isset($showall)){ $this->showAll = $showall;}
 
 		if(isset($searchMember)){ $this->searchMember = $searchMember;}
@@ -2065,10 +2472,12 @@ class Init
 							$this->topicObj = unserialize($s);
 							$message = Tools::clean($message);
 							$this->topicObj->addReply($this->tLogin,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0));
-							list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=$this->topicObj->getInfo(0);
-							$this->forum->updateTopic($time,$ntitle,$auth,$post,$last,$tlast,$attach,$postType);
+							//list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=
+							$this->topicObj->getInfo(0);
+							$this->forum->updateTopic($this->topicObj->infos->time,$ntitle,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
 							if($this->isMember) $this->forum->setPost($this->cLogin);
-							header('Location: index.php?topic='.$topicID);
+							$this->page = ceil($this->topicObj->infos->posts/$this->nbMsgTopic);
+							header('Location: index.php?topic='.$topicID.'&page='.$this->page);
 							exit();
 						} else $this->errors .= ERROR_INVALID_TOPIC;
 					}
@@ -2090,8 +2499,9 @@ class Init
 						$postType=$postit?1:0;
 						$message = Tools::clean($message);
 						$this->topicObj = new Topic($this->tLogin,$titre,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0),$postType);
-						list($time,$title,$auth,$post,$last,$tlast,$attach,$postit)=$this->topicObj->getInfo(0);
-						$this->forum->addTopic($title,$auth,$time,$attach,$postit);
+						//list($time,$title,$auth,$posts,$lastAuth,$tlastTime,$attach,$type)=
+						$this->topicObj->getInfo(0);
+						$this->forum->addTopic($this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->time,$this->topicObj->infos->attach,$this->topicObj->infos->type);
 						$this->topic=$time;
 						setCookie('uFread'.$this->topic,1,time()+2592000);
 					}
@@ -2124,9 +2534,9 @@ class Init
 					if(file_exists($this->uforum)) unlink($this->uforum);
 					$this->uforum=$tmp?$tmp:$uftitle;
 				}
-				$this->nbrMsgIndex=$nbmess?$nbmess:$this->nbrMsgIndex;
-				$this->nbMsgTopic=$nbmessTopic?$nbmessTopic:$this->nbMsgTopic;
-				$this->nbrMb=$nbmb?$nbmb:$this->nbrMb;
+				$this->nbrMsgIndex=$nbmess?abs($nbmess):abs($this->nbrMsgIndex);
+				$this->nbMsgTopic=$nbmessTopic?abs($nbmessTopic):abs($this->nbMsgTopic);
+				$this->nbrMb=$nbmb?abs($nbmb):abs($this->nbrMb);
 				$this->extStr=$exts?$exts:$this->extStr;
 				$this->maxAvatarSize=$maxav?($maxav*1024):$this->maxAvatarSize;
 				$this->forumMode=($fmode=='on')?1:0;
@@ -2140,9 +2550,9 @@ class Init
 				\$uforum='$this->uforum';
 				\$lang='$this->lang';
 				\$metaDesc='$this->metaDesc';
-				\$nbrMsgIndex=$this->nbrMsgIndex;
-				\$nbMsgTopic=$this->nbMsgTopic;
-				\$nbrMb=$this->nbrMb;
+				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";
+				\$nbMsgTopic=".abs($this->nbMsgTopic).";
+				\$nbrMb=".abs($this->nbrMb).";
 				\$extensionsAutorises='$this->extStr';
 				\$maxAvatarSize=$this->maxAvatarSize;
 				\$forumMode=$this->forumMode;
@@ -2181,7 +2591,10 @@ class Init
 					$message = '[e]'.$this->cLogin.' le '.date('d/m/y \à H:i',time()).'[/e]'.$message;
 					$this->topicObj = unserialize($s);
 					$this->topicObj->setReply($postID,'',$message);
+					$this->topicObj->getInfo(0);
 					$topic=$topicID;
+					header('Location: ?topic='.$topic.'&page='.$this->page.'#p-'.$postID);
+					exit();
 				}
 			}
 			else if($topic && $delpost) {
@@ -2196,10 +2609,15 @@ class Init
 					if($s=implode('', file(MU_THREAD.$topic.'.dat'))) {
 						$this->topicObj = unserialize($s);
 						$r=$this->topicObj->getReply($delpost);
-						@unlink($r[3]);
+						@unlink($r->attach);
 						$this->topicObj->removeReply($delpost);
-						list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=$this->topicObj->getInfo(0);
-						$this->forum->updateTopic($time,$title,$auth,$post,$last,$tlast,$attach,$postType);
+						//list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=
+						$this->topicObj->getInfo(0);
+						$this->forum->updateTopic($this->topicObj->infos->time,$this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
+						if(ceil($this->topicObj->infos->posts/$this->nbMsgTopic) == 1 ) $this->page = 1;
+						$this->session->setMsg(MSG_DATA_DEL);
+						header('Location: ?topic='.$topic.'&page='.$this->page);
+						exit();
 					}
 				}
 			}
@@ -2224,7 +2642,6 @@ class Init
 
 		$stats = $this->pagesMsg = $this->forum->getStat();
 
-		if(isset($page) && $page != ''){ $this->page = $page;} else {$this->page = 1;}
 		$this->pages = $stats['topics'];
 		$this->pagesMb = $stats['members'];
 	}
@@ -2272,7 +2689,7 @@ class Init
 
 	/**
 	*
-	* CRÉATION DU FICHIER .HTACCESS
+	* CRÉATION DES FICHIERS .HTACCESS
 	*/
 	private function mkhtaccess() {
 		$s = $_SERVER['SCRIPT_NAME'];
@@ -2310,15 +2727,22 @@ class Init
 	private function mkjs() {
 		if(!file_exists(MU_JS.'scripts.js')) {
 			$js = '//<![CDATA[
-			var activeSub=0;var SubNum=0;var timerID=null;var timerOn=false;var timecount=300;var what=null;var newbrowser=true;var check=false;var layerRef="";var tm="";var confirmMsg="Confirmez la suppression de ";var msie=navigator.userAgent.toLowerCase().indexOf("msie")+1;wmtt=null;document.onmousemove=updateWMTT;function init(){if(document.layers){layerRef="document.layers";styleSwitch="";visibleVar="show";what="ns4"}else{if(document.all){layerRef="document.all";styleSwitch=".style";visibleVar="visible";what="ie"}else{if(document.getElementById){layerRef="document.getElementByID";styleSwitch=".style";visibleVar="visible";what="moz"}else{what="none";newbrowser=false}}}check=true}function switchLayer(a){if(check){if(what=="none"){return}else{if(what=="moz"){if(document.getElementById(a).style.visibility=="visible"){document.getElementById(a).style.visibility="hidden";document.getElementById(a).style.display="none"}else{document.getElementById(a).style.visibility="visible";document.getElementById(a).style.display="block"}}else{if(document.all[a].style.visibility=="visible"){document.all[a].style.visibility="hidden";document.all[a].style.display="none"}else{document.all[a].style.visibility="visible";document.all[a].style.display="block"}}}}else{return}}function countInstances(c,b){var a=document.formulaire.message.value.split(c);var d=document.formulaire.message.value.split(b);return a.length+d.length-2}function insert(e,c){var b=document.getElementById("message");if(document.selection){var g=document.selection.createRange().text;document.formulaire.message.focus();var d=document.selection.createRange();if(c!=""){if(g==""){var f=countInstances(e,c);if(f%2!=0){d.text=d.text+c}else{d.text=d.text+e}}else{d.text=e+d.text+c}}else{d.text=d.text+e}}else{if(b.selectionStart|b.selectionStart==0){if(b.selectionEnd>b.value.length){b.selectionEnd=b.value.length}var h=b.selectionStart;var a=b.selectionEnd+e.length;b.value=b.value.slice(0,h)+e+b.value.slice(h);b.value=b.value.slice(0,a)+c+b.value.slice(a);b.selectionStart=h+e.length;b.selectionEnd=a;b.focus()}else{var d=document.formulaire.message;var f=countInstances(e,c);if(f%2!=0&&c!=""){d.value=d.value+c}else{d.value=d.value+e}}}}function updateWMTT(a){if(document.documentElement.scrollTop&&msie){x=window.event.x+document.documentElement.scrollLeft+10;y=window.event.y+document.documentElement.scrollTop+10}else{x=(document.all)?window.event.x+document.body.scrollLeft+10:(a.pageX+10)+"px";y=(document.all)?window.event.y+document.body.scrollTop+10:(a.pageY+10)+"px"}if(wmtt!=null){wmtt.style.left=x;wmtt.style.top=y}}function showWMTT(a){wmtt=document.getElementById(a);wmtt.style.display="block"}function hideWMTT(){wmtt.style.display="none";wmtt=null}function quote(c,f){var a=document.getElementById("td"+f).innerHTML;var b=new Array("<fieldset.*?>.*?</fieldset>","<br>|<br />","<small>.*?</small>|<pre>|</pre>|<font.*?>|</font>|&nbsp;","<b>","</b>","<i>","</i>","<u>","</u>","&amp;lt;|&lt;","&amp;gt;|&gt;","<hr>",\'<img(.*?)rel="(.*?)"(.*?)>\');var e=new Array("","\n","","[b]","[/b]","[i]","[/i]","[u]","[/u]","<",">","[hr]","[sm=$2]");var d=0;for(i in b){regex=new RegExp(b[i],"gi");a=a.replace(regex,e[d++])}if(document.getElementById("form").style.visibility!="visible"){switchLayer("form")}document.getElementById("message").value+="[q="+c+"]"+a+"[/q]\n"}function blnk(b,a){document.getElementById(b).style.textDecoration=(a)?"none":"underline";a=a?0:1;tm=setTimeout(\'blnk("\'+b+\'",\'+a+")",1000)}function confirmLink(b,c){var a=confirm(confirmMsg+" :\n"+c);if(a){b.href+="&do=1"}return a};
+			var activeSub=0;var SubNum=0;var timerID=null;var timerOn=false;var timecount=300;var what=null;var newbrowser=true;var check=false;var layerRef="";var tm="";var confirmMsg="Confirmez la suppression de ";var msie=navigator.userAgent.toLowerCase().indexOf("msie")+1;wmtt=null;document.onmousemove=updateWMTT;function init(){if(document.layers){layerRef="document.layers";styleSwitch="";visibleVar="show";what="ns4"}else{if(document.all){layerRef="document.all";styleSwitch=".style";visibleVar="visible";what="ie"}else{if(document.getElementById){layerRef="document.getElementByID";styleSwitch=".style";visibleVar="visible";what="moz"}else{what="none";newbrowser=false}}}check=true}function switchLayer(a){if(check){if(what=="none"){return}else{if(what=="moz"){if(document.getElementById(a).style.visibility=="visible"){document.getElementById(a).style.visibility="hidden";document.getElementById(a).style.display="none"}else{document.getElementById(a).style.visibility="visible";document.getElementById(a).style.display="block"}}else{if(document.all[a].style.visibility=="visible"){document.all[a].style.visibility="hidden";document.all[a].style.display="none"}else{document.all[a].style.visibility="visible";document.all[a].style.display="block"}}}scrollTo(\'form\');}else{scrollTo(\'form\');return}}function countInstances(c,b){var a=document.formulaire.message.value.split(c);var d=document.formulaire.message.value.split(b);return a.length+d.length-2}function insert(e,c){var b=document.getElementById("message");if(document.selection){var g=document.selection.createRange().text;document.formulaire.message.focus();var d=document.selection.createRange();if(c!=""){if(g==""){var f=countInstances(e,c);if(f%2!=0){d.text=d.text+c}else{d.text=d.text+e}}else{d.text=e+d.text+c}}else{d.text=d.text+e}}else{if(b.selectionStart|b.selectionStart==0){if(b.selectionEnd>b.value.length){b.selectionEnd=b.value.length}var h=b.selectionStart;var a=b.selectionEnd+e.length;b.value=b.value.slice(0,h)+e+b.value.slice(h);b.value=b.value.slice(0,a)+c+b.value.slice(a);b.selectionStart=h+e.length;b.selectionEnd=a;b.focus()}else{var d=document.formulaire.message;var f=countInstances(e,c);if(f%2!=0&&c!=""){d.value=d.value+c}else{d.value=d.value+e}}}}function updateWMTT(a){if(document.documentElement.scrollTop&&msie){x=window.event.x+document.documentElement.scrollLeft+10;y=window.event.y+document.documentElement.scrollTop+10}else{x=(document.all)?window.event.x+document.body.scrollLeft+10:(a.pageX+10)+"px";y=(document.all)?window.event.y+document.body.scrollTop+10:(a.pageY+10)+"px"}if(wmtt!=null){wmtt.style.left=x;wmtt.style.top=y}}function showWMTT(a){wmtt=document.getElementById(a);wmtt.style.display="block"}function hideWMTT(){wmtt.style.display="none";wmtt=null}function quote(c,f){var a=document.getElementById("td"+f).innerHTML;var b=new Array("<fieldset.*?>.*?</fieldset>","<br>|<br />","<small>.*?</small>|<pre>|</pre>|<font.*?>|</font>|&nbsp;","<b>","</b>","<i>","</i>","<u>","</u>","&amp;lt;|&lt;","&amp;gt;|&gt;","<hr>",\'<img(.*?)rel="(.*?)"(.*?)>\');var e=new Array("","\n","","[b]","[/b]","[i]","[/i]","[u]","[/u]","<",">","[hr]","[sm=$2]");var d=0;for(i in b){regex=new RegExp(b[i],"gi");a=a.replace(regex,e[d++])}if(document.getElementById("form").style.visibility!="visible"){switchLayer("form")}document.getElementById("message").value+="[q="+c+"]"+a+"[/q]\n"}function blnk(b,a){document.getElementById(b).style.textDecoration=(a)?"none":"underline";a=a?0:1;tm=setTimeout(\'blnk("\'+b+\'",\'+a+")",1000)}function confirmLink(b,c){var a=confirm(confirmMsg+" :\n"+c);if(a){b.href+="&do=1"}return a};function scrollTo(hash) {location.hash = "#" + hash;}
 			/*ONGLETS form http://www.supportduweb.com/*/
 			function tab(name){if(document.getElementById(\'tab\'+ idTab) !==null) {document.getElementById(\'tab\'+ idTab).className = \'tabA tab\';document.getElementById(\'tab\'+ name).className = \'tabB tab\';document.getElementById(\'tabContent\'+ idTab).style.display = \'none\';document.getElementById(\'tabContent\'+ name).style.display = \'block\';
 				idTab = name;}}
 			/*VISUAL EFFECTS from http://www.pluxml.org */
 			function setOpacity(obj,opacity){obj.style.minHeight=obj.style.minHeight;opacity=(opacity==100)?99.999:opacity;obj.style.filter="alpha(opacity="+opacity+")";obj.style.KHTMLOpacity=opacity/100;obj.style.MozOpacity=opacity/100;obj.style.opacity=opacity/100}function fadeOut(objId,opacity){var obj=document.getElementById(objId);var stop=document.getElementById(\'noToogle\');if(obj&&!stop){if(opacity==undefined){window.setTimeout("fadeOut(\'"+objId+"\',"+100+")",3000)}else{if(opacity>=0){setOpacity(obj,opacity);opacity-=10;window.setTimeout("fadeOut(\'"+objId+"\',"+opacity+")",100)}else{obj.style.display=\'none\'}}}}
 			/*CALENDRIER Script featured on JavaScript Kit- http://www.javascriptkit.com */
-			var ds_i_date=new Date();ds_c_month=ds_i_date.getMonth()+1;ds_c_year=ds_i_date.getFullYear()-40;function ds_getel(id){return document.getElementById(id)}function ds_getleft(el){var tmp=el.offsetLeft;el=el.offsetParent; while(el){tmp+=el.offsetLeft;el=el.offsetParent}return tmp}function ds_gettop(el){var tmp=el.offsetTop;el=el.offsetParent; while(el){tmp+=el.offsetTop;el=el.offsetParent}return tmp}var ds_oe=ds_getel(\'ds_calclass\');var ds_ce=ds_getel(\'ds_conclass\');var ds_ob=\'\';function ds_ob_clean(){ds_ob=\'\'}function ds_ob_flush(){ds_oe.innerHTML=ds_ob;ds_ob_clean()}function ds_echo(t){ds_ob+=t}var ds_element;var ds_monthnames=[\''.L_JANUARY.'\',\''.L_FEBRUARY.'\',\''.L_MARCH.'\',\''.L_APRIL.'\',\''.L_MAY.'\',\''.L_JUNE.'\',\''.L_JULY.'\',\''.L_AUGUST.'\',\''.L_SEPTEMBER.'\',\''.L_OCTOBER.'\',\''.L_NOVEMBER.'\',\''.L_DECEMBER.'\'];var ds_daynames=[\''.L_SUND.'\',\''.L_MOND.'\',\''.L_TUES.'\',\''.L_WEDN.'\',\''.L_THUR.'\',\''.L_FRID.'\',\''.L_SATU.'\'];function ds_template_main_above(t){return\'<table cellpadding="3" cellspacing="1" class="ds_tbl">\'+\'<tr>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_py();">&lt;&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_pm();">&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_hi();" colspan="3">['.CLOSE.']</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_nm();">&gt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_ny();">&gt;&gt;</td>\'+\'</tr>\'+\'<tr>\'+\'<td colspan="7" class="ds_head">\'+t+\'</td>\'+\'</tr>\'+\'<tr>\'}function ds_template_day_row(t){return\'<td class="ds_subhead">\'+t+\'</td>\'}function ds_template_new_week(){return\'</tr><tr>\'}function ds_template_blank_cell(colspan){return\'<td colspan="\'+colspan+\'"></td>\'}function ds_template_day(d,m,y){return\'<td class="ds_cell" onclick="ds_onclick(\'+d+\',\'+m+\',\'+y+\')">\'+d+\'</td>\'}function ds_template_main_below(){return\'</tr>\'+\'</table>\'}function ds_draw_calendar(m,y){ds_ob_clean();ds_echo(ds_template_main_above(ds_monthnames[m-1]+\' \'+y));for(i=0;i<7;i++){ds_echo(ds_template_day_row(ds_daynames[i]))}var ds_dc_date=new Date();ds_dc_date.setMonth(m-1);ds_dc_date.setFullYear(y);ds_dc_date.setDate(1);if(m==1||m==3||m==5||m==7||m==8||m==10||m==12){days=31}else if(m==4||m==6||m==9||m==11){days=30}else{days=(y%4==0)?29:28}var first_day=ds_dc_date.getDay();var first_loop=1;ds_echo(ds_template_new_week());if(first_day!=0){ds_echo(ds_template_blank_cell(first_day))}var j=first_day;for(i=0;i<days;i++){if(j==0&&!first_loop){ds_echo(ds_template_new_week())}ds_echo(ds_template_day(i+1,m,y));first_loop=0;j++;j%=7}ds_echo(ds_template_main_below());ds_ob_flush();/*ds_ce.scrollIntoView()*/}function ds_sh(t){ds_element=t;var ds_sh_date=new Date();ds_c_month=ds_sh_date.getMonth()+1;ds_c_year=ds_sh_date.getFullYear()-40;ds_draw_calendar(ds_c_month,ds_c_year);ds_ce.style.display=\'\';the_left=ds_getleft(t);the_top=ds_gettop(t)+t.offsetHeight;ds_ce.style.left=the_left+\'px\';ds_ce.style.top=the_top+\'px\';/*ds_ce.scrollIntoView()*/}function ds_hi(){ds_ce.style.display=\'none\'}function ds_nm(){ds_c_month++;if(ds_c_month>12){ds_c_month=1;ds_c_year++}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_pm(){ds_c_month=ds_c_month-1;if(ds_c_month<1){ds_c_month=12;ds_c_year=ds_c_year-1}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_ny(){ds_c_year++;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_py(){ds_c_year=ds_c_year-1;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_format_date(d,m,y){m2=\'00\'+m;m2=m2.substr(m2.length-2);d2=\'00\'+d;d2=d2.substr(d2.length-2);return d2+\'-\'+m2+\'-\'+y}function ds_onclick(d,m,y){ds_hi();if(typeof(ds_element.value)!=\'undefined\'){ds_element.value=ds_format_date(d,m,y)}else if(typeof(ds_element.innerHTML)!=\'undefined\'){ds_element.innerHTML=ds_format_date(d,m,y)}else{alert(ds_format_date(d,m,y))}}
+			var ds_i_date=new Date();ds_c_month=ds_i_date.getMonth()+1;ds_c_year=ds_i_date.getFullYear()-40;function ds_getel(id){return document.getElementById(id)}function ds_getleft(el){var tmp=el.offsetLeft;el=el.offsetParent; while(el){tmp+=el.offsetLeft;el=el.offsetParent}return tmp}function ds_gettop(el){var tmp=el.offsetTop;el=el.offsetParent; while(el){tmp+=el.offsetTop;el=el.offsetParent}return tmp}var ds_oe=ds_getel(\'ds_calclass\');var ds_ce=ds_getel(\'ds_conclass\');var ds_ob=\'\';function ds_ob_clean(){ds_ob=\'\'}function ds_ob_flush(){ds_oe.innerHTML=ds_ob;ds_ob_clean()}function ds_echo(t){ds_ob+=t}var ds_element;var ds_monthnames=[\''.L_JANUARY.'\',\''.L_FEBRUARY.'\',\''.L_MARCH.'\',\''.L_APRIL.'\',\''.L_MAY.'\',\''.L_JUNE.'\',\''.L_JULY.'\',\''.L_AUGUST.'\',\''.L_SEPTEMBER.'\',\''.L_OCTOBER.'\',\''.L_NOVEMBER.'\',\''.L_DECEMBER.'\'];var ds_daynames=[\''.L_SUND.'\',\''.L_MOND.'\',\''.L_TUES.'\',\''.L_WEDN.'\',\''.L_THUR.'\',\''.L_FRID.'\',\''.L_SATU.'\'];function ds_template_main_above(t){return\'<table cellpadding="3" cellspacing="1" class="ds_tbl">\'+\'<tr>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_py();">&lt;&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_pm();">&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_hi();" colspan="3">['.CLOSE.']</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_nm();">&gt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_ny();">&gt;&gt;</td>\'+\'</tr>\'+\'<tr>\'+\'<td colspan="7" class="ds_head">\'+t+\'</td>\'+\'</tr>\'+\'<tr>\'}function ds_template_day_row(t){return\'<td class="ds_subhead">\'+t+\'</td>\'}function ds_template_new_week(){return\'</tr><tr>\'}function ds_template_blank_cell(colspan){return\'<td colspan="\'+colspan+\'"></td>\'}function ds_template_day(d,m,y){return\'<td class="ds_cell" onclick="ds_onclick(\'+d+\',\'+m+\',\'+y+\')">\'+d+\'</td>\'}function ds_template_main_below(){return\'</tr>\'+\'</table>\'}function ds_draw_calendar(m,y){ds_ob_clean();ds_echo(ds_template_main_above(ds_monthnames[m-1]+\' \'+y));for(i=0;i<7;i++){ds_echo(ds_template_day_row(ds_daynames[i]))}var ds_dc_date=new Date();ds_dc_date.setMonth(m-1);ds_dc_date.setFullYear(y);ds_dc_date.setDate(1);if(m==1||m==3||m==5||m==7||m==8||m==10||m==12){days=31}else if(m==4||m==6||m==9||m==11){days=30}else{days=(y%4==0)?29:28}var first_day=ds_dc_date.getDay();var first_loop=1;ds_echo(ds_template_new_week());if(first_day!=0){ds_echo(ds_template_blank_cell(first_day))}var j=first_day;for(i=0;i<days;i++){if(j==0&&!first_loop){ds_echo(ds_template_new_week())}ds_echo(ds_template_day(i+1,m,y));first_loop=0;j++;j%=7}ds_echo(ds_template_main_below());ds_ob_flush();/*ds_ce.scrollIntoView()*/}function ds_sh(t){ds_element=t;var ds_sh_date=new Date();ds_c_month=ds_sh_date.getMonth()+1;ds_c_year=ds_sh_date.getFullYear()-40;ds_draw_calendar(ds_c_month,ds_c_year);ds_ce.style.display=\'\';the_left=ds_getleft(t);the_top=ds_gettop(t)+t.offsetHeight;ds_ce.style.left=the_left+\'px\';ds_ce.style.top=the_top+\'px\';/*ds_ce.scrollIntoView()*/}function ds_hi(){ds_ce.style.display=\'none\'}function ds_nm(){ds_c_month++;if(ds_c_month>12){ds_c_month=1;ds_c_year++}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_pm(){ds_c_month=ds_c_month-1;if(ds_c_month<1){ds_c_month=12;ds_c_year=ds_c_year-1}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_ny(){ds_c_year++;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_py(){ds_c_year=ds_c_year-1;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_format_date(d,m,y){m2=\'00\'+m;m2=m2.substr(m2.length-2);d2=\'00\'+d;d2=d2.substr(d2.length-2);return d2+\'/\'+m2+\'/\'+y}function ds_onclick(d,m,y){ds_hi();if(typeof(ds_element.value)!=\'undefined\'){ds_element.value=ds_format_date(d,m,y)}else if(typeof(ds_element.innerHTML)!=\'undefined\'){ds_element.innerHTML=ds_format_date(d,m,y)}else{alert(ds_format_date(d,m,y))}}
+<<<<<<< HEAD
+<<<<<<< HEAD
+		';
+=======
+=======
+>>>>>>> 5689f6c646f5bd6f193d7c41007f07c9cddab69b
 	';
+>>>>>>> b1656633070e670f402e006e785832d061c047b1
 
 			file_put_contents(MU_JS.'scripts.js', $js);
 		}	
@@ -2331,7 +2755,7 @@ class Init
 	private function mkcss() {
 
 		$default = '/* =Uforum -----------------------------------------------------------------------------*/ .Ligne{font-size:11px; border-bottom:1px solid [br]; padding-left:4px; vertical-align:middle} .mess{font-size:16px; border-bottom:1px solid [br]; text-align:center; vertical-align:middle} /* Formulaire */ .red{color:#c00} .blue{color:#00f} .orange{color:#f90} .grey{color:#aaa} .avatar{width:80px; height:80px} .avatarTD{width:18%; font-size:12px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-bottom:10px} .messageTD{padding:10px; font-size:14px} .tooltipTD{padding-left:5px; vertical-align:middle; font-size:9px; font-family:Courrier,Monaco,monospaced} .formTD{background:[lt]; font-size:12px; color:#666; padding:3px 6px 3px 0px; vertical-align:middle; text-align:right; width:150px} .titreCol{background:[lt]; font-size:13px; color:#666; padding:4px; vertical-align:middle} .colDate{font-size:11px; color:#666; padding:4px; vertical-align:middle; border-bottom:1px solid [br]} /* BOUTONS */ .titreLien:link, .titreLien:visited{color:#fff; text-decoration:none} .titreLien:hover{color:#fff; text-decoration:underline} .bImage:link, .bImage:visited, .bImage:hover{padding:2px; opacity:.6} .bImage:hover{padding:2px; opacity:1} .Lien:link, .Lien:visited{color:[lk]; text-decoration:none} .Lien:hover{color:[lk]; text-decoration:underline} .LienNonLu:link, .LienNonLu:visited{color:[ct]; text-decoration:none} .LienNonLu:hover{color:[ct]; text-decoration:underline} .avatarTooltip:hover{cursor:help} .uForum{background:[dk]; display:block; text-align:left; border:1px solid [br]; padding:6px; margin-bottom:3px; color:#fff; font-size:30px; font-weight:100} .Box{background:#fff; border:1px solid [br]; vertical-align:middle; padding:4px; margin-bottom:3px; text-align:left} .titreDiv{background:[dk]; border:1px solid [br]; color:#fff; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left} .titrePost{text-align:left; font-size:14px; color:[dk]} .gradient{background:[dk]; border:1px solid [br]; color:#fff; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left; font-weight:bold} .datePost{color:#9a9a9a; font-size:12px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-top:5px; padding-right:3px} .postMod{font-size:9px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-top:6px; padding-right:3px; color:[dk]} .poster{color:#f90} .poster:link, .poster:visited{text-decoration:none} .poster:hover{text-decoration:underline} .attachLink{text-decoration:none; display:block; padding-top:5px; font-size:9px; font-family:Courrier,Monaco,monospaced; text-align:right} .attachLink:link, .attachLink:visited{color:#999} .attachLink:hover{color:[ct]} .toggle{padding-top:10px; margin:0px; display:none; visibility:hidden} .toggleLink{text-decoration:none; display:block; padding:3px 3px 3px 6px; margin:2px} .toggleLink:link, .toggleLink:visited{color:#666; background:[lt]} .toggleLink:hover{background:#b1c5d0; color:#fff} .tooltip{position:absolute; border:1px solid #999; text-align:left; display:none; background-color:rgba(255,255,255,0.9); padding:6px; color:#666; font-size:11px; z-index:999; width:400px} @keyframes blink { 0% { color: red; } 100% { color: black; } } @-webkit-keyframes blink { 0% { color: red; } 100% { color: black; } } .blink { -webkit-animation: blink 0.5s linear infinite; -moz-animation: blink 0.5s linear infinite; -ms-animation: blink 0.5s linear infinite; -o-animation: blink 0.5s linear infinite; animation: blink 0.5s linear infinite; } /* =Layout -----------------------------------------------------------------------------*/ .wrapper { margin: auto; max-width: 980px; padding: 36px 10px; } #main aside { background-color: #f6f6f6; } #blocks li { background-color: #f8f8f8; padding: 3.3em 0; text-align: center; } .well { display: block; background-color: #f8f8f8; padding: 3.3em 0; border-radius: 5px } .link-show-code { background-color: #eee; border-radius: 10px; color: #555; font-size: 12px; display: inline-block; line-height: 1; padding: 5px 11px; text-decoration: none; } .link-show-code:hover { background-color: #ef6465; color: #fff; } .link-show-code-active { background-color: #444; color: #fff; padding: 5px 14px; } .label {text-transform: uppercase; font-size: 9px !important; font-weight: bold} /* =Editor -----------------------------------------------------------------------------*/ ul.smileys { width: 170px } .smileys li{ float:left } /* =Header -----------------------------------------------------------------------------*/ #header { overflow: hidden; margin-bottom: 1.5em; border-bottom: 1px solid #eee; } #header h1 { float: left; margin: 0; } #header nav { padding-top: 10px; float: right; } /* =Footer -----------------------------------------------------------------------------*/ #footer { border-top: 1px solid #eee; padding-top: 1.5em; margin: 1.5em 0; font-size: .85em; } #footer span { float: right; } /* =Tablet (Portrait) -----------------------------------------------------------------------------*/ @media only screen and (min-width: 768px) and (max-width: 959px) { .wrapper { width: 748px; } } /* =Mobile (Portrait) -----------------------------------------------------------------------------*/ @media only screen and (max-width: 767px) { .wrapper { width: 300px; } #nav, #header h1 { float: none; } #header h1 { margin-bottom: .5em; } #nav ul li { margin: 0; float: none; margin-bottom: 1px; background-color: #f6f6f6; } #nav ul li a, #nav ul li span { display: block; padding: 2px 5px; } } /* =Mobile (Landscape) -----------------------------------------------------------------------------*/ @media only screen and (min-width: 480px) and (max-width: 767px) { .wrapper { width: 420px; } } ';
-		$main = 'html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,body,div,span,object,iframe,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video,h1,h2,h3,h4,h5,h6{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent;font-style:normal}a:active,a:hover{outline:0}button,input{line-height:normal}button,select{text-transform:none}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}blockquote,q{quotes:none}blockquote p:before,blockquote p:after,q:before,q:after{content:\'\';content:none}table{border-collapse:collapse;border-spacing:0}caption,th,td{text-align:left;vertical-align:top;font-weight:normal}thead th,thead td{font-weight:bold;vertical-align:bottom}a img,th img,td img{vertical-align:top}button,input,select,textarea{margin:0}textarea{overflow:auto;vertical-align:top}button{width:auto;overflow:visible}input[type=button],input[type=submit],button{cursor:pointer}input[type="radio"],input[type="checkbox"]{font-size:110%;box-sizing:border-box}input[type="search"]{-webkit-appearance:textfield;-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}hr{display:block;height:1px;border:0;border-top:1px solid #ddd}.group:after{content:".";display:block;height:0;clear:both;visibility:hidden}body{background:#fff;color:#333;font-size:.875em;line-height:1.65em;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif}a{color:#369}a:focus,a:hover{color:#ef6465}h1,h2,h3,h4,h5,h6{color:#222;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;font-weight:bold}h1{font-size:2.142em;line-height:1.1333em;margin-bottom:.2666em}h2{font-size:1.714em;line-height:1.1666em;margin-bottom:.4555em}h3{font-size:1.429em;line-height:1.4em;margin-bottom:.4em}h4{font-size:1.143em;line-height:1.65em;margin-bottom:.4555em}h5{font-size:1em;line-height:1.65em;margin-bottom:.5em}h6{font-size:.857em;line-height:1.5em;margin-bottom:.4555em;text-transform:uppercase}hgroup h1,hgroup h2,hgroup h3,hgroup h4,hgroup h5,hgroup h6{margin-bottom:0}hgroup{margin-bottom:.6em}.subheader{font-weight:300;color:#888}h1.subheader{font-size:1.357em;line-height:1.263em}h2.subheader{font-size:1.214em;line-height:1.412em}h3.subheader{font-size:1em;line-height:1.286em}h4.subheader,h5.subheader{font-size:.95em;line-height:1.385em}h6.subheader{font-size:.8em;line-height:1.364em}p,ul,ol,dl,dd,dt,blockquote,td,th{line-height:1.65em}ul,ol,ul ul,ol ol,ul ol,ol ul{margin:0 0 0 2em}ol ol li{list-style-type:lower-alpha}ol ol ol li{list-style-type:lower-roman}p,ul,ol,dl,blockquote,hr,pre,table,form,fieldset,figure{margin-bottom:1.65em}dl dt{font-weight:bold}dd{margin-left:1em}blockquote{margin-bottom:1.65em;position:relative;color:#777;padding-left:1.65em;margin-left:1.65em;border-left:1px solid #ddd}blockquote small,cite{color:#999;font-style:normal}blockquote p{margin-bottom:.5em}small,blockquote cite{font-size:.85em;line-height:1}blockquote .pull-right,.units-row blockquote .pull-right{float:none;text-align:right;display:block}address{font-style:italic}del{text-decoration:line-through}abbr[title],dfn[title]{border-bottom:1px dotted #000;cursor:help}strong,b{font-weight:bold}em,i{font-style:italic}sub,sup{font-size:.7em;line-height:0;position:relative}sup{top:-0.5em}sub{bottom:-0.25em}figcaption{font-size:.85em;font-style:italic}ins,mark{background-color:#fe5;color:#000;text-decoration:none}pre,code,kbd,samp{font-size:90%;font-family:Consolas,Monaco,monospace,sans-serif}pre{font-size:90%;color:#444;background:#f5f5f5;padding:.85em;overflow:auto}code{padding:2px 3px;display:inline-block;line-height:1;background:#f5f5f5;border:1px solid #ddd}kbd{padding:2px 6px 1px 6px;line-height:1;display:inline-block;border-radius:.3em;box-shadow:0 2px 0 rgba(0,0,0,0.2),0 0 0 1px #fff inset;background-color:#fafafa;border-color:#ccc #ccc white;border-style:solid solid none;border-width:1px 1px medium;color:#444;font-weight:normal;white-space:nowrap}input[type="text"],input[type="password"],input[type="email"],textarea{font-size:.95em}fieldset{padding:1.65em;margin-bottom:1.65em;border:1px solid #e3e3e3}legend{font-weight:bold;padding:0 1em}.com{color:#888}.lit{color:#195f91}.pun,.opn,.clo{color:#93a1a1}.fun{color:#005cb9}.str,.atv{color:#8a6343}.kwd,.linenums,.tag{color:#000}.typ,.atn,.dec,.var{color:#666}.pln{color:#5890ad}tfoot th,tfoot td{background-color:#f2f2f2}th,td{border-bottom:1px solid #eee;padding:.5em .8em}table caption{text-transform:uppercase;padding:0 1em;color:#999;font-size:.85em}table.table-flat td,table.table-flat th{border:0;padding:0}table.table-simple td,table.table-simple th{border:0;padding:.825em .7em .825em 0}table.table-simple caption{padding-left:0}table.table-bordered td,table.table-bordered th{border:1px solid #ddd}table.table-stroked td,table.table-stroked th{border-bottom:1px solid #eee}table.table-striped tbody tr:nth-child(odd) td{background-color:#f5f5f5}table.table-hovered tbody tr:hover td,table.table-hovered thead tr:hover th{background-color:#f6f6f6}.table-container{width:100%;overflow:auto;margin-bottom:1.65em}.table-container table{margin-bottom:0}.table-container::-webkit-scrollbar{-webkit-appearance:none;width:14px;height:14px}.table-container::-webkit-scrollbar-thumb{border-radius:8px;border:3px solid #fff;background-color:rgba(0,0,0,0.3)}.lists-simple{margin-left:0;list-style:none}.lists-simple ul,.lists-simple ol{list-style:none;margin-left:1.5em}.lists-dash{margin-left:18px}.lists-dash li{list-style-type:none}.lists-dash li:before{content:"\2013";position:relative;margin-left:-10px;left:-7px}.forms label{display:block;margin-bottom:1.65em}.forms input[type="text"],.forms input[type="password"],.forms input[type="email"],.forms input[type="url"],.forms input[type="phone"],.forms input[type="tel"],.forms input[type="number"],.forms input[type="datetime"],.forms input[type="date"],.forms input[type="search"],.forms input[type="range"],.forms input[type="file"],.forms input[type="datetime-local"],.forms textarea,.forms select,.forms button{display:block}.forms-inline input[type="text"],.forms-inline input[type="password"],.forms-inline input[type="email"],.forms-inline input[type="url"],.forms-inline input[type="phone"],.forms-inline input[type="tel"],.forms-inline input[type="number"],.forms-inline input[type="datetime"],.forms-inline input[type="date"],.forms-inline input[type="search"],.forms-inline input[type="range"],.forms-inline input[type="file"],.forms-inline input[type="datetime-local"],.forms-inline textarea,.forms-inline select,.forms-inline button,.forms-inline-list input[type="text"],.forms-inline-list input[type="password"],.forms-inline-list input[type="email"],.forms-inline-list input[type="url"],.forms-inline-list input[type="phone"],.forms-inline-list input[type="tel"],.forms-inline-list input[type="number"],.forms-inline-list input[type="datetime"],.forms-inline-list input[type="date"],.forms-inline-list input[type="search"],.forms-inline-list input[type="range"],.forms-inline-list input[type="file"],.forms-inline-list input[type="datetime-local"],.forms-inline-list textarea,.forms-inline-list select,.forms-inline-list button{display:inline-block}.forms-list,.forms-inline-list{margin:0;padding:0;margin-bottom:1.65em;list-style:none}.forms-list label,.forms-inline-list li,.forms-inline-list li label{display:inline-block;margin-bottom:0}.forms-inline-list li label{margin-right:1.65em}.forms-list li{margin-bottom:6px}.forms-desc{margin-top:4px;color:#999;font-size:.85em;line-height:1.4em}.forms fieldset{padding-bottom:.5em;border-radius:.5em}fieldset.forms-row{padding:0;border:0;margin-bottom:0}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;float:none;width:auto;text-align:left;margin-right:0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1) inset;-webkit-transition:border ease .5s;-moz-transition:border ease .5s;-o-transition:border ease .5s;transition:border ease .5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.error,.success{margin-left:5px;font-weight:normal;font-size:.85em}input.input-error,textarea.input-error,select.input-error,.input-error{border-color:#da3e5a;box-shadow:0 0 0 2px rgba(218,62,90,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-success,textarea.input-success,select.input-success,.input-success{border-color:#18a011;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-gray,textarea.input-gray,select.input-gray,.input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input:focus,textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}.input-append,.input-prepend{display:inline-block;background-color:#eee;height:23px;border:1px solid #ccc;margin:0;padding:1px 8px;color:#333;font-size:1em;line-height:23px}.input-prepend{margin-right:-1px}.input-append{position:relative;z-index:1;margin-left:-1px}:-moz-placeholder{color:#999}::-moz-placeholder{color:#999}:-ms-input-placeholder{color:#999}::-webkit-input-placeholder{color:#999;padding:2px}.color-black{color:#000}.color-gray-dark{color:#555}.color-gray{color:#777}.color-gray-light{color:#999}.color-white{color:#fff}.color-red,.error{color:#ef6465}.color-green,.success{color:#90af45}.color-orange{color:#f48a30}.color-green{color:#90af45}.color-blue{color:#1c7ab4}.color-yellow{color:#f3c835}a.color-white:focus,a.color-white:hover{color:#bfbfbf;color:rgba(255,255,255,0.6)}a.color-green:focus,a.color-green:hover,a.color-red:focus,a.color-red:hover,a.color-error:focus,a.color-error:hover{color:#000}.label,.label-badge{border-radius:2em;border:1px solid #ddd;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em .6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-black{border-color:#000;background-color:#2e2e2e;background-image:-moz-linear-gradient(top,#4d4d4d,#000);background-image:-ms-linear-gradient(top,#4d4d4d,#000);background-image:-webkit-gradient(linear,0 0,0 100%,from(#4d4d4d),to(#000));background-image:-webkit-linear-gradient(top,#4d4d4d,#000);background-image:-o-linear-gradient(top,#4d4d4d,#000);background-image:linear-gradient(top,#4d4d4d,#000);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#4d4d4d\',endColorstr=\'#000\',GradientType=0)}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-black{text-shadow:0 -1px 0 #000}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0 -1px 0 rgba(0,0,0,0.24)}.btn-black,.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-black:hover,.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-black:hover{background:#000}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-round{border-radius:20px}.btn-active,.btn-active:hover,.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{filter:alpha(opacity=100);-moz-opacity:1;opacity:1;background:#d1d1d1;border:1px solid #b3b3b3;text-shadow:0 1px 1px #fff}.btn-active,.btn-active:hover{color:#666}.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{color:#999}.btn:focus .halflings,.btn:hover .halflings{color:#555}.btn-black:hover .halflings,.btn-red:hover .halflings,.btn-orange:hover .halflings,.btn-green:hover .halflings,.btn-blue:hover .halflings,.btn-yellow:hover .halflings{color:rgba(255,255,255,0.8)}.btn-disabled:hover .halflings{color:#999}.btn-active .halflings{color:#555}.btn-single,.btn-group{display:inline-block;margin-right:2px;vertical-align:bottom}.btn-single:after,.btn-group:after{content:".";display:block;height:0;clear:both;visibility:hidden}.btn-single>.btn,.btn-single>input,.btn-group>.btn,.btn-group>input{float:left;border-radius:0;margin-left:-1px}.btn-single>.btn{border-radius:4px}.btn-group>.btn:first-child{border-radius:4px 0 0 4px}.btn-group>.btn:last-child{border-radius:0 4px 4px 0}.btn-group>.btn.btn-round:first-child,.btn-group>.input-search:first-child{border-radius:15px 0 0 15px}.btn-group>.btn.btn-round:last-child,.btn-group>.input-search:last-child{border-radius:0 15px 15px 0}.btn-append,.btn-group .btn{padding:7px 1.1em 6px 1.1em}.btn-append{position:relative;top:-1px;margin-left:-2px;border-radius:0 4px 4px 0}@-moz-document url-prefix("http://"){input[type=submit].btn::-moz-focus-inner,button.btn::-moz-focus-inner{border:0;padding:0}}.first-letter::first-letter {font-size:4em;line-height:.75em;float:left;position:relative;padding-right:6px;margin-top:-2px;font-weight:normal;color:#333}.supersmall{font-size:.7em}.small{font-size:.85em}.big{font-size:1.2em}input.big{padding:2px 0;font-size:1.2em}.text-centered{text-align:center}.text-right{text-align:right}.text-uppercase{text-transform:uppercase}.nowrap{white-space:nowrap}.zero{margin:0!important;padding:0!important}.clear{clear:both}.last{margin-right:0!important}.pause{margin-bottom:.75em!important}.end{margin-bottom:0!important}.handle{cursor:move}.normal{font-weight:normal}.bold{font-weight:bold}.italic{font-style:italic}.req,.required{font-weight:normal;color:#ef6465}.highlight{background-color:#ffff9e!important}.close{padding:4px 6px;line-height:1;font-size:18px;cursor:pointer;color:#000;text-decoration:none;opacity:.4}.close:before{content:\'\00D7\'}.close:hover{color:#000;opacity:1}.image-left{float:left;margin:0 1em 1em 0}.image-right{float:right;margin:0 0 1em 1em}.image-left img,.image-right img{position:relative;top:.4em}.image-centered{text-align:center}.image-container:after{content:".";display:block;height:0;clear:both;visibility:hidden}.image-content{overflow:hidden}.nav-h,.nav-g{margin:20px 0 1.65em 0;height:50px;padding:10px;border:1px solid #dedede;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-h:after,.nav-g:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul,.nav-g ul{list-style:none;margin:0}.nav-h ul:after,.nav-g ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul li,.nav-g ul li{float:right;margin-right:1.5em}.nav-h ul li a,.nav-h ul li span,.nav-g ul li a,.nav-g ul li span{display:block}.nav-h ul li a,.nav-g ul li a{text-decoration:none}.nav-h ul li a:hover,.nav-g ul li a:hover{color:#ef6465;text-decoration:underline}.nav-h ul li span,.nav-g ul li span{color:#999}.nav-v{margin-bottom:1.65em}.nav-v ul{list-style:none;margin:0}.nav-v ul li{border-bottom:1px solid #eee}.nav-v ul li ul{margin-left:2em;font-size:.95em}.nav-v ul li ul li:last-child{border-bottom:0}.nav-v ul li ul li a,.nav-v ul li ul li span{padding:4px 0}.nav-v ul li a,.nav-v ul li span{display:block;padding:5px 0}.nav-v ul li a{text-decoration:none}.nav-v ul li a:hover{color:#ef6465;text-decoration:underline}.nav-v ul li span{color:#999}.nav-stacked ul{border:1px solid #eee;border-bottom:0}.nav-stacked ul li a,.nav-stacked ul li span{padding:5px 10px}.nav-stacked ul li a:hover{background-color:#f5f5f5}.nav-stats li{position:relative}.nav-stats li a,.nav-stats li span{padding-right:50px}.nav-stats .label,.nav-stats .label-badge{position:absolute;top:50%;margin-top:-8px;right:0}.nav-stats.nav-stacked .label,.nav-stats.nav-stacked .label-badge{right:4px}.nav-stats .label.label-data,.nav-stacked .label-data{margin-top:-6px;right:6px}.nav-v h1,.nav-v h2,.nav-v h3,.nav-v h4,.nav-v h5,.nav-v h6{margin-top:1.5em;margin-bottom:3px}.nav-v h1:first-child,.nav-v h2:first-child,.nav-v h3:first-child,.nav-v h4:first-child,.nav-v h5:first-child,.nav-v h6:first-child{margin-top:0}.breadcrumbs{margin-bottom:1.65em}.breadcrumbs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs, .breadcrumbs ul{font-size:.9em;color:#999;list-style:none;margin:0;}.breadcrumbs:after, .breadcrumbs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs li,.breadcrumbs ul li{float:left;margin-right:3px}.breadcrumbs li+li:before{content:" > ";color:#aaa;font-size:12px;margin:0 3px;position:relative;top:-1px}.breadcrumbs-sections li+li:before{content:" | ";top:0}.breadcrumbs-path li+li:before{content:" / ";top:0}.breadcrumbs li a, .breadcrumbs ul li a{color:#000;text-decoration:none}.breadcrumbs li a.active, .breadcrumbs ul li a.active{color:#999}.breadcrumbs li a:hover, .breadcrumbs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs{border-bottom:1px solid #e3e3e3;margin-bottom:1.65em}.nav-tabs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul{list-style:none;margin:0}.nav-tabs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul li{float:left;margin-right:2px}.nav-tabs ul li a,.nav-tabs ul li span{display:block;line-height:1;padding:8px 12px 9px 12px}.nav-tabs ul li a{color:#999;text-decoration:none}.nav-tabs ul li a:focus,.nav-tabs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs ul li .active,.nav-tabs ul li span{color:#000;background:#fff;margin-top:-2px;position:relative;padding:8px 11px 9px 11px;border:1px solid #ddd;border-bottom:1px solid #fff;bottom:-1px}.nav-tabs ul li .active{cursor:default}.nav-tabs-v{border:0;border-right:1px solid #e3e3e3}.nav-tabs-v ul li{float:none}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:-3px;border:1px solid #ddd;border-right:1px solid #fff}.nav-pills{margin-bottom:1.15em}.nav-pills:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul{list-style:none;margin:0}.nav-pills ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul li{float:left;margin-right:.5em;margin-bottom:.6499999999999999em}.nav-pills ul li a,.nav-pills ul li span{display:block;padding:6px 15px;line-height:1;border-radius:15px}.nav-pills ul li a{color:#777;text-decoration:none;background-color:#f3f4f5}.nav-pills ul li a:hover{color:#555;text-decoration:underline}.nav-pills ul li .active,.nav-pills ul li .active:hover,.nav-pills ul li span{color:#777;padding:5px 14px;border:1px solid #ddd;background:0}.nav-pills ul li .active,.nav-pills ul li .active:hover{cursor:default;text-decoration:none}.pagination{position:relative;left:-9px;margin-left:0;list-style:none}.pagination:after{content:".";display:block;height:0;clear:both;visibility:hidden}.pagination li{float:left;margin-right:2px}.pagination li a,.pagination li span{display:block;padding:7px 9px;line-height:1;border-radius:2em;color:#000;text-decoration:none}.pagination span{border:1px solid #ddd}.pagination li a:focus,.pagination li a:hover{text-decoration:underline;background-color:#333;color:#fff}.pagination li.pagination-older{margin-left:7px}.pagination li.pagination-older a,.pagination li.pagination-newest a,.pagination li.pagination-older span,.pagination li.pagination-newest span{padding:5px 15px;border-radius:2em;border:1px solid #ddd}.pagination li.pagination-older span,.pagination li.pagination-newest span{border-color:#eee;color:#999}.pagination li.pagination-pull{float:right;margin-right:-7px;margin-left:.5em}.message{position:relative;padding:9px 13px;border:1px solid #f7dc7d;border-radius:5px;margin-bottom:1.65em;color:#9f7d09;background-color:#fdf7e2}.message-error{color:#c01415;border-color:#f9c0c1;background-color:#fdefef}.message-success{color:#546628;border-color:#d1dfae;background-color:#f0f5e5}.message-info{color:#124d72;border-color:#b3dbf3;background-color:#dff0fa}.message header{font-weight:bold;font-size:1.2em}.message .close{cursor:pointer;position:absolute;right:3px;top:6px}.units-container:after,.units-row-end:after,.units-row:after{content:".";display:block;height:0;clear:both;visibility:hidden}.units-container{padding-top:1px;margin-top:-1px}.units-container,.units-row-end,.units-row{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row{margin-bottom:1.5em}.units-row-end{margin-bottom:0}.width-100,.unit-100{width:100%}.width-80,.unit-80{width:80%}.width-75,.unit-75{width:75%}.width-70,.unit-70{width:70%}.width-66,.unit-66{width:66.6%}.width-60,.unit-60{width:60%}.width-50,.unit-50{width:50%}.width-40,.unit-40{width:40%}.width-33,.unit-33{width:33.3%}.width-30,.unit-30{width:30%}.width-25,.unit-25{width:25%}.width-20,.unit-20{width:20%}input.width-100,input.unit-100{width:98.6%}textarea.width-100,textarea.unit-100{width:98.8%}select.width-100,select.unit-100{width:99.4%}.width-100,.width-80,.width-75,.width-70,.width-66,.width-60,.width-50,.width-40,.width-33,.width-30,.width-25,.width-20,.units-row .unit-100,.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{float:left;margin-left:3%}.units-row .unit-80:first-child,.units-row .unit-75:first-child,.units-row .unit-70:first-child,.units-row .unit-66:first-child,.units-row .unit-60:first-child,.units-row .unit-50:first-child,.units-row .unit-40:first-child,.units-row .unit-33:first-child,.units-row .unit-30:first-child,.units-row .unit-25:first-child,.units-row .unit-20:first-child,.units-row-end .unit-100:first-child,.units-row-end .unit-80:first-child,.units-row-end .unit-75:first-child,.units-row-end .unit-70:first-child,.units-row-end .unit-66:first-child,.units-row-end .unit-60:first-child,.units-row-end .unit-50:first-child,.units-row-end .unit-40:first-child,.units-row-end .unit-33:first-child,.units-row-end .unit-30:first-child,.units-row-end .unit-25:first-child,.units-row-end .unit-20:first-child{margin-left:0}.units-row .unit-80,.units-row-end .unit-80{width:79.4%}.units-row .unit-75,.units-row-end .unit-75{width:74.25%}.units-row .unit-70,.units-row-end .unit-70{width:69.1%}.units-row .unit-66,.units-row-end .unit-66{width:65.66666666666666%}.units-row .unit-60,.units-row-end .unit-60{width:58.800000000000004%}.units-row .unit-50,.units-row-end .unit-50{width:48.5%}.units-row .unit-40,.units-row-end .unit-40{width:38.2%}.units-row .unit-30,.units-row-end .unit-30{width:27.9%}.units-row .unit-33,.units-row-end .unit-33{width:31.333333333333332%}.units-row .unit-25,.units-row-end .unit-25{width:22.75%}.units-row .unit-20,.units-row-end .unit-20{width:17.6%}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{position:relative}.unit-push-30{left:30.9%}.unit-push-80{left:82.4%}.unit-push-75{left:77.25%}.unit-push-70{left:72.1%}.unit-push-66{left:68.66666666666666%}.unit-push-60{left:61.800000000000004%}.unit-push-50{left:51.5%}.unit-push-40{left:41.2%}.unit-push-33{left:34.33333333333333%}.unit-push-25{left:25.75%}.unit-push-20{left:20.6%}.unit-push-right{float:right}.centered,.unit-centered{float:none!important;margin:0 auto!important}.unit-padding{padding:1.65em}.units-padding .unit-100,.units-padding .unit-80,.units-padding .unit-75,.units-padding .unit-70,.units-padding .unit-66,.units-padding .unit-60,.units-padding .unit-50,.units-padding .unit-40,.units-padding .unit-33,.units-padding .unit-30,.units-padding .unit-25,.units-padding .unit-20{padding:1.65em}.units-split .unit-80,.units-split .unit-75,.units-split .unit-70,.units-split .unit-66,.units-split .unit-60,.units-split .unit-50,.units-split .unit-40,.units-split .unit-33,.units-split .unit-30,.units-split .unit-25,.units-split .unit-20{margin-left:0}.units-split .unit-80{width:80%}.units-split .unit-75{width:75%}.units-split .unit-70{width:70%}.units-split .unit-66{width:66.6%}.units-split .unit-60{width:60%}.units-split .unit-50{width:50%}.units-split .unit-40{width:40%}.units-split .unit-33{width:33.3%}.units-split .unit-30{width:30%}.units-split .unit-25{width:25%}.units-split .unit-20{width:20%}.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{padding-left:0;list-style:none;margin-left:-3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2:after,.blocks-3:after,.blocks-4:after,.blocks-5:after,.blocks-6:after{content:".";display:block;height:0;clear:both;visibility:hidden}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{height:auto;float:left;margin-bottom:1.65em;margin-left:3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2>li{width:47%}.blocks-3>li{width:30.333333333333332%}.blocks-4>li{width:22%}.blocks-5>li{width:17%}.blocks-6>li{width:13.666666666666666%}.block-first{clear:both}@media(min-width:768px){.desktop-hide{display:none}}@media only screen and (max-width:767px){.mobile-text-centered{text-align:center}.mobile-hide{display:none}}img,video{max-width:100%;height:auto}img{-ms-interpolation-mode:bicubic}audio{width:100%}.video-wrapper{height:0;padding-bottom:56.25%;position:relative;margin-bottom:1.65em}.video-wrapper iframe,.video-wrapper object,.video-wrapper embed{position:absolute;top:0;left:0;width:100%;height:100%}@media only screen and (max-width:767px){.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{width:100%;float:none;margin-left:0;margin-bottom:1.65em}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{left:0}.units-row-end .unit-push-right,.units-row .unit-push-right{float:none}.units-mobile-50 .unit-80,.units-mobile-50 .unit-75,.units-mobile-50 .unit-70,.units-mobile-50 .unit-66,.units-mobile-50 .unit-60,.units-mobile-50 .unit-40,.units-mobile-50 .unit-30,.units-mobile-50 .unit-33,.units-mobile-50 .unit-25,.units-mobile-50 .unit-20{float:left;margin-left:3%;width:48.5%}.units-mobile-50 .unit-80:first-child,.units-mobile-50 .unit-75:first-child,.units-mobile-50 .unit-70:first-child,.units-mobile-50 .unit-66:first-child,.units-mobile-50 .unit-60:first-child,.units-mobile-50 .unit-40:first-child,.units-mobile-50 .unit-30:first-child,.units-mobile-50 .unit-33:first-child,.units-mobile-50 .unit-25:first-child,.units-mobile-50 .unit-20:first-child{margin-left:0}}@media only screen and (max-width:767px){.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{margin-left:0;margin-bottom:1.65em}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{float:none;margin-left:0;width:100%}.blocks-mobile-50>li,.blocks-mobile-33>li{float:left;margin-left:3%}.blocks-mobile-33,.blocks-mobile-50{margin-left:-3%}.blocks-mobile-50>li{width:47%}.blocks-mobile-33>li{width:30.333333333333332%}}@media only screen and (max-width:767px){.nav-h,.nav-h ul,.nav-h ul li,.nav-h,.nav-g,.nav-g ul,.nav-g ul li,.nav-g,.nav-v ul,.nav-v,.nav-tabs ul,.nav-pills,.nav-pills ul{float:none}.nav-h ul li,.nav-g ul li{margin:0;margin-bottom:1px}.nav-tabs ul li{float:none;margin-right:0}.nav-tabs ul li a,.nav-tabs ul li span,.nav-tabs ul li .active{margin-top:0;bottom:0;padding:8px 12px 9px 12px;border:1px solid #ddd;border-bottom:0}.nav-tabs-v{border-bottom:1px solid #ddd;border-right:0}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:0}}@media only screen and (max-width:767px){.forms-columnar label{float:none;text-align:left;width:auto;margin-bottom:0}.forms-push label{position:relative}.forms-push,.forms-columnar .forms-section{padding-left:0}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:0}}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid #dedede;cursor:pointer;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.tabA{background:#dedede;border-bottom:0px solid #dedede;padding-bottom:6px;}.tabB{background:#fff;border-bottom:1px solid #fff;}.tabContent{background-color:#fff;border:1px solid #dedede;margin-top:-24px;padding:15px;display:none;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.ds_box{background-color:#FFF;border:1px solid rgb(179, 219, 243);position:absolute;z-index:32767;}.ds_tbl{background-color:#FFF;}.ds_head{background-color:rgb(223, 240, 250);color:rgb(18, 77, 114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18, 77, 114);color:rgb(223, 240, 250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:1px solid rgb(179, 219, 243);-webkit-border-radius:25px;-moz-border-radius:25px;border-radius:25px;} #root{color:#a1a1a1;} #root a{text-decoration: none;} #root a img {width:32px;height:32px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"], select, textarea {-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"] {height:25px;border: 1px solid #a1a1a1;}.msgFlash{position:absolute;width:70%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.close-right{float:right;margin-top:-35px;cursor:pointer}.closed{display:none}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}article.unit-100{border: 1px solid #dedede;padding:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-g ul li form.text-right input {width:170px;height:24px;}.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);background-color:#49afcd;background-image:-moz-linear-gradient(top, #5bc0de, #2f96b4);background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#5bc0de), to(#2f96b4));background-image:-webkit-linear-gradient(top, #5bc0de, #2f96b4);background-image:-o-linear-gradient(top, #5bc0de, #2f96b4);background-image:linear-gradient(to bottom, #5bc0de, #2f96b4);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff5bc0de\', endColorstr=\'#ff2f96b4\', GradientType=0);border-color:#2f96b4 #2f96b4 #1f6377;border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);*background-color:#2f96b4;filter:progid:DXImageTransform.Microsoft.gradient(enabled = false);}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#2f96b4;*background-color:#2a85a0;}.btn-info:active,.btn-info.active{background-color:#24748c \9;}.btn-info:hover .ok{color:#fff;}.signature{clear:both;margin-top: 40px;border-top: 1px solid #dedede;}.messageTD div fieldset {border-left:3px solid #dedede;}';
+		$main = 'html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,body,div,span,object,iframe,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video,h1,h2,h3,h4,h5,h6{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent;font-style:normal}a:active,a:hover{outline:0}button,input{line-height:normal}button,select{text-transform:none}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}blockquote,q{quotes:none}blockquote p:before,blockquote p:after,q:before,q:after{content:\'\';content:none}table{border-collapse:collapse;border-spacing:0}caption,th,td{text-align:left;vertical-align:top;font-weight:normal}thead th,thead td{font-weight:bold;vertical-align:bottom}a img,th img,td img{vertical-align:top}button,input,select,textarea{margin:0}textarea{overflow:auto;vertical-align:top}button{width:auto;overflow:visible}input[type=button],input[type=submit],button{cursor:pointer}input[type="radio"],input[type="checkbox"]{font-size:110%;box-sizing:border-box}input[type="search"]{-webkit-appearance:textfield;-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}hr{display:block;height:1px;border:0;border-top:1px solid #ddd}.group:after{content:".";display:block;height:0;clear:both;visibility:hidden}body{background:#fff;color:#333;font-size:.875em;line-height:1.65em;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif}a{color:#369}a:focus,a:hover{color:#ef6465}h1,h2,h3,h4,h5,h6{color:#222;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;font-weight:bold}h1{font-size:2.142em;line-height:1.1333em;margin-bottom:.2666em}h2{font-size:1.714em;line-height:1.1666em;margin-bottom:.4555em}h3{font-size:1.429em;line-height:1.4em;margin-bottom:.4em}h4{font-size:1.143em;line-height:1.65em;margin-bottom:.4555em}h5{font-size:1em;line-height:1.65em;margin-bottom:.5em}h6{font-size:.857em;line-height:1.5em;margin-bottom:.4555em;text-transform:uppercase}hgroup h1,hgroup h2,hgroup h3,hgroup h4,hgroup h5,hgroup h6{margin-bottom:0}hgroup{margin-bottom:.6em}.subheader{font-weight:300;color:#888}h1.subheader{font-size:1.357em;line-height:1.263em}h2.subheader{font-size:1.214em;line-height:1.412em}h3.subheader{font-size:1em;line-height:1.286em}h4.subheader,h5.subheader{font-size:.95em;line-height:1.385em}h6.subheader{font-size:.8em;line-height:1.364em}p,ul,ol,dl,dd,dt,blockquote,td,th{line-height:1.65em}ul,ol,ul ul,ol ol,ul ol,ol ul{margin:0 0 0 2em}ol ol li{list-style-type:lower-alpha}ol ol ol li{list-style-type:lower-roman}p,ul,ol,dl,blockquote,hr,pre,table,form,fieldset,figure{margin-bottom:1.65em}dl dt{font-weight:bold}dd{margin-left:1em}blockquote{margin-bottom:1.65em;position:relative;color:#777;padding-left:1.65em;margin-left:1.65em;border-left:1px solid #ddd}blockquote small,cite{color:#999;font-style:normal}blockquote p{margin-bottom:.5em}small,blockquote cite{font-size:.85em;line-height:1}blockquote .pull-right,.units-row blockquote .pull-right{float:none;text-align:right;display:block}address{font-style:italic}del{text-decoration:line-through}abbr[title],dfn[title]{border-bottom:1px dotted #000;cursor:help}strong,b{font-weight:bold}em,i{font-style:italic}sub,sup{font-size:.7em;line-height:0;position:relative}sup{top:-0.5em}sub{bottom:-0.25em}figcaption{font-size:.85em;font-style:italic}ins,mark{background-color:#fe5;color:#000;text-decoration:none}pre,code,kbd,samp{font-size:90%;font-family:Consolas,Monaco,monospace,sans-serif}pre{font-size:90%;color:#444;background:#f5f5f5;padding:.85em;overflow:auto}code{padding:2px 3px;display:inline-block;line-height:1;background:#f5f5f5;border:1px solid #ddd}kbd{padding:2px 6px 1px 6px;line-height:1;display:inline-block;border-radius:.3em;box-shadow:0 2px 0 rgba(0,0,0,0.2),0 0 0 1px #fff inset;background-color:#fafafa;border-color:#ccc #ccc white;border-style:solid solid none;border-width:1px 1px medium;color:#444;font-weight:normal;white-space:nowrap}input[type="text"],input[type="password"],input[type="email"],textarea{font-size:.95em}fieldset{padding:1.65em;margin-bottom:1.65em;border:1px solid #e3e3e3}legend{font-weight:bold;padding:0 1em}.com{color:#888}.lit{color:#195f91}.pun,.opn,.clo{color:#93a1a1}.fun{color:#005cb9}.str,.atv{color:#8a6343}.kwd,.linenums,.tag{color:#000}.typ,.atn,.dec,.var{color:#666}.pln{color:#5890ad}tfoot th,tfoot td{background-color:#f2f2f2}th,td{border-bottom:1px solid #eee;padding:.5em .8em}table caption{text-transform:uppercase;padding:0 1em;color:#999;font-size:.85em}table.table-flat td,table.table-flat th{border:0;padding:0}table.table-simple td,table.table-simple th{border:0;padding:.825em .7em .825em 0}table.table-simple caption{padding-left:0}table.table-bordered td,table.table-bordered th{border:1px solid #ddd}table.table-stroked td,table.table-stroked th{border-bottom:1px solid #eee}table.table-striped tbody tr:nth-child(odd) td{background-color:#f5f5f5}table.table-hovered tbody tr:hover td,table.table-hovered thead tr:hover th{background-color:#f6f6f6}.table-container{width:100%;overflow:auto;margin-bottom:1.65em}.table-container table{margin-bottom:0}.table-container::-webkit-scrollbar{-webkit-appearance:none;width:14px;height:14px}.table-container::-webkit-scrollbar-thumb{border-radius:8px;border:3px solid #fff;background-color:rgba(0,0,0,0.3)}.lists-simple{margin-left:0;list-style:none}.lists-simple ul,.lists-simple ol{list-style:none;margin-left:1.5em}.lists-dash{margin-left:18px}.lists-dash li{list-style-type:none}.lists-dash li:before{content:"\2013";position:relative;margin-left:-10px;left:-7px}.forms label{display:block;margin-bottom:1.65em}.forms input[type="text"],.forms input[type="password"],.forms input[type="email"],.forms input[type="url"],.forms input[type="phone"],.forms input[type="tel"],.forms input[type="number"],.forms input[type="datetime"],.forms input[type="date"],.forms input[type="search"],.forms input[type="range"],.forms input[type="file"],.forms input[type="datetime-local"],.forms textarea,.forms select,.forms button{display:block}.forms-inline input[type="text"],.forms-inline input[type="password"],.forms-inline input[type="email"],.forms-inline input[type="url"],.forms-inline input[type="phone"],.forms-inline input[type="tel"],.forms-inline input[type="number"],.forms-inline input[type="datetime"],.forms-inline input[type="date"],.forms-inline input[type="search"],.forms-inline input[type="range"],.forms-inline input[type="file"],.forms-inline input[type="datetime-local"],.forms-inline textarea,.forms-inline select,.forms-inline button,.forms-inline-list input[type="text"],.forms-inline-list input[type="password"],.forms-inline-list input[type="email"],.forms-inline-list input[type="url"],.forms-inline-list input[type="phone"],.forms-inline-list input[type="tel"],.forms-inline-list input[type="number"],.forms-inline-list input[type="datetime"],.forms-inline-list input[type="date"],.forms-inline-list input[type="search"],.forms-inline-list input[type="range"],.forms-inline-list input[type="file"],.forms-inline-list input[type="datetime-local"],.forms-inline-list textarea,.forms-inline-list select,.forms-inline-list button{display:inline-block}.forms-list,.forms-inline-list{margin:0;padding:0;margin-bottom:1.65em;list-style:none}.forms-list label,.forms-inline-list li,.forms-inline-list li label{display:inline-block;margin-bottom:0}.forms-inline-list li label{margin-right:1.65em}.forms-list li{margin-bottom:6px}.forms-desc{margin-top:4px;color:#999;font-size:.85em;line-height:1.4em}.forms fieldset{padding-bottom:.5em;border-radius:.5em}fieldset.forms-row{padding:0;border:0;margin-bottom:0}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;float:none;width:auto;text-align:left;margin-right:0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1) inset;-webkit-transition:border ease .5s;-moz-transition:border ease .5s;-o-transition:border ease .5s;transition:border ease .5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.error,.success{margin-left:5px;font-weight:normal;font-size:.85em}input.input-error,textarea.input-error,select.input-error,.input-error{border-color:#da3e5a;box-shadow:0 0 0 2px rgba(218,62,90,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-success,textarea.input-success,select.input-success,.input-success{border-color:#18a011;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-gray,textarea.input-gray,select.input-gray,.input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input:focus,textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}.input-append,.input-prepend{display:inline-block;background-color:#eee;height:23px;border:1px solid #ccc;margin:0;padding:1px 8px;color:#333;font-size:1em;line-height:23px}.input-prepend{margin-right:-1px}.input-append{position:relative;z-index:1;margin-left:-1px}:-moz-placeholder{color:#999}::-moz-placeholder{color:#999}:-ms-input-placeholder{color:#999}::-webkit-input-placeholder{color:#999;padding:2px}.color-black{color:#000}.color-gray-dark{color:#555}.color-gray{color:#777}.color-gray-light{color:#999}.color-white{color:#fff}.color-red,.error{color:#ef6465}.color-green,.success{color:#90af45}.color-orange{color:#f48a30}.color-green{color:#90af45}.color-blue{color:#1c7ab4}.color-yellow{color:#f3c835}a.color-white:focus,a.color-white:hover{color:#bfbfbf;color:rgba(255,255,255,0.6)}a.color-green:focus,a.color-green:hover,a.color-red:focus,a.color-red:hover,a.color-error:focus,a.color-error:hover{color:#000}.label,.label-badge{border-radius:2em;border:1px solid #ddd;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em .6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-black{border-color:#000;background-color:#2e2e2e;background-image:-moz-linear-gradient(top,#4d4d4d,#000);background-image:-ms-linear-gradient(top,#4d4d4d,#000);background-image:-webkit-gradient(linear,0 0,0 100%,from(#4d4d4d),to(#000));background-image:-webkit-linear-gradient(top,#4d4d4d,#000);background-image:-o-linear-gradient(top,#4d4d4d,#000);background-image:linear-gradient(top,#4d4d4d,#000);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#4d4d4d\',endColorstr=\'#000\',GradientType=0)}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-black{text-shadow:0 -1px 0 #000}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0 -1px 0 rgba(0,0,0,0.24)}.btn-black,.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-black:hover,.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-black:hover{background:#000}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-round{border-radius:20px}.btn-active,.btn-active:hover,.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{filter:alpha(opacity=100);-moz-opacity:1;opacity:1;background:#d1d1d1;border:1px solid #b3b3b3;text-shadow:0 1px 1px #fff}.btn-active,.btn-active:hover{color:#666}.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{color:#999}.btn:focus .halflings,.btn:hover .halflings{color:#555}.btn-black:hover .halflings,.btn-red:hover .halflings,.btn-orange:hover .halflings,.btn-green:hover .halflings,.btn-blue:hover .halflings,.btn-yellow:hover .halflings{color:rgba(255,255,255,0.8)}.btn-disabled:hover .halflings{color:#999}.btn-active .halflings{color:#555}.btn-single,.btn-group{display:inline-block;margin-right:2px;vertical-align:bottom}.btn-single:after,.btn-group:after{content:".";display:block;height:0;clear:both;visibility:hidden}.btn-single>.btn,.btn-single>input,.btn-group>.btn,.btn-group>input{float:left;border-radius:0;margin-left:-1px}.btn-single>.btn{border-radius:4px}.btn-group>.btn:first-child{border-radius:4px 0 0 4px}.btn-group>.btn:last-child{border-radius:0 4px 4px 0}.btn-group>.btn.btn-round:first-child,.btn-group>.input-search:first-child{border-radius:15px 0 0 15px}.btn-group>.btn.btn-round:last-child,.btn-group>.input-search:last-child{border-radius:0 15px 15px 0}.btn-append,.btn-group .btn{padding:7px 1.1em 6px 1.1em}.btn-append{position:relative;top:-1px;margin-left:-2px;border-radius:0 4px 4px 0}@-moz-document url-prefix("http://"){input[type=submit].btn::-moz-focus-inner,button.btn::-moz-focus-inner{border:0;padding:0}}.first-letter::first-letter {font-size:4em;line-height:.75em;float:left;position:relative;padding-right:6px;margin-top:-2px;font-weight:normal;color:#333}.supersmall{font-size:.7em}.small{font-size:.85em}.big{font-size:1.2em}input.big{padding:2px 0;font-size:1.2em}.text-centered{text-align:center}.text-right{text-align:right}.text-uppercase{text-transform:uppercase}.nowrap{white-space:nowrap}.zero{margin:0!important;padding:0!important}.clear{clear:both}.last{margin-right:0!important}.pause{margin-bottom:.75em!important}.end{margin-bottom:0!important}.handle{cursor:move}.normal{font-weight:normal}.bold{font-weight:bold}.italic{font-style:italic}.req,.required{font-weight:normal;color:#ef6465}.highlight{background-color:#ffff9e!important}.close{padding:4px 6px;line-height:1;font-size:18px;cursor:pointer;color:#000;text-decoration:none;opacity:.4}.close:before{content:\'\00D7\'}.close:hover{color:#000;opacity:1}.image-left{float:left;margin:0 1em 1em 0}.image-right{float:right;margin:0 0 1em 1em}.image-left img,.image-right img{position:relative;top:.4em}.image-centered{text-align:center}.image-container:after{content:".";display:block;height:0;clear:both;visibility:hidden}.image-content{overflow:hidden}.nav-h,.nav-g{margin:20px 0 1.65em 0;height:50px;padding:10px;border:1px solid #dedede;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-h:after,.nav-g:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul,.nav-g ul{list-style:none;margin:0}.nav-h ul:after,.nav-g ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul li,.nav-g ul li{float:right;margin-right:1.5em}.nav-h ul li a,.nav-h ul li span,.nav-g ul li a,.nav-g ul li span{display:block}.nav-h ul li a,.nav-g ul li a{text-decoration:none}.nav-h ul li a:hover,.nav-g ul li a:hover{color:#ef6465;text-decoration:underline}.nav-h ul li span,.nav-g ul li span{color:#999}.nav-v{margin-bottom:1.65em}.nav-v ul{list-style:none;margin:0}.nav-v ul li{border-bottom:1px solid #eee}.nav-v ul li ul{margin-left:2em;font-size:.95em}.nav-v ul li ul li:last-child{border-bottom:0}.nav-v ul li ul li a,.nav-v ul li ul li span{padding:4px 0}.nav-v ul li a,.nav-v ul li span{display:block;padding:5px 0}.nav-v ul li a{text-decoration:none}.nav-v ul li a:hover{color:#ef6465;text-decoration:underline}.nav-v ul li span{color:#999}.nav-stacked ul{border:1px solid #eee;border-bottom:0}.nav-stacked ul li a,.nav-stacked ul li span{padding:5px 10px}.nav-stacked ul li a:hover{background-color:#f5f5f5}.nav-stats li{position:relative}.nav-stats li a,.nav-stats li span{padding-right:50px}.nav-stats .label,.nav-stats .label-badge{position:absolute;top:50%;margin-top:-8px;right:0}.nav-stats.nav-stacked .label,.nav-stats.nav-stacked .label-badge{right:4px}.nav-stats .label.label-data,.nav-stacked .label-data{margin-top:-6px;right:6px}.nav-v h1,.nav-v h2,.nav-v h3,.nav-v h4,.nav-v h5,.nav-v h6{margin-top:1.5em;margin-bottom:3px}.nav-v h1:first-child,.nav-v h2:first-child,.nav-v h3:first-child,.nav-v h4:first-child,.nav-v h5:first-child,.nav-v h6:first-child{margin-top:0}.breadcrumbs{margin-bottom:1.65em}.breadcrumbs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs, .breadcrumbs ul{font-size:.9em;color:#999;list-style:none;margin:0;}.breadcrumbs:after, .breadcrumbs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs li,.breadcrumbs ul li{float:left;margin-right:3px}.breadcrumbs li+li:before{content:" > ";color:#aaa;font-size:12px;margin:0 3px;position:relative;top:-1px}.breadcrumbs-sections li+li:before{content:" | ";top:0}.breadcrumbs-path li+li:before{content:" / ";top:0}.breadcrumbs li a, .breadcrumbs ul li a{color:#000;text-decoration:none}.breadcrumbs li a.active, .breadcrumbs ul li a.active{color:#999}.breadcrumbs li a:hover, .breadcrumbs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs{border-bottom:1px solid #e3e3e3;margin-bottom:1.65em}.nav-tabs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul{list-style:none;margin:0}.nav-tabs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul li{float:left;margin-right:2px}.nav-tabs ul li a,.nav-tabs ul li span{display:block;line-height:1;padding:8px 12px 9px 12px}.nav-tabs ul li a{color:#999;text-decoration:none}.nav-tabs ul li a:focus,.nav-tabs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs ul li .active,.nav-tabs ul li span{color:#000;background:#fff;margin-top:-2px;position:relative;padding:8px 11px 9px 11px;border:1px solid #ddd;border-bottom:1px solid #fff;bottom:-1px}.nav-tabs ul li .active{cursor:default}.nav-tabs-v{border:0;border-right:1px solid #e3e3e3}.nav-tabs-v ul li{float:none}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:-3px;border:1px solid #ddd;border-right:1px solid #fff}.nav-pills{margin-bottom:1.15em}.nav-pills:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul{list-style:none;margin:0}.nav-pills ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul li{float:left;margin-right:.5em;margin-bottom:.6499999999999999em}.nav-pills ul li a,.nav-pills ul li span{display:block;padding:6px 15px;line-height:1;border-radius:15px}.nav-pills ul li a{color:#777;text-decoration:none;background-color:#f3f4f5}.nav-pills ul li a:hover{color:#555;text-decoration:underline}.nav-pills ul li .active,.nav-pills ul li .active:hover,.nav-pills ul li span{color:#777;padding:5px 14px;border:1px solid #ddd;background:0}.nav-pills ul li .active,.nav-pills ul li .active:hover{cursor:default;text-decoration:none}.pagination{position:relative;left:-9px;margin-left:0;list-style:none}.pagination:after{content:".";display:block;height:0;clear:both;visibility:hidden}.pagination li{float:left;margin-right:2px}.pagination li a,.pagination li span{display:block;padding:7px 9px;line-height:1;border-radius:2em;color:#000;text-decoration:none}.pagination span{border:1px solid #ddd}.pagination li a:focus,.pagination li a:hover{text-decoration:underline;background-color:#333;color:#fff}.pagination li.pagination-older{margin-left:7px}.pagination li.pagination-older a,.pagination li.pagination-newest a,.pagination li.pagination-older span,.pagination li.pagination-newest span{padding:5px 15px;border-radius:2em;border:1px solid #ddd}.pagination li.pagination-older span,.pagination li.pagination-newest span{border-color:#eee;color:#999}.pagination li.pagination-pull{float:right;margin-right:-7px;margin-left:.5em}.message{position:relative;padding:9px 13px;border:1px solid #f7dc7d;border-radius:5px;margin-bottom:1.65em;color:#9f7d09;background-color:#fdf7e2}.message-error{color:#c01415;border-color:#f9c0c1;background-color:#fdefef}.message-success{color:#546628;border-color:#d1dfae;background-color:#f0f5e5}.message-info{color:#124d72;border-color:#b3dbf3;background-color:#dff0fa}.message header{font-weight:bold;font-size:1.2em}.message .close{cursor:pointer;position:absolute;right:3px;top:6px}.units-container:after,.units-row-end:after,.units-row:after{content:".";display:block;height:0;clear:both;visibility:hidden}.units-container{padding-top:1px;margin-top:-1px}.units-container,.units-row-end,.units-row{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row{margin-bottom:1.5em}.units-row-end{margin-bottom:0}.width-100,.unit-100{width:100%}.width-80,.unit-80{width:80%}.width-75,.unit-75{width:75%}.width-70,.unit-70{width:70%}.width-66,.unit-66{width:66.6%}.width-60,.unit-60{width:60%}.width-50,.unit-50{width:50%}.width-40,.unit-40{width:40%}.width-33,.unit-33{width:33.3%}.width-30,.unit-30{width:30%}.width-25,.unit-25{width:25%}.width-20,.unit-20{width:20%}input.width-100,input.unit-100{width:98.6%}textarea.width-100,textarea.unit-100{width:98.8%}select.width-100,select.unit-100{width:99.4%}.width-100,.width-80,.width-75,.width-70,.width-66,.width-60,.width-50,.width-40,.width-33,.width-30,.width-25,.width-20,.units-row .unit-100,.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{float:left;margin-left:3%}.units-row .unit-80:first-child,.units-row .unit-75:first-child,.units-row .unit-70:first-child,.units-row .unit-66:first-child,.units-row .unit-60:first-child,.units-row .unit-50:first-child,.units-row .unit-40:first-child,.units-row .unit-33:first-child,.units-row .unit-30:first-child,.units-row .unit-25:first-child,.units-row .unit-20:first-child,.units-row-end .unit-100:first-child,.units-row-end .unit-80:first-child,.units-row-end .unit-75:first-child,.units-row-end .unit-70:first-child,.units-row-end .unit-66:first-child,.units-row-end .unit-60:first-child,.units-row-end .unit-50:first-child,.units-row-end .unit-40:first-child,.units-row-end .unit-33:first-child,.units-row-end .unit-30:first-child,.units-row-end .unit-25:first-child,.units-row-end .unit-20:first-child{margin-left:0}.units-row .unit-80,.units-row-end .unit-80{width:79.4%}.units-row .unit-75,.units-row-end .unit-75{width:74.25%}.units-row .unit-70,.units-row-end .unit-70{width:69.1%}.units-row .unit-66,.units-row-end .unit-66{width:65.66666666666666%}.units-row .unit-60,.units-row-end .unit-60{width:58.800000000000004%}.units-row .unit-50,.units-row-end .unit-50{width:48.5%}.units-row .unit-40,.units-row-end .unit-40{width:38.2%}.units-row .unit-30,.units-row-end .unit-30{width:27.9%}.units-row .unit-33,.units-row-end .unit-33{width:31.333333333333332%}.units-row .unit-25,.units-row-end .unit-25{width:22.75%}.units-row .unit-20,.units-row-end .unit-20{width:17.6%}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{position:relative}.unit-push-30{left:30.9%}.unit-push-80{left:82.4%}.unit-push-75{left:77.25%}.unit-push-70{left:72.1%}.unit-push-66{left:68.66666666666666%}.unit-push-60{left:61.800000000000004%}.unit-push-50{left:51.5%}.unit-push-40{left:41.2%}.unit-push-33{left:34.33333333333333%}.unit-push-25{left:25.75%}.unit-push-20{left:20.6%}.unit-push-right{float:right}.centered,.unit-centered{float:none!important;margin:0 auto!important}.unit-padding{padding:1.65em}.units-padding .unit-100,.units-padding .unit-80,.units-padding .unit-75,.units-padding .unit-70,.units-padding .unit-66,.units-padding .unit-60,.units-padding .unit-50,.units-padding .unit-40,.units-padding .unit-33,.units-padding .unit-30,.units-padding .unit-25,.units-padding .unit-20{padding:1.65em}.units-split .unit-80,.units-split .unit-75,.units-split .unit-70,.units-split .unit-66,.units-split .unit-60,.units-split .unit-50,.units-split .unit-40,.units-split .unit-33,.units-split .unit-30,.units-split .unit-25,.units-split .unit-20{margin-left:0}.units-split .unit-80{width:80%}.units-split .unit-75{width:75%}.units-split .unit-70{width:70%}.units-split .unit-66{width:66.6%}.units-split .unit-60{width:60%}.units-split .unit-50{width:50%}.units-split .unit-40{width:40%}.units-split .unit-33{width:33.3%}.units-split .unit-30{width:30%}.units-split .unit-25{width:25%}.units-split .unit-20{width:20%}.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{padding-left:0;list-style:none;margin-left:-3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2:after,.blocks-3:after,.blocks-4:after,.blocks-5:after,.blocks-6:after{content:".";display:block;height:0;clear:both;visibility:hidden}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{height:auto;float:left;margin-bottom:1.65em;margin-left:3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2>li{width:47%}.blocks-3>li{width:30.333333333333332%}.blocks-4>li{width:22%}.blocks-5>li{width:17%}.blocks-6>li{width:13.666666666666666%}.block-first{clear:both}@media(min-width:768px){.desktop-hide{display:none}}@media only screen and (max-width:767px){.mobile-text-centered{text-align:center}.mobile-hide{display:none}}img,video{max-width:100%;height:auto}img{-ms-interpolation-mode:bicubic}audio{width:100%}.video-wrapper{height:0;padding-bottom:56.25%;position:relative;margin-bottom:1.65em}.video-wrapper iframe,.video-wrapper object,.video-wrapper embed{position:absolute;top:0;left:0;width:100%;height:100%}@media only screen and (max-width:767px){.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{width:100%;float:none;margin-left:0;margin-bottom:1.65em}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{left:0}.units-row-end .unit-push-right,.units-row .unit-push-right{float:none}.units-mobile-50 .unit-80,.units-mobile-50 .unit-75,.units-mobile-50 .unit-70,.units-mobile-50 .unit-66,.units-mobile-50 .unit-60,.units-mobile-50 .unit-40,.units-mobile-50 .unit-30,.units-mobile-50 .unit-33,.units-mobile-50 .unit-25,.units-mobile-50 .unit-20{float:left;margin-left:3%;width:48.5%}.units-mobile-50 .unit-80:first-child,.units-mobile-50 .unit-75:first-child,.units-mobile-50 .unit-70:first-child,.units-mobile-50 .unit-66:first-child,.units-mobile-50 .unit-60:first-child,.units-mobile-50 .unit-40:first-child,.units-mobile-50 .unit-30:first-child,.units-mobile-50 .unit-33:first-child,.units-mobile-50 .unit-25:first-child,.units-mobile-50 .unit-20:first-child{margin-left:0}}@media only screen and (max-width:767px){.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{margin-left:0;margin-bottom:1.65em}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{float:none;margin-left:0;width:100%}.blocks-mobile-50>li,.blocks-mobile-33>li{float:left;margin-left:3%}.blocks-mobile-33,.blocks-mobile-50{margin-left:-3%}.blocks-mobile-50>li{width:47%}.blocks-mobile-33>li{width:30.333333333333332%}}@media only screen and (max-width:767px){.nav-h,.nav-h ul,.nav-h ul li,.nav-h,.nav-g,.nav-g ul,.nav-g ul li,.nav-g,.nav-v ul,.nav-v,.nav-tabs ul,.nav-pills,.nav-pills ul{float:none}.nav-h ul li,.nav-g ul li{margin:0;margin-bottom:1px}.nav-tabs ul li{float:none;margin-right:0}.nav-tabs ul li a,.nav-tabs ul li span,.nav-tabs ul li .active{margin-top:0;bottom:0;padding:8px 12px 9px 12px;border:1px solid #ddd;border-bottom:0}.nav-tabs-v{border-bottom:1px solid #ddd;border-right:0}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:0}}@media only screen and (max-width:767px){.forms-columnar label{float:none;text-align:left;width:auto;margin-bottom:0}.forms-push label{position:relative}.forms-push,.forms-columnar .forms-section{padding-left:0}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:0}}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid #dedede;cursor:pointer;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.tabA{background:#dedede;border-bottom:0px solid #dedede;padding-bottom:6px;}.tabB{background:#fff;border-bottom:1px solid #fff;}.tabContent{background-color:#fff;border:1px solid #dedede;margin-top:-24px;padding:15px;display:none;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.ds_box{background-color:#FFF;border:1px solid rgb(179, 219, 243);position:absolute;z-index:32767;}.ds_tbl{background-color:#FFF;}.ds_head{background-color:rgb(223, 240, 250);color:rgb(18, 77, 114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18, 77, 114);color:rgb(223, 240, 250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:1px solid rgb(179, 219, 243);-webkit-border-radius:25px;-moz-border-radius:25px;border-radius:25px;} #root{color:#a1a1a1;} #root a{text-decoration: none;} #root a img {width:32px;height:32px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"], select, textarea {-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"] {height:25px;border: 1px solid #a1a1a1;}.msgFlash{position:absolute;width:70%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.close-right{float:right;margin-top:-35px;cursor:pointer}.closed{display:none}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}article.unit-100{border: 1px solid #dedede;padding:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-g ul li form.text-right input {width:170px;height:24px;}.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);background-color:#49afcd;background-image:-moz-linear-gradient(top, #5bc0de, #2f96b4);background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#5bc0de), to(#2f96b4));background-image:-webkit-linear-gradient(top, #5bc0de, #2f96b4);background-image:-o-linear-gradient(top, #5bc0de, #2f96b4);background-image:linear-gradient(to bottom, #5bc0de, #2f96b4);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff5bc0de\', endColorstr=\'#ff2f96b4\', GradientType=0);border-color:#2f96b4 #2f96b4 #1f6377;border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);*background-color:#2f96b4;filter:progid:DXImageTransform.Microsoft.gradient(enabled = false);}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#2f96b4;*background-color:#2a85a0;}.btn-info:active,.btn-info.active{background-color:#24748c \9;}.btn-info:hover .ok{color:#fff;}.signature{clear:both;margin-top: 40px;border-top: 1px solid #dedede;}.messageTD div fieldset {border-left:3px solid #dedede;}.selectColor{display: inline-block; border-radius: 3px; width: 16px; height: 16px; line-height: 18px; cursor: pointer;}';
 
 		$halflings = '/*! * * Project: GLYPHICONS HALFLINGS * Author: Jan Kovarik - www.glyphicons.com * Twitter: @jankovarik * */html,html .halflings{-webkit-font-smoothing:antialiased!important}@font-face{font-family:\'Glyphicons Halflings\';src:url(\'../fonts/glyphiconshalflings-regular.eot\');src:url(\'../fonts/glyphiconshalflings-regular.eot?#iefix\') format(\'embedded-opentype\'),url(\'../fonts/glyphiconshalflings-regular.woff\') format(\'woff\'),url(\'../fonts/glyphiconshalflings-regular.ttf\') format(\'truetype\'),url(\'../fonts/glyphiconshalflings-regular.svg#glyphicons_halflingsregular\') format(\'svg\');font-weight:normal;font-style:normal}.halflings{font-family:\'Glyphicons Halflings\';font-size:11px/1em;font-style:normal;display:inline-block;line-height:.8em}.halflings.big{position:relative;top:2px}.halflings.glass:before{content:"\e001"}.halflings.music:before{content:"\e002"}.halflings.search:before{content:"\e003"}.halflings.envelope:before{content:"\2709"}.halflings.heart:before{content:"\e005"}.halflings.star:before{content:"\e006"}.halflings.star-empty:before{content:"\e007"}.halflings.user:before{content:"\e008"}.halflings.film:before{content:"\e009"}.halflings.th-large:before{content:"\e010"}.halflings.th:before{content:"\e011"}.halflings.th-list:before{content:"\e012"}.halflings.ok:before{content:"\e013"}.halflings.remove:before{content:"\e014"}.halflings.zoom-in:before{content:"\e015"}.halflings.zoom-out:before{content:"\e016"}.halflings.off:before{content:"\e017"}.halflings.signal:before{content:"\e018"}.halflings.cog:before{content:"\e019"}.halflings.trash:before{content:"\e020"}.halflings.home:before{content:"\e021"}.halflings.file:before{content:"\e022"}.halflings.time:before{content:"\e023"}.halflings.road:before{content:"\e024"}.halflings.download-alt:before{content:"\e025"}.halflings.download:before{content:"\e026"}.halflings.upload:before{content:"\e027"}.halflings.inbox:before{content:"\e028"}.halflings.play-circle:before{content:"\e029"}.halflings.repeat:before{content:"\e030"}.halflings.refresh:before{content:"\e031"}.halflings.list-alt:before{content:"\e032"}.halflings.lock:before{content:"\e033"}.halflings.flag:before{content:"\e034"}.halflings.headphones:before{content:"\e035"}.halflings.volume-off:before{content:"\e036"}.halflings.volume-down:before{content:"\e037"}.halflings.volume-up:before{content:"\e038"}.halflings.qrcode:before{content:"\e039"}.halflings.barcode:before{content:"\e040"}.halflings.tag:before{content:"\e041"}.halflings.tags:before{content:"\e042"}.halflings.book:before{content:"\e043"}.halflings.bookmark:before{content:"\e044"}.halflings.print:before{content:"\e045"}.halflings.camera:before{content:"\e046"}.halflings.font:before{content:"\e047"}.halflings.bold:before{content:"\e048"}.halflings.italic:before{content:"\e049"}.halflings.text-height:before{content:"\e050"}.halflings.text-width:before{content:"\e051"}.halflings.align-left:before{content:"\e052"}.halflings.align-center:before{content:"\e053"}.halflings.align-right:before{content:"\e054"}.halflings.align-justify:before{content:"\e055"}.halflings.list:before{content:"\e056"}.halflings.indent-left:before{content:"\e057"}.halflings.indent-right:before{content:"\e058"}.halflings.facetime-video:before{content:"\e059"}.halflings.picture:before{content:"\e060"}.halflings.pencil:before{content:"\270f"}.halflings.map-marker:before{content:"\e062"}.halflings.adjust:before{content:"\e063"}.halflings.tint:before{content:"\e064"}.halflings.edit:before{content:"\e065"}.halflings.share:before{content:"\e066"}.halflings.check:before{content:"\e067"}.halflings.move:before{content:"\e068"}.halflings.step-backward:before{content:"\e069"}.halflings.fast-backward:before{content:"\e070"}.halflings.backward:before{content:"\e071"}.halflings.play:before{content:"\e072"}.halflings.pause:before{content:"\e073"}.halflings.stop:before{content:"\e074"}.halflings.forward:before{content:"\e075"}.halflings.fast-forward:before{content:"\e076"}.halflings.step-forward:before{content:"\e077"}.halflings.eject:before{content:"\e078"}.halflings.chevron-left:before{content:"\e079"}.halflings.chevron-right:before{content:"\e080"}.halflings.plus-sign:before{content:"\e081"}.halflings.minus-sign:before{content:"\e082"}.halflings.remove-sign:before{content:"\e083"}.halflings.ok-sign:before{content:"\e084"}.halflings.question-sign:before{content:"\e085"}.halflings.info-sign:before{content:"\e086"}.halflings.screenshot:before{content:"\e087"}.halflings.remove-circle:before{content:"\e088"}.halflings.ok-circle:before{content:"\e089"}.halflings.ban-circle:before{content:"\e090"}.halflings.arrow-left:before{content:"\e091"}.halflings.arrow-right:before{content:"\e092"}.halflings.arrow-up:before{content:"\e093"}.halflings.arrow-down:before{content:"\e094"}.halflings.share-alt:before{content:"\e095"}.halflings.resize-full:before{content:"\e096"}.halflings.resize-small:before{content:"\e097"}.halflings.plus:before{content:"\002b"}.halflings.minus:before{content:"\2212"}.halflings.asterisk:before{content:"\002a"}.halflings.exclamation-sign:before{content:"\e101"}.halflings.gift:before{content:"\e102"}.halflings.leaf:before{content:"\e103"}.halflings.fire:before{content:"\e104"}.halflings.eye-open:before{content:"\e105"}.halflings.eye-close:before{content:"\e106"}.halflings.warning-sign:before{content:"\e107"}.halflings.plane:before{content:"\e108"}.halflings.calendar:before{content:"\e109"}.halflings.random:before{content:"\e110"}.halflings.comments:before{content:"\e111"}.halflings.magnet:before{content:"\e113"}.halflings.chevron-up:before{content:"\e113"}.halflings.chevron-down:before{content:"\e114"}.halflings.retweet:before{content:"\e115"}.halflings.shopping-cart:before{content:"\e116"}.halflings.folder-close:before{content:"\e117"}.halflings.folder-open:before{content:"\e118"}.halflings.resize-vertical:before{content:"\e119"}.halflings.resize-horizontal:before{content:"\e120"}.halflings.hdd:before{content:"\e121"}.halflings.bullhorn:before{content:"\e122"}.halflings.bell:before{content:"\e123"}.halflings.certificate:before{content:"\e124"}.halflings.thumbs-up:before{content:"\e125"}.halflings.thumbs-down:before{content:"\e126"}.halflings.hand-right:before{content:"\e127"}.halflings.hand-left:before{content:"\e128"}.halflings.hand-top:before{content:"\e129"}.halflings.hand-down:before{content:"\e130"}.halflings.circle-arrow-right:before{content:"\e131"}.halflings.circle-arrow-left:before{content:"\e132"}.halflings.circle-arrow-top:before{content:"\e133"}.halflings.circle-arrow-down:before{content:"\e134"}.halflings.globe:before{content:"\e135"}.halflings.wrench:before{content:"\e136"}.halflings.tasks:before{content:"\e137"}.halflings.filter:before{content:"\e138"}.halflings.briefcase:before{content:"\e139"}.halflings.fullscreen:before{content:"\e140"}.halflings.dashboard:before{content:"\e141"}.halflings.paperclip:before{content:"\e142"}.halflings.heart-empty:before{content:"\e143"}.halflings.link:before{content:"\e144"}.halflings.phone:before{content:"\e145"}.halflings.pushpin:before{content:"\e146"}.halflings.euro:before{content:"\20ac"}.halflings.usd:before{content:"\e148"}.halflings.gbp:before{content:"\e149"}.halflings.sort:before{content:"\e150"}.halflings.sort-by-alphabet:before{content:"\e151"}.halflings.sort-by-alphabet-alt:before{content:"\e152"}.halflings.sort-by-order:before{content:"\e153"}.halflings.sort-by-order-alt:before{content:"\e154"}.halflings.sort-by-attributes:before{content:"\e155"}.halflings.sort-by-attributes-alt:before{content:"\e156"}.halflings.unchecked:before{content:"\e157"}.halflings.expand:before{content:"\e158"}.halflings.collapse:before{content:"\e159"}.halflings.collapse-top:before{content:"\e160"}';
 
@@ -2352,8 +2776,7 @@ class Init
 	*
 	* ÉXÉCUTE LA SAUVEGARDE
 	*/
-	private function do_backup($source, $destination)
-	{
+	private function do_backup($source, $destination) {
 	    $msg='';
 	    if (is_string($source)) $source_arr = array($source); // convert it to array
 
@@ -2456,7 +2879,7 @@ class Init
 	}
 	/**
 	*
-	* VÉRIFIE L'ENVOIE D'AVATAR
+	* VÉRIFIE L'ENVOI D'AVATAR
 	*/
 	private function checkUpload($dir,$type=false,$login='') {
 		if (empty($login)) $login = $this->cLogin;
@@ -2558,9 +2981,9 @@ class Init
 /**
  * Mise en forme du forum
  */
-class Template extends Init
-{	
-	public function __construct(){
+class Template extends Init {	
+
+	public function __construct() {
 		parent::__construct();
 	}
 	/**
@@ -2581,7 +3004,7 @@ class Template extends Init
 	/**
 	 * PAGINATION
 	 */
-	public function pagination($perPage, $page, $pages) {
+	private function pagination($perPage, $page, $pages) {
 			$url = Tools::getURLParams();
 			# on supprime le n° de page courante dans l'url
 			$arg_url = substr($url,1);
@@ -2619,83 +3042,9 @@ class Template extends Init
 	}
 	/**
 	*
-	* FORMULAIRE D'INSCRIPTION
-	*/
-	public function registerForm() {
-
-		$form ='';
-		$form .= '<h4 class="forms-section">'.JOIN_COMMUNITY.'</h4>
-		<form action="index.php" method="post" enctype="multipart/form-data" autocomplete="off" class="form forms forms-columnar">';
-		$form .= '<input type="hidden" name="action" value="newuser" />
-		<input type="hidden" name="MAX_FILE_SIZE" value="'.$this->maxAvatarSize.'" />
-		' .
-		     //input($label, $name, $value, $type, $placeholder, $maxlength, $readonly, $class, $icon, $require,onclick)
-			'<p class="forms-inline">' .Tools::input(USER_LOGIN, 'login', '', 'text', '', '20', '', 'width-30 input-success', 'halflings user', 'success').'</p>
-			<p class="forms-inline">' .Tools::input(PASSWORD, 'password', '', 'password', '', '50', '', 'width-30 input-success', 'halflings lock', 'success').'</p>
-			<p class="forms-inline">' .Tools::input(BIRTHDAY, 'birthday', '', 'date', 'Jour/Mois/Année', '10', true, 'width-20 input-success', 'halflings calendar', 'success','ds_sh(this)','ds_sh(this)').'</p>
-			<p class="forms-inline">' .Tools::input(EMAIL, 'email', '', 'email', '', '50', '', 'width-30 input-success', 'halflings envelope', 'success').'</p>
-			<p class="forms-inline">' .Tools::input(WEBSITE, 'site', '', 'url', 'http://', '255', '', 'width-30', 'halflings globe').'</p>
-			<p class="forms-inline"><i class="halflings link"></i>&nbsp;&nbsp;&nbsp;&nbsp;' .Tools::textarea(SIGNATURE, 'signature', '', '10', '2', SIGNATURE_MSG, '150', '', 'width-70'). '</p>
-		<p>
-		<label for="avatar">'.AVATAR.' <span class="label label-red">&lt; '.($this->maxAvatarSize/1024).'ko</span></label>
-		<i class="halflings picture"></i>&nbsp;&nbsp;&nbsp;
-		<input type="file" id="avatar" name="avatar">
-		</p>';
-		$form .= '<p><label for="qid">'.CAPTCHA.'</label>'.$this->captcha->template().'</p>';
-		$form .= '<p><button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> '.SIGN_UP.'</button></p>
-		<div class="message message-info"><i class="halflings exclamation-sign"></i> '.MENDATORY_FIELDS.'
-		'.CHAR_NOT_ALLOWED.'
-		<pre>/ \ &amp; " \' . ! ? :</pre> '.CHAR_NOT_ALLOWED_BIS.'
-		</div>
-		</form>';
-
-		return $form;
-	}
-	/**
-	*
-	* ÉDITION DU PROFIL
-	*/
-	public function editProfilForm() {
-
-		$mb=$this->forum->getMember($this->cLogin);
-		$avatar=($mb->pic!='')?'<figure><img src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="'.AVATAR.'"/></figure>':'<figure>'.Tools::img('avatar','img-polaroid').'</figure>';	
-		
-		$form = '<!-- Edit profil form -->';
-	    $form .= '<h4 class="forms-section">'.EDIT_PROFIL.' ~ '.$this->cLogin.'</h4>';
-		$form .= '<div class="units-container">
-			<ul class="blocks-2">
-			<li>'.$avatar.'</li>
-			<li>'.$this->listFiles().'</li>
-			</ul>
-			<hr />
-			<div class="units-row well">
-			<form action="index.php" method="post" enctype="multipart/form-data" class=" forms forms-columnar">
-			<input type="hidden" name="action" value="editprofil" />
-			<input type="hidden" name="MAX_FILE_SIZE" value="'.$this->maxAvatarSize.'" />
-
-	  ' .//input($label,$name,$value,$type,$placeholder,$maxlength,$readonly,$class,$icon,$require,$onclick)
-
-		'<p class="forms-inline">'.Tools::input(BIRTHDAY, 'birthday', $mb->birthday, 'text', 'Jour/Mois/Année', '10', true, '', 'halflings calendar', true, 'ds_sh(this);').'</p>
-		<p class="forms-inline">'.Tools::input(EMAIL, 'email', $mb->mail, 'email', '', '50', '', '', 'halflings envelope').'</p>
-		<p class="forms-inline">'.Tools::input(WEBSITE, 'site', $mb->url, 'url', 'http://', '255', '', 'input-xlarge', 'halflings globe').'</p>
-		<p class="forms-inline">'.Tools::textarea(SIGNATURE, 'signature', $mb->quote, '10', '2', SIGNATURE_MSG, '150', '', 'width-70').'</p> 
-		<p>
-		<label for="avatar">'.AVATAR.' <span class="label label-red">&lt; '.($this->maxAvatarSize/1024).'ko</span></label>
-			<input type="file" id="avatar" name="avatar">
-		</p>
-		<p>
-			<button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> '.SAVE_PROFIL.'</button>
-		</p>
-		</form>
-		</div><!-- well -->';
-
-			return $form;
-	}
-	/**
-	*
 	* LISTE LES FICHIERS ENVOYÉS DANS LE PROFIL DE L'UTILISATEUR
 	*/
-	public function listFiles() {
+	private function listFiles() {
 			$dir=MU_UPLOAD.md5(SECURITY_SALT.$this->cLogin).'/';
 			$a=$this->forum->getMember($this->cLogin);
 			$list='<div class="files">';
@@ -2720,113 +3069,286 @@ class Template extends Init
 			return $list;
 	}
 	/**
+	 * INITIALISATION DES VARIABLES DU FORMULAIRE DE SOUSCRIPTION
+	 */
+	private function setRegistrationForm($form=array()) {
+		//input($label, $name, $value, $type, $placeholder, $maxlength, $readonly, $class, $icon, $require,onclick)
+		$form['userLogin'] = Tools::input(USER_LOGIN, 'login', '', 'text', '', '20', '', 'width-30 input-success', 'halflings user', 'success');
+		$form['password'] = Tools::input(PASSWORD, 'password', '', 'password', '', '50', '', 'width-30 input-success', 'halflings lock', 'success');
+		$form['birthday'] = Tools::input(BIRTHDAY, 'birthday', '', 'date', 'Jour/Mois/Année', '10', true, 'width-20 input-success', 'halflings calendar', 'success','ds_sh(this)','ds_sh(this)');
+		$form['email'] = Tools::input(EMAIL, 'email', '', 'email', '', '50', '', 'width-30 input-success', 'halflings envelope', 'success');
+		$form['website'] = Tools::input(WEBSITE, 'site', '', 'url', 'http://', '255', '', 'width-30', 'halflings globe');
+		$form['signature'] = Tools::textarea(SIGNATURE, 'signature', '', '10', '2', SIGNATURE_MSG, '150', '', 'width-70');
+		return $form;
+	}
+	/**
+	 * INITIALISATION DES VARIABLES DU FORMULAIRE D'EDITION DU PROFIL
+	 */
+	private function setEditProfilForm($form=array()) {
+		$mb=$this->forum->getMember($this->cLogin);
+		$form['avatar'] = ($mb->pic!='')? '<img src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="'.AVATAR.'"/>':Tools::img('avatar','img-polaroid');
+		$form['title'] = EDIT_PROFIL.' ~ '.$this->cLogin;
+		//input($label,$name,$value,$type,$placeholder,$maxlength,$readonly,$class,$icon,$require,$onclick)
+		$form['birthday'] = Tools::input(BIRTHDAY, 'birthday', $mb->birthday, 'text', 'Jour/Mois/Année', '10', true, '', 'halflings calendar', true, 'ds_sh(this);');
+		$form['email'] = Tools::input(EMAIL, 'email', $mb->mail, 'email', '', '50', '', '', 'halflings envelope');
+		$form['website'] = Tools::input(WEBSITE, 'site', $mb->url, 'url', 'http://', '255', '', 'input-xlarge', 'halflings globe');
+		$form['signature'] = Tools::textarea(SIGNATURE, 'signature', $mb->quote, '10', '2', SIGNATURE_MSG, '150', '', 'width-70');
+		return $form;
+	}
+	/**
+	 * INITIALISATION DES VARIABLES DU FIL D'ARIANE
+	 */
+	private function setBreadcrumbs($form=array()) {
+
+		$url = Tools::getURLParams();
+		$url .= ($url)? '&':'?';
+
+		$form['login'] = $this->isMember?$this->cLogin:GUEST;
+		$form['selectColor'] = '';
+		foreach($this->cVals as $k=>$v) $form['selectColor'] .= '<span onclick="window.location=\''.$url.'style='.$k.'\'" title="'.$k.'" class="selectColor" style="background-color: #'.$v[1].';">&nbsp;&nbsp;</span> ';
+		$form['textClass'] = ($this->isAdmin)?'text-error':'text-info';
+		$form['script'] = '<script>function blink(selector){$(selector).fadeOut("slow", function(){$(this).fadeIn("slow", function(){blink(this);});});}blink(".blink");</script>';
+
+		return $form;
+	}
+
+	private function setTopics($val) {
+		switch ($val) {
+			case 'pagination':
+				echo $this->pagination($this->nbrMsgIndex, $this->page, $this->pages);
+				break;
+			case 'topicList':
+				return $this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page);
+				break;
+			case 'reply':
+				echo $this->replyForm('newtopic',count($this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page)));
+				break;
+		}
+	}
+
+	private function setTopicList($t,$format) {
+		if (isset($t) && $t!='') echo $format;
+	}
+
+	private function setTopicIcon($t,$ifTrue,$ifFalse) {
+		 echo (isset($_COOKIE["uFread".$t['topicID'].""])) ? $ifTrue : $ifFalse;
+	}
+
+	private function setTopicTitle($t) {
+		echo stripslashes($t['titre']);
+	}
+
+	private function setTopicStartonBy($t) {
+		echo STARTED_ON.' '.date('d M Y', $t['topicID']).', '.BY.' ';
+	}
+
+	private function setTopicPrivate($t,$class='') {
+		echo $this->forum->isMember($t['auteur'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a>':$t['auteur'];
+	}
+
+	private function setTopicLastMsg($t,$class='') {
+		echo '<a href="?topic='.$t['topicID'].'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$t['dernierLe']).'</a>';
+	}
+
+	private function setTopicLastMsgBy($t,$class='') {
+		echo $this->forum->isMember($t['dernierPar'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a>':$t['dernierPar'];
+	}
+
+	private function setPostPagination($topicObj) {
+		if(ceil($topicObj->nbPosts/$this->nbMsgTopic) == 1 ) $this->page = 1;
+		echo $topicObj->pagination = $this->pagination($this->nbMsgTopic, $this->page, $topicObj->nbPosts);
+	}
+
+	/********************************************************
+	 * VOUS POUVEZ MODIFIER LES LIGNES CI-DESSOUS
+	 * POUR PERSONNALISER LE THEME
+	 ********************************************************/
+
+	/**
+	*
+	* FORMULAIRE D'INSCRIPTION
+	*/
+	public function registrationForm() {
+		$f = $this->setRegistrationForm();
+		?>
+
+		<h4 class="forms-section"><?php echo JOIN_COMMUNITY ?></h4>
+		<form action="index.php" method="post" enctype="multipart/form-data" autocomplete="off" class="form forms forms-columnar">
+			<input type="hidden" name="action" value="newuser" />
+			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $this->maxAvatarSize ?>" />
+			<p class="forms-inline"><?php echo $f['userLogin'] ?></p>
+			<p class="forms-inline"><?php echo $f['password'] ?></p>
+			<p class="forms-inline"><?php echo $f['birthday'] ?></p>
+			<p class="forms-inline"><?php echo $f['email'] ?></p>
+			<p class="forms-inline"><?php echo $f['website'] ?></p>
+			<p class="forms-inline"><i class="halflings link"></i>&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $f['signature'] ?></p>
+		<p>
+			<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo ($this->maxAvatarSize/1024);?>ko</span></label>
+			<i class="halflings picture"></i>&nbsp;&nbsp;&nbsp;
+			<input type="file" id="avatar" name="avatar">
+		</p>
+		<p><label for="qid"><?php echo CAPTCHA;?></label><?php echo $this->captcha->template();?></p>';
+		<p><button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> <?php echo SIGN_UP;?></button></p>
+		<div class="message message-info"><i class="halflings exclamation-sign"></i> <?php echo MENDATORY_FIELDS;?>
+		<?php echo CHAR_NOT_ALLOWED;?>
+		<pre>/ \ &amp; " \' . ! ? :</pre> <?php echo CHAR_NOT_ALLOWED_BIS;?>
+		</div>
+		</form>
+		<?php
+	}
+	/**
+	*
+	* ÉDITION DU PROFIL
+	*/
+	public function editProfilForm() {
+		$f = $this->setEditProfilForm();
+		?>
+
+		<!-- Edit profil form -->
+		<h4 class="forms-section"><?php echo $f['title']; ?></h4>
+		<div class="units-container">
+			<ul class="blocks-2">
+				<li><figure><?php echo $f['avatar'];?></figure></li>
+				<li><?php echo $this->listFiles();?></li>
+			</ul>
+			<hr />
+			<div class="units-row well">
+			<form action="index.php" method="post" enctype="multipart/form-data" class=" forms forms-columnar">
+				<input type="hidden" name="action" value="editprofil" />
+				<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $this->maxAvatarSize;?>" />
+				<p class="forms-inline"><?php echo $f['birthday']; ?></p>
+				<p class="forms-inline"><?php echo $f['email']; ?></p>
+				<p class="forms-inline"><?php echo $f['website']; ?></p>
+				<p class="forms-inline"><?php echo $f['signature']; ?></p> 
+				<p>
+				<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo ($this->maxAvatarSize/1024);?>ko</span></label><input type="file" id="avatar" name="avatar">
+				</p>
+				<p>
+					<button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> <?php echo SAVE_PROFIL;?></button>
+				</p>
+			</form>
+			</div><!-- well -->
+		<?php
+	}
+	
+	/**
 	*
 	* AFFICHAGE FIL D'ARIANE (Breadcrumbs)
 	*/
 	public function breadcrumbs() {
-		$url = Tools::getURLParams();
-		$url .= ($url)? '&':'?';
-		$mn='';	
-		$mn .='<div class="image-right">';	
-		foreach($this->cVals as $k=>$v) $mn .= '<span onclick="window.location=\''.$url.'style='.$k.'\'" title="'.$k.'" style="display: inline-block; border-radius: 3px; width: 16px; height: 16px; line-height: 18px; background-color: #'.$v[1].'; cursor: pointer;">&nbsp;&nbsp;</span> ';	
-		$mn .= '</div>';
-		$tLogin=$this->isMember?$this->cLogin:GUEST;
-		$mn .= '<ul class="breadcrumbs"><li><i class="halflings play-circle"></i>&nbsp;'.WELCOME.' <span class="';	
-		$mn .= ($this->isAdmin)?'text-error':'text-info';
-		$mn .= '"><strong>'.$tLogin.'</strong></span>';	
-		if($this->haveMP) $mn .= ' <a  href="javascript:switchLayer(\'privatebox\');" rel="tooltip" title="'.NEW_PRIVATE_MSG.'" role="button" class="blink" data-toggle="modal"> <i class="halflings inbox"></i></a><script>function blink(selector){$(selector).fadeOut("slow", function(){$(this).fadeIn("slow", function(){blink(this);});});}blink(".blink");</script>';
-		$mn .= 	'</li>';
-		$mn .= '<li><a href="'.MU_BASE_URL.'"><i class="halflings home"></i>&nbsp;'.HOME.'</a></li>';
-		if($this->haveMP) $mn .= '<li><i class="halflings envelope"></i>&nbsp;'.PRIVATE_INBOX.'</li>';
-		if($this->get_editpost) $mn .= '<li><i class="halflings pencil"></i>&nbsp;'.EDIT.'</li>';
-		else if($this->get_conf) $mn .= '<li><i class="halflings cog"></i>&nbsp;'.CONFIG_OPTIONS.'</li>';
-		else if($this->get_topic) $mn .= '<li><i class="halflings comments"></i>&nbsp;'.$this->forum->getPostsTitle($this->get_topic).'</li>';
-		else if($this->get_memberlist) $mn .= '<li><i class="halflings user"></i>&nbsp;'.MEMBERS.'</li>';
-		else if($this->searchMember) $mn .= '<li><i class="halflings user"></i>&nbsp;'.RESULT_FOR.$this->searchMember.'</li>';
-		else if($this->get_editprofil) $mn .= '<li><i class="halflings eye-open"></i>&nbsp;'.EDIT_PROFIL.'</li>';
-		else if($this->get_private) $mn .= '<li><i class="halflings leaf"></i>&nbsp;'.PRIVATE_MSG.'</li>';
-		else if($this->get_restore) $mn .= '<li><i class="halflings refresh"></i>&nbsp;'.RESTORE.'</li>';
-		
-		$mn .= '
-		       </ul>';
-		return $mn;
+		$f = $this->setBreadcrumbs();
+		?>
+
+		<div class="image-right"><?php echo $f['selectColor'];?></div>
+		<ul class="breadcrumbs">
+			<li><i class="halflings play-circle"></i>&nbsp;<?php echo WELCOME;?> 
+				<span class="<?php echo $f['textClass']; ?>">
+					<strong><?php echo $f['login'];?></strong>
+				</span>
+		<?php if($this->haveMP):?> 
+				<a  href="javascript:switchLayer('privatebox');" rel="tooltip" title="<?php echo NEW_PRIVATE_MSG;?>" role="button" class="blink" data-toggle="modal"> <i class="halflings inbox"></i></a><?php echo $f['script'];
+			endif; ?>
+
+			</li>
+			<li><a href="<?php echo MU_BASE_URL;?>"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></a></li>
+		<?php if($this->haveMP) echo '<li><i class="halflings envelope"></i>&nbsp;'.PRIVATE_INBOX.'</li>';
+		if($this->get_editpost) echo '<li><i class="halflings pencil"></i>&nbsp;'.EDIT.'</li>';
+		else if($this->get_conf) echo '<li><i class="halflings cog"></i>&nbsp;'.CONFIG_OPTIONS.'</li>';
+		else if($this->get_topic) echo '<li><i class="halflings comments"></i>&nbsp;'.$this->forum->getPostsTitle($this->get_topic).'</li>';
+		else if($this->get_memberlist) echo '<li><i class="halflings user"></i>&nbsp;'.MEMBERS.'</li>';
+		else if($this->searchMember) echo '<li><i class="halflings user"></i>&nbsp;'.RESULT_FOR.$this->searchMember.'</li>';
+		else if($this->get_editprofil) echo '<li><i class="halflings eye-open"></i>&nbsp;'.EDIT_PROFIL.'</li>';
+		else if($this->get_private) echo '<li><i class="halflings leaf"></i>&nbsp;'.PRIVATE_MSG.'</li>';
+		else if($this->get_restore) echo '<li><i class="halflings refresh"></i>&nbsp;'.RESTORE.'</li>';
+		?>
+
+		</ul>
+		<?php
 	}
 	/**
 	*
 	* AFFICHAGE DU MENU
 	*/
 	public function menu() {
-		$mn='';
 		$stats=$this->forum->getStat();
-	//	if($this->nbrMsgIndex<$stats['topics']) $mn .='<li><a href="?showall=1" title="'.LIST_OF_ALL_TOPICS.'"><i class="halflings bookmark"></i> '.ARCHIVES.'</a></li>';	
-		if($this->isMember) {
-			$mn .='<li><a href="?logout=1" title="'.QUIT.'"><i class="halflings off"></i> '.LOGOUT.'</a></li>';
-			$mn .='<li><a href="?editprofil=1" title="'.EDIT_MY_PROFIL.'"><i class="halflings eye-open"></i> '.PROFIL.'</a></li>';
-			$mn .='<li><a href="?memberlist=1" title="'.LIST_OF_MEMBERS.'"><i class="halflings user"></i> '.MEMBERS.'</a></li>';
-			if(!$this->isAdmin && !$this->isOwner) {
-			$mn .='<li><a href="index.php" title="'.HOME.'"><i class="halflings home"></i> '.FORUMS.'</a></li>';
-			}
-		} else {
-			$mn .='<li>
+
+		if($this->isMember) :?>
+			<li><a href="?logout=1" title="<?php echo QUIT;?>"><i class="halflings off"></i> <?php echo LOGOUT;?></a></li>
+			<li><a href="?editprofil=1" title="<?php echo EDIT_MY_PROFIL;?>"><i class="halflings eye-open"></i> <?php echo PROFIL;?></a></li>
+			<li><a href="?memberlist=1" title="<?php echo LIST_OF_MEMBERS;?>"><i class="halflings user"></i> <?php echo MEMBERS;?></a></li>
+			<?php if(!$this->isAdmin && !$this->isOwner) :?>
+			<li><a href="index.php" title="<?php echo HOME;?>"><i class="halflings home"></i> <?php echo FORUMS;?></a></li>
+			<?php endif;?>
+		<?php else :?>
+			<li>
 			<form action="index.php" method="post" autocomplete="off" class="text-right">
 			<input type="hidden" name="action" value="enter" />
-			<input type="text" name="login" placeholder="'.USER.'">
-			<input type="password" name="password" placeholder="'.PASSWORD.'">
-			<button type="submit" class="btn btn-info"><i class="halflings ok"></i> '.CONNECT.'</button>
-			</form></li>';	
-		}	
-		return $mn;
+			<input type="text" name="login" placeholder="<?php echo USER;?>">
+			<input type="password" name="password" placeholder="<?php echo PASSWORD;?>">
+			<button type="submit" class="btn btn-info"><i class="halflings ok"></i> <?php echo CONNECT;?></button>
+			</form></li>	
+		<?php endif;
+		
 	}
 	/**
 	*
 	* NAVIGATION (Admin seulement!)
 	*/
 	public function menu_admin() {
-		$mn='';
-		if($this->isAdmin && $this->isOwner) {
-			$mn .= '<li><a href="?conf=1" title="'.GENERAL_PARAM.'"><i class="halflings wrench"></i> '.CONFIG.'</a></li>';
-			$mn .= '<li><a href="?backup=1" title="'.SAVE_BACKUP.'"><i class="halflings hdd"></i> '.SAVE.'</a></li>';
-			$mn .= '<li><a href="?restore=1" title="'.RESTORE_FROM_BACKUP.'"><i class="halflings refresh"></i> '.RESTORE.'</a></li>';
-			$mn .='<li><a href="index.php" title="'.HOME.'"><i class="halflings home"></i> '.FORUMS.'</a></li>';
-		}
-		return $mn;
+		if($this->isAdmin && $this->isOwner) :?>
+			<li><a href="?conf=1" title="<?php echo GENERAL_PARAM;?>"><i class="halflings wrench"></i> <?php echo CONFIG;?></a></li>
+			<li><a href="?backup=1" title="<?php echo SAVE_BACKUP;?>"><i class="halflings hdd"></i> <?php echo SAVE;?></a></li>
+			<li><a href="?restore=1" title="<?php echo RESTORE_FROM_BACKUP;?>"><i class="halflings refresh"></i> <?php echo RESTORE;?></a></li>
+			<li><a href="index.php" title="<?php echo HOME;?>"><i class="halflings home"></i> <?php echo FORUMS;?></a></li>
+		<?php endif;
 	}
 	/**
 	*
 	* AFFICHAGE DE LA LISTE DES SUJETS (Forum home)
 	*/
-	public function showTopics() {
-		$pagination = '<p>'.$this->pagination($this->nbrMsgIndex, $this->page, $this->pages).'</p>';
-		$buffer = '';
-		$buffer .= $pagination;
-		$buffer .= '<table class="table-bordered table-striped">
-		<tr class="info">
-		<td style="width:60%;">'.TITLE_SUBJECT.'</td>
-		<td style="width:5%; text-align:center;">'.MESSAGES.'</td>
-		<td style="width:30%;">'.LAST_MSG.'</td>';
-		if($this->isAdmin) $buffer .= '<td style="width:5%">'.ADMIN.'</td>';
-		$buffer .= '</tr>';
+	public function showTopics() {?>
 
-		$topicList=$this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page);
- 		foreach($topicList as $t) {
-			$t['dernierLe'] = date('d M Y à H:i',$t['dernierLe']);
-			$started = date('d M Y', $t['topicID']);
-			$t['attachment']=($t['attachment']!='')?'<i class="halflings file"></i> ':'';
-			$t['postType']=$t['postType']?'<i class="halflings star"></i> ':'';
-			$statusIcon = (isset($_COOKIE["uFread".$t['topicID'].""]))?'<i class="halflings folder-open"></i>':'<i class="halflings fire"></i>';
-			$buffer .= '<tr>';
-			$buffer .= '<td>'.$t['postType'].$t['attachment'].$statusIcon.' <a href="?topic='.$t['topicID'].'" title="'.DISPLAY_TOPIC.'">'.stripslashes($t['titre']).'</a><br /><span class="image-right">'.STARTED_ON.' '.$started.', '.BY.' ';
-			$buffer .= $this->forum->isMember($t['auteur'])?'<a class="Lien" href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a></span></td>':$t['auteur'].'</span></td>';
-			$buffer .= '<td class="mess">'.$t['nombrePosts'].'</td>';
-			$buffer .= '<td><i>'.L_ON.' :</i> <a href="?topic='.$t['topicID'].'#bottom" class="Lien" title="'.GOTO_LAST_MSG.'">'.$t['dernierLe'].'</a><br /><i>'.BY.':</i> ';
-			$buffer .= $this->forum->isMember($t['dernierPar'])?'<a class="Lien" href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a></td>':$t['dernierPar'].'</td>';
-			if($this->isAdmin) $buffer .= '<td><a href="?topic='.$t['topicID'].'&amp;delpost='.$t['topicID'].'" onclick="return confirmLink(this,\''.$t['titre'].'\');" rel="tooltip" title="'.DEL_MSG.'"><i class="halflings trash"></i></a></td>'."\n";
-			$buffer .= '</tr>';
-		}
-		$buffer .= '</table>';
-		$buffer .= $pagination;
-		$buffer .= $this->replyForm('newtopic',count($topicList));	
-		return $buffer;
+		<p><?php $this->setTopics('pagination');?></p>
+
+		<table class="table-bordered table-striped">
+		<tr class="info">
+		<td style="width:60%;"><?php echo TITLE_SUBJECT;?></td>
+		<td style="width:5%; text-align:center;"><?php echo MESSAGES;?></td>
+		<td style="width:30%;"><?php echo LAST_MSG;?></td>
+		<?php if($this->isAdmin) :?><td style="width:5%"><?php echo ADMIN;?></td><?php endif; ?>
+		</tr>
+
+ 		<?php foreach($this->setTopics('topicList') as $t) :
+			?>
+			<tr>
+			<td><?php $this->setTopicList($t['postType'],'<i class="halflings star"></i> ');?>
+				<?php $this->setTopicList($t['attachment'],'<i class="halflings file"></i> ');?>
+				<?php $this->setTopicIcon($t,'<i class="halflings folder-open"></i>','<i class="halflings fire"></i>');?>
+
+				<a href="?topic=<?php echo $t['topicID'];?>" title="<?php echo DISPLAY_TOPIC;?>">
+					<?php $this->setTopicTitle($t)?>
+				</a>
+					<br />
+				<span class="image-right"><?php $this->setTopicStartonBy($t);$this->setTopicPrivate($t,'Lien');?></span>
+			</td>
+			<td class="mess"><?php echo $t['nombrePosts'];?></td>
+			<td>
+				<i><?php echo L_ON;?> :</i> 
+				<?php $this->setTopicLastMsg($t);?><br />
+				<i><?php echo BY;?>:</i>
+				<?php $this->setTopicLastMsgBy($t,'Lien');?>
+
+			</td>
+			<?php if($this->isAdmin) :?>
+
+			<td><a href="?topic=<?php echo $t['topicID'];?>&amp;delpost=<?php echo $t['topicID'];?>" onclick="return confirmLink(this,'<?php echo $t['titre'];?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="halflings trash"></i></a></td><?php endif;?>
+
+			</tr>
+		<?php endforeach;?>
+		
+		</table>
+		<?php $this->setTopics('pagination');
+		$this->setTopics('reply');
 	}
 	/**
 	*
@@ -2838,17 +3360,18 @@ class Template extends Init
 		$avatars=array();
 		$quotes=array();
 		$modo=array();
-		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
-		$pagination = '<p>'.$this->pagination($this->nbMsgTopic, $this->page, $this->topicObj->nbPosts).'</p>';
-		$buffer .= $pagination;
-			list($time,$titre,$auteur,$posts,$last,$lasttime,$attach,$type)=$this->topicObj->getInfo(0);
+		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){?>
+		<p><?php $this->setPostPagination($this->topicObj) ?></p>
+		<?php
+			//list($time,$titre,$auteur,$posts,$last,$lasttime,$attach,$type)=
+			$this->topicObj->getInfo(0);
 			$buffer .= '<div class="gradient">';
 			if($this->isAdmin) {
 				$buffer .= '<form action="index.php?topic='.$this->get_topic.'" name="sub" method="post" class="forms-inline"><input type="hidden" name="topicID" value="'.$this->get_topic.'" />';
-				$buffer .= '<i class="halflings star" style="color:#111;"></i> <input style="border:none;" type="checkbox" onclick="window.location=\'?topic='.$this->get_topic.'&postit='.($type?'off':'on').'\'"';/*** On épingle le sujet ou pas ***/
-				$buffer .= $type?' checked="checked" /> ':'/> ';
-				$buffer .= '<input type="text" value="'.stripslashes($titre).'" size="40" name="ntitle" /> <button type="submit" class="btn btn-blue"><i class="halflings pencil"></i>&nbsp;'.EDIT_TITLE.'</button></form>';/*** Modification du Titre du sujet ***/
-			} else $buffer .= stripslashes($titre);
+				$buffer .= '<i class="halflings star" style="color:#111;"></i> <input style="border:none;" type="checkbox" onclick="window.location=\'?topic='.$this->get_topic.'&postit='.($this->topicObj->infos->type?'off':'on').'\'"';/*** On épingle le sujet ou pas ***/
+				$buffer .= $this->topicObj->infos->type?' checked="checked" /> ':'/> ';
+				$buffer .= '<input type="text" value="'.stripslashes($this->topicObj->infos->title).'" size="40" name="ntitle" /> <button type="submit" class="btn btn-blue"><i class="halflings pencil"></i>&nbsp;'.EDIT_TITLE.'</button></form>';/*** Modification du Titre du sujet ***/
+			} else $buffer .= stripslashes($this->topicObj->infos->title);
 			$buffer .= '</div>';
 			// tooltips
 			list($num,$auths)=$this->topicObj->getInfo(1);
@@ -2877,7 +3400,7 @@ class Template extends Init
 			$cnt=0;
 			while($reply=$this->topicObj->nextReply()) {
 				$mb=$this->forum->getMember($reply->auth);
-				$buffer .= '<table class="width-100 table-bordered"><tr>';
+				$buffer .= '<table class="width-100 table-bordered" id="p-'.$reply->time.'"><tr>';
 				if($this->forum->isMember($reply->auth)) {
 					$buffer .= '<td class="avatarTD" rowspan="2"><a onmouseover="showWMTT(\''.$reply->auth.'\')" onmouseout="hideWMTT()" href="?private='.$reply->auth.'" title="">'.$avatars[$reply->auth].'</a>';
 					$buffer .= '<div class="datePost"><a class="LienNonLu" href="?private='.$reply->auth.'" title="'.SEND_PRIVATE_MSG.'">'.$reply->auth.'</a></div>';
@@ -2888,13 +3411,13 @@ class Template extends Init
 				}
 				if(!empty($mb->url)) $buffer .= '<div class="datePost"><i class="halflings share"></i>&nbsp;<a href="'.$mb->url.'" onclick="window.open(this.href);return false;" title="'.$mb->url.'">'.WEBSITE.'</a></div>';
 				$buffer .= '<div class="datePost">'.MESSAGE.': '.$mb->post.'</div>';
-				$buffer .= '<td><div class="datePost">'.date('d/m/Y H:i', $reply->time).'</div></td></tr>';
+				$buffer .= '<td><div class="datePost"><a href="?topic='.$this->get_topic.'&page='.$this->page.'#p-'.$reply->time.'">'.date('d/m/Y H:i', $reply->time).'</a></div></td></tr>';
 				$buffer .= '<tr><td class="messageTD"><div id="td'.$cnt.'">'.BBCHelper::decode($reply->content).'</div>';
 				if(isset($quotes[$reply->auth])) $buffer .= '<div class="signature"><blockquote><p>'.$quotes[$reply->auth].'</p></blockquote></div>';
 				$buffer .= "</td></tr><tr><td style='text-align: center'><a href='".$_SERVER['REQUEST_URI']."#bottom' class='btn btn-small btn-orange' onclick='quote(\"".$reply->auth."\",$cnt)' title='".QUOTE_MSG_FROM." ".$reply->auth."' /><i class='halflings comments'></i> ".QUOTE."</a></td><td>";
 				if($this->isAdmin) {
-					$delmsg = $cnt?ANSWER_FROM.' '.$reply->auth:' '.WHOLE_TOPIC;
-					$buffer .= '<a class="btn btn-small" href="?topic='.$this->get_topic.'&amp;editpost='.$reply->time.'" title="'.EDIT.'"><i class="halflings pencil"></i> '.EDIT.'</a>&nbsp;<a class="btn btn-small btn-red" href="?topic='.$this->get_topic.'&amp;delpost='.$reply->time.'" title="'.DEL.'" onclick="return confirmLink(this,\''.$delmsg.'\')"><i class="halflings trash"></i> '.DEL.'</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer(\'form\');" title="'.ANSWER.'"><i class="halflings share-alt"></i> '.ANSWER.'</a>'."\n";
+					$delmsg = ($cnt || $this->page > 1)?ANSWER_FROM.' '.$reply->auth:' '.WHOLE_TOPIC;
+					$buffer .= '<a class="btn btn-small" href="?topic='.$this->get_topic.'&amp;editpost='.$reply->time.'&amp;page='.$this->page.'" title="'.EDIT.'"><i class="halflings pencil"></i> '.EDIT.'</a>&nbsp;<a class="btn btn-small btn-red" href="?topic='.$this->get_topic.'&amp;delpost='.$reply->time.'&page='.$this->page.'" title="'.DEL.'" onclick="return confirmLink(this,\''.$delmsg.'\')"><i class="halflings trash"></i> '.DEL.'</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer(\'form\');" title="'.ANSWER.'"><i class="halflings share-alt"></i> '.ANSWER.'</a>'."\n";
 				}	
 				if(!empty($reply->attach)){
 					$attachment = explode('/', $reply->attach);
@@ -2904,7 +3427,7 @@ class Template extends Init
 				$buffer .= '</table>';
 				$cnt++;
 			}
-			$buffer .= $pagination;
+			$buffer .= $this->topicObj->pagination;
 			$buffer .= $this->replyForm('newpost');	
 
 		} else {
@@ -2961,6 +3484,7 @@ class Template extends Init
 			if(!empty($mb->quote)) {
 				$toolTip .= '<b>'.SIGNATURE.' : </b> <blockquote><p class="color-blue">'.$mb->quote.'</p></blockquote><br />';
 			}
+			if($mb->mod) $toolTip .= ($mb->mod>1)?'<span class="label label-red">'.FOUNDER.'</span>':'<span class="label label-green">'.MODERATOR.'</span>';
 			    $toolTip .= '</p></div>';
 
 			$annu .= '<tr>';
@@ -3086,7 +3610,7 @@ class Template extends Init
 	}
 	/**
 	*
-	* AFFICHE LE MODAL DES MESSAGES PRIVÉ
+	* AFFICHE LA FENÊTRE MODALE DES MESSAGES PRIVÉS
 	*/
 	public function showPrivateMsg() {
 		$s=implode('', file(MU_MEMBER.md5($this->cLogin.SECURITY_SALT).'/'.$this->cLogin.'.mp'));
@@ -3144,6 +3668,7 @@ class Template extends Init
 		}
 		$buffer .= '<br /><form id="formulaire" action="index.php#bottom" method="post" enctype="multipart/form-data" class="forms forms-columnar">';
 		$buffer .= '<input type="hidden" name="action" value="'.$type.'" />';
+		$buffer .= '<input type="hidden" name="page" value="'.$this->page.'" />';
 		// Réponse
 		if($type== 'newpost' || $edit) $buffer .= '<input type="hidden" name="topicID" value="'.$this->get_topic.'" />';
 		// Mesage privé
@@ -3335,7 +3860,7 @@ if($MF->isMember || !$MF->forumMode) {
 	else if($MF->get_topic) echo $MF->showPosts();
 	else if($MF->get_memberlist) echo $MF->showMemberlist();
 	else if($MF->searchMember) echo $MF->searchMember();
-	else if($MF->get_editprofil) echo $MF->editProfilForm();
+	else if($MF->get_editprofil) $MF->editProfilForm();
 	else if($MF->get_private) echo $MF->replyForm('mp',$MF->get_private);
 	else if($MF->get_restore) echo $MF->frestore();
 	// MODE LIBRE
@@ -3354,7 +3879,7 @@ if($MF->isMember || !$MF->forumMode) {
 			'.$MF->welcomeText().'
 			</div>
 			<div class="tabContent" id="tabContentsignup">
-			'.$MF->registerForm().'
+			'.$MF->registrationForm().'
 			</div>
 			<div class="tabContent" id="tabContenttopics">
 			'.$MF->showTopics().'
@@ -3364,21 +3889,23 @@ if($MF->isMember || !$MF->forumMode) {
 		echo $MF->showTopics();
 	}
 } else {// MODE PRIVÉ
-	echo '
+	?>
+
 	<nav class="onglets">
 	<ul>
-        <li class="tabA tab" id="tabhome" onclick="javascript:tab(\'home\');"><i class="halflings home"></i>&nbsp;'.HOME.'</li>
-        <li class="tabA tab" id="tabsignup" onclick="javascript:tab(\'signup\');"><i class="halflings user"></i>&nbsp;'.SIGN_UP.'</li>
+        <li class="tabA tab" id="tabhome" onclick="javascript:tab('home');"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></li>
+        <li class="tabA tab" id="tabsignup" onclick="javascript:tab('signup');"><i class="halflings user"></i>&nbsp;<?php echo SIGN_UP;?></li>
     </ul>
     </nav>
     <div class="tabContents">
         <div class="tabContent" id="tabContenthome">
-		'.$MF->welcomeText().'
+		<?php echo $MF->welcomeText();?>
 		</div>
 		<div class="tabContent" id="tabContentsignup">
-		'.$MF->registerForm().'
+		<?php echo $MF->registrationForm();?>
 		</div>
-	</div>';
+	</div>
+	<?php
 }
 $arr_cnct=$MF->conn->updateVisit($MF->cLogin);
 $a=array();
@@ -3441,6 +3968,9 @@ echo '
 			if(!empty($MsgId))
 			echo '<script src="js/visual.js"></script>
 			<script>fadeOut("'.$MsgId.'");</script>';
+			if (DEBUG == 1) {
+				 Debug::getDebugInstance($MF->lang)->printBar();
+			}
 		?>
 </body>
 </html>
