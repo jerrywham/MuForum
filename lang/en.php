@@ -320,7 +320,6 @@ The concept is a little different from other forums as the most important inform
 'L_SUND'=>"Sun",
 'GET'=>"Answer the question :",
 'CANT_OPEN_CAPTCHA_FILE'=>"Can not open file issues :",
-<<<<<<< HEAD
 'CAPTCHA_WRONG_ANSWER'=>"The answer is not correct. Please try again .",
 'L_ARRAY'                     => 'Array',
 'L_OBJECT'                    => 'Object',
@@ -334,8 +333,3 @@ The concept is a little different from other forums as the most important inform
 'L_FLOW'                      => 'FLOW',
 );
 ?>
-=======
-'CAPTCHA_WRONG_ANSWER'=>"The answer is not correct. Please try again ."
-);
-?>
->>>>>>> b1656633070e670f402e006e785832d061c047b1
