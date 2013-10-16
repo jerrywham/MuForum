@@ -41,5 +41,6 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [ ] gestion mots de passe à vérifier
 - [ ] email dans lien image (pour le tableau des membres)
 - [ ] interdire de poster à moins d'une minute d'intervalle (modif oui, new non)
+- [ ] création de templates
 
 Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
