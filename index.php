@@ -4,7 +4,7 @@
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     2013-10-19 
+# @update     2013-10-20 
 # @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
