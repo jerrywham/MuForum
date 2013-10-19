@@ -4,7 +4,7 @@
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     2013-10-15 
+# @update     2013-10-19 
 # @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
@@ -56,12 +56,12 @@ date_default_timezone_set('Europe/Paris');
 /*
 ** Version de µForum
 */
-define('VERSION','0.9.8.alpha');
+define('VERSION','0.9.9.alpha');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
 #
-# This file is part of µForum project: http://uforum.byethost5.com
+# This file is part of µForum project: http://uforum.ecyseo.net
 #
 # @update     '.date('Y-m-d').'
 # @copyright  2013  Cyril MAGUIRE and contributors
@@ -298,9 +298,9 @@ class Tools {
 	*
 	* CRÉATION DES IMAGES
 	*/
-	public static function img($nr, $class='',$icon = false,$smile=false) {
+	public static function img($nr, $class='',$icon=false,$smile=false,$dim='') {
 		
-		return  ($icon === true) ? 'data:image/png;base64,'.self::$img[$nr] :'<img src="data:image/png;base64,'.self::$img[$nr].'" alt="'.self::$names[$nr].'"'.($class!=''?' class="' .$class. '"':'').''.($smile!=''?' rel="'.$nr.'"':'').' />';
+		return  ($icon === true) ? 'data:image/png;base64,'.self::$img[$nr] :'<img src="data:image/png;base64,'.self::$img[$nr].'" alt="'.self::$names[$nr].'"'.($class!=''?' class="' .$class. '"':'').''.($dim!=''?' width="' .$dim. '" height="' .$dim. '"':'').''.($smile!=''?' rel="'.$nr.'"':'').' />';
 	}
 	/**
 	* CRÉATION DU FICHIER LANG
@@ -314,7 +314,7 @@ class Tools {
 			'PLUGIN' => 'Plugin',
 			'CONFIG' => 'Configuration',
 			'REDIRECT' => 'Redirection vers',
-			'POWEREDBY' => 'Propulsé par <a id=\"bottom\" name=\"bottom\" href=\"http://uforum.byethost5.com\" rel=\"tooltip\" title=\"Forum sans Sql\">µForum</a>',
+			'POWEREDBY' => 'Propulsé par <a id=\"bottom\" name=\"bottom\" href=\"http://uforum.ecyseo.net\" rel=\"tooltip\" title=\"Forum sans Sql\">µForum</a>',
 			'BBCODE_WELCOM_TXT' => "[b][i]Bienvenue sur µforum[/i][/b]
 
 			Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql).
@@ -388,6 +388,7 @@ class Tools {
 			'YEARS_OLD' => 'ans',
 			'CONNECT' => 'S\'identifier',
 			'EMAIL' => 'Adresse Mail',
+			'EMAIL_URL' => 'Mail / Site Web',
 			'WEBSITE' => 'Site Web',
 			'SIGNATURE' => 'Signature',
 			'SIGNATURE_MSG' => 'Aucune mise en forme possible et limitée à 150 caractères',
@@ -722,7 +723,7 @@ class Tools {
 		$txt = preg_replace('#(([0-9a-zA-Z\./~\-_]+)@([0-9a-z/~\-_]+\.[0-9a-z\./~\-_]+))#i', '<a href="mailto:$2@$3">$2@$3</a>', $txt); 
 		if(preg_match_all('/<a.+href=[\'"]mailto:([\._a-zA-Z0-9-@]+)((\?.*)?)[\'"]>([\._a-zA-Z0-9-@]+)<\/a>/i', $txt, $matches)) {
 			foreach($matches[0] as $k => $v) {
-				$string = self::encodeBin2Hex('document.write(\''.$matches[0][$k].'\')');
+				$string = self::encodeBin2Hex('document.write(\'<a href="mailto:'.$matches[1][$k].'" title="'.$matches[1][$k].'">'.self::img('mail').'</a>\')');
 				$txt = str_replace($matches[0][$k], '<script type="text/javascript">eval(unescape(\''.$string.'\'))</script>' , $txt);
 			}
 		}
@@ -2060,23 +2061,23 @@ class Visit extends saveObj {
 		parent::__construct();
 	}
 	public function visit($id='') {
-		$this->conn[$_SERVER['REMOTE_ADDR']]=array($id,time());
+		$this->conn[$_SERVER['REMOTE_ADDR']]=array('id'=>$id,'time'=>time());
 		$this->saveObj($this);
 	}
 	public function updateVisit($id='') {
 		$r=$_SERVER['REMOTE_ADDR'];
-		$cnt=0;
-		$arr='';
-		$this->conn[$r]=array($id,time());
+		$connected=0;
+		$mbConnected='';
+		$this->conn[$r]=array('id'=>$id,'time'=>time());
 		foreach($this->conn as $k=>$v) {
-			if(((time()-$v[1])>120) && $k!=$r) unset($this->conn[$k]);
+			if(((time()-$v['time'])>120) && $k!=$r) unset($this->conn[$k]);
 			else {
-				if($this->conn[$k][0]!='') $arr.=($r==$k)?$id.' ':'<a href="?private='.$this->conn[$k][0].'" rel="tooltip" title="'.SEND_PRIVATE_MSG.'">'.$this->conn[$k][0].'</a> ';
-				else $cnt++;
+				if($this->conn[$k]['id']!='') $mbConnected.=($r==$k)?$id.' ':'<a href="?private='.$this->conn[$k]['id'].'" rel="tooltip" title="'.SEND_PRIVATE_MSG.'">'.$this->conn[$k]['id'].'</a> ';
+				else $connected++;
 			}
 		}
 		$this->saveObj($this);
-		return array($arr,$cnt);
+		return array('mbConnected'=>$mbConnected,'guestsConnected'=>$connected);
 	}
 }
 /**
@@ -2918,6 +2919,7 @@ class Template extends Init {
 
 	public function __construct() {
 		parent::__construct();
+		$this->header();
 	}
 	/**
 	*
@@ -3001,6 +3003,54 @@ class Template extends Init {
 			$list .= '</div>';
 			return $list;
 	}
+	private function setHeader() {
+		$header = new stdClass;
+		if(preg_match('/.gif$|.jpg$|.png$/i',$this->uforum) && file_exists($this->uforum)) {
+			$header->h1 = '<a href="'.MU_BASE_URL.'" title="'.htmlspecialchars($this->siteName, ENT_QUOTES).'"><img src="'.$this->uforum.'" alt="'.htmlspecialchars($this->siteName, ENT_QUOTES).'" /></a>';
+			$header->title = '<title>'.htmlspecialchars($this->siteName, ENT_QUOTES).'</title>';
+		} else {
+			if ($this->uforum == '[b]&micro;[/b]Forum') {
+				$header->h1 = '<a href="'.MU_BASE_URL.'" title="'.PROJECT.'">'.Tools::img('icon-big').'Forum</a>';
+			} else {
+				$header->h1 = BBCHelper::decode($this->uforum);
+			}
+			$bbcodes=array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[e]','[/e]','[hr]');
+			$header->title = '<title>'.str_replace($bbcodes,'',$this->uforum).'</title>';
+		}
+		return $header;
+	}
+	private function setTemplate() {
+		$template = $this->breadcrumbs();
+		if($this->isMember || !$this->forumMode) {
+			if($this->haveMP) $template .= $this->showPrivateMsg();	
+			if($this->get_editpost) $template .= $this->replyForm('editpost');
+			else if($this->get_conf) $template .= $this->editConf();
+			else if($this->get_topic) $template .= $this->showPosts();
+			else if($this->get_memberlist) $template .= $this->showMemberlist();
+			else if($this->searchMember) $template .= $this->searchMember();
+			else if($this->get_editprofil)$template .= $this->editProfilForm();
+			else if($this->get_private) $template .= $this->replyForm('mp',$this->get_private);
+			else if($this->get_restore) $template .= $this->frestore();
+			// MODE LIBRE
+			else if(!$this->forumMode && !$this->isMember) $template .= $this->content($this->forumMode);
+			#on est connecté, alors on affiche uniquement la liste des forums
+			else  $template .=  $this->showTopics();
+		} else {// MODE PRIVÉ
+			$template .= $this->content($this->forumMode);
+		}
+		return $template;
+	}
+	private function setFooter($stats) {
+		$f['updateVisit']=$this->conn->updateVisit($this->cLogin);
+		$f['mb']=array();
+		if($stats['members']>1) {$f['mb']['singularPlural']='s';$f['conjug'][1]='ont';}
+		else {$f['mb']['singularPlural']='';$f['mb']['conjug']='a';}//Total membres
+		$f['m']=($stats['messages']>1)?'s':'';//Messages
+		$f['s']=($stats['topics']>1)?'s':'';//Sujets
+		$f['updateVisit']['mbConnected']=($f['updateVisit']['mbConnected'])?$f['updateVisit']['mbConnected']:L_NONE;
+		$f['stats'] = $stats;
+		return $f;
+	}
 	/**
 	 * INITIALISATION DES VARIABLES DU FORMULAIRE DE SOUSCRIPTION
 	 */
@@ -3040,11 +3090,19 @@ class Template extends Init {
 		$form['selectColor'] = '';
 		foreach($this->cVals as $k=>$v) $form['selectColor'] .= '<span onclick="window.location=\''.$url.'style='.$k.'\'" title="'.$k.'" class="selectColor" style="background-color: #'.$v[1].($k=='clean'?';border:1px solid #ddd;width:15px;height:15px;top:1px;':'').';">&nbsp;&nbsp;</span> ';
 		$form['textClass'] = ($this->isAdmin)?'text-error':'text-info';
-		$form['script'] = '<script>function blink(selector){$(selector).fadeOut("slow", function(){$(this).fadeIn("slow", function(){blink(this);});});}blink(".blink");</script>';
-
 		return $form;
 	}
-
+	private function setBreadcrumbsLinks() {
+		if($this->get_editpost){?><i class="halflings pencil"></i>&nbsp;<?php echo EDIT?>
+		<?php }else{if($this->get_conf){?><i class="halflings cog"></i>&nbsp;<?php echo CONFIG_OPTIONS?>
+		<?php }else{if($this->get_topic){?><i class="halflings comments"></i>&nbsp;<?php echo $this->forum->getPostsTitle($this->get_topic)?>
+		<?php }else{if($this->get_memberlist){?><i class="halflings user"></i>&nbsp;<?php echo MEMBERS?>
+		<?php }else{if($this->searchMember){?><i class="halflings user"></i>&nbsp;<?php echo RESULT_FOR.$this->searchMember?>
+		<?php }else{if($this->get_editprofil){?><i class="halflings eye-open"></i>&nbsp;<?php echo EDIT_PROFIL?>
+		<?php }else{if($this->get_private){ ?><i class="halflings leaf">&nbsp;<?php echo PRIVATE_MSG?></i>
+		<?php }else{if($this->get_restore){?><i class="halflings refresh"></i>&nbsp;<?php echo RESTORE?>
+		<?php }}}}}}}} 
+	}
 	private function setTopics($val) {
 		switch ($val) {
 			case 'pagination':
@@ -3058,45 +3116,343 @@ class Template extends Init {
 				break;
 		}
 	}
-
 	private function setTopicList($t,$format) {
 		if (isset($t) && $t!='') echo $format;
 	}
-
 	private function setTopicIcon($t,$ifTrue,$ifFalse) {
 		 echo (isset($_COOKIE["uFread".$t['topicID'].""])) ? $ifTrue : $ifFalse;
 	}
-
 	private function setTopicTitle($t) {
 		echo stripslashes($t['titre']);
 	}
-
 	private function setTopicStartonBy($t) {
 		echo STARTED_ON.' '.date('d M Y', $t['topicID']).', '.BY.' ';
 	}
-
 	private function setTopicPrivate($t,$class='') {
 		echo $this->forum->isMember($t['auteur'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a>':$t['auteur'];
 	}
-
 	private function setTopicLastMsg($t,$class='') {
 		echo '<a href="?topic='.$t['topicID'].'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$t['dernierLe']).'</a>';
 	}
-
 	private function setTopicLastMsgBy($t,$class='') {
 		echo $this->forum->isMember($t['dernierPar'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a>':$t['dernierPar'];
 	}
-
 	private function setPostPagination($topicObj) {
 		if(ceil($topicObj->nbPosts/$this->nbMsgTopic) == 1 ) $this->page = 1;
-		echo $topicObj->pagination = $this->pagination($this->nbMsgTopic, $this->page, $topicObj->nbPosts);
+		return $topicObj->pagination = $this->pagination($this->nbMsgTopic, $this->page, $topicObj->nbPosts);
+	}
+	private function setPost() {
+		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
+			$this->topicObj->getInfo(0);
+			list($this->topicObj->num,$this->topicObj->auths)=$this->topicObj->getInfo(1);
+			$this->topicObj->pagination = $this->setPostPagination($this->topicObj);
+			$this->topicObj->avatars=array();
+			$this->topicObj->quotes=array();
+			$this->topicObj->modo=array();
+			return $this->topicObj;
+		}
+		return false;
 	}
 
+	private function topicId() {
+		echo $this->get_topic;
+	}
+	private function pinned($topicObj) {
+		echo ($topicObj->infos->type ?'off" checked="checked':'on');
+	}
+	private function postTitle($topicObj) {
+		echo stripslashes($topicObj->infos->title);
+	}
+	private function dateOfAction($member) {
+		echo date('d M Y à H:i',$member->time);
+	}
+	private function email($member) {
+		echo Tools::protect_email($member->mail);
+	}
+	private function statut($mb) {
+		$statut = new stdClass();
+		if($mb->mod) {
+			if ($mb->mod>1) {
+				$statut->title = FOUNDER;
+				$statut->class = 'red';
+			} else {
+				$statut->title = MODERATOR;
+				$statut->class = 'green';
+			}
+		}else {
+			$statut->title = MEMBER;
+			$statut->class = 'blue';
+		}
+		return $statut;
+	}
+	private function pic($membre,$class="avatar") {
+		return ($membre->pic!='')?'<img '.($class!=''? 'class="'.$class.'"':'').' src="'.Tools::base64_encode_image($membre->pic,$membre->extension).'" alt="avatar"/>':Tools::img('avatar',$class);
+	}
+	private function delMsg($cnt,$auth) {
+		echo ($cnt || $this->page > 1)?ANSWER_FROM.' '.$auth:' '.WHOLE_TOPIC;
+	}
+	private function downloadAttach($attach,$class='') {
+		$attachment = substr($attach,strrpos($attach, '/')+1);
+		echo '<a '.($class!=''? 'class="'.$class.'" ':'').'href="?pid='.base64_encode($attach).'" title="'.DOWNLOAD.'">'.$attachment.' '.Tools::img('clip').'</a>';
+	}
+	private function setMemberList() {
+		$m = array();
+		$m['wd']=$this->isAdmin?25:40;
+		$m['pagination'] = $this->pagination($this->nbrMb, $this->page, $this->pagesMb);
+		return $m;
+	}
+	private function setMbOfList($m, $class='img-circle') {
+		$mb=$this->forum->getMember($m);
+		$mb->mail= Tools::protect_email($mb->mail);
+		$mb->signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
+		if($mb->url!='') {
+			if (!preg_match('|http://|',$mb->url)) $mb->url='http://'.$mb->url;
+			$mb->url='&nbsp;&nbsp;<a href="'.$mb->url.'" title="'.$mb->url.'" onclick="window.open(this.href);return false;">'.Tools::img('window').'</a>';
+		}
+		if($mb->birthday!='') {
+			$mb->birthday = str_replace(' ', '', $mb->birthday);
+			$mb->birthday = preg_replace('/([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+(.*)/i', '\\1 \\2 \\3 \\4 \\5', $mb->birthday);
+		} else $mb->birthday = '&nbsp;';
+		$mb->avatar=($mb->pic != '')?'<img width="40" height="40" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="Avatar" '.($class!=''? 'class="'.$class.'"':'').' />':Tools::img('avatar',$class,false,false,40);
+		return $mb;
+	}
+	private function setSearchMb() {
+			// Calcul de la distance Levenshtein entre le mot recherché
+			// avec les pseudos enregistrés
+			// Aucune distance de trouvée pour le moment
+			$shortest = -1;
+			// Boucle sur les des mots pour trouver le plus près
+			foreach ($this->forum->listMember() as $membre) {
+			    // Calcule la distance avec le mot mis en entrée,
+			    // et le mot courant
+			    $lev = levenshtein($this->searchMember, $membre);
+			    // Cherche une correspondance exacte
+			    if ($lev == 0) {
+			        // Le mot le plus près est celui-ci (correspondance exacte)
+			        $closest = $membre;
+			        $shortest = 0;
+			        // On sort de la boucle ; nous avons trouvé une correspondance exacte
+			        break;
+			    }
+			    // Si la distance est plus petite que la prochaine distance trouvée
+			    // OU, si le prochain mot le plus près n'a pas encore été trouvé
+			    if ($lev <= $shortest || $shortest < 0) {
+			        // Définition du mot le plus près ainsi que la distance
+			        $closest  = $membre;
+			        $shortest = $lev;
+			    }
+			}
+			if ($shortest == 0) {
+					$mb = $this->forum->getMember($this->searchMember);
+					$mb->mail= Tools::protect_email($mb->mail);
+					$mb->signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
+				if($mb->url!='') {
+					if (!preg_match('|http://|',$mb->url)) $mb->url='http://'.$mb->url;
+					$mb->url='<a href="'.$mb->url.'" title="'.$mb->url.'">'.Tools::img('window').'</a>';
+				}
+				if($mb->birthday!='') {
+					$mb->birthday = str_replace(' ', '', $mb->birthday);
+					$mb->birthday = preg_replace('/([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+(.*)/i', '\\1 \\2 \\3 \\4 \\5', $mb->birthday);
+				} else $mb->birthday = '&nbsp;';
+				$mb->avatar=($mb->pic != '')?'<img width="40" height="40" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="Avatar" />':Tools::img('avatar','img-circle',false,false,40);
+			} else {
+				$mb->avatar = null;
+			}
+			$mb->wd = $this->isAdmin?25:40;
+			$mb->closest = $closest;
+		return $mb;
+	}
+	private function setPrivateMsg() {
+		$s=implode('', file(MU_MEMBER.md5($this->cLogin.SECURITY_SALT).'/'.$this->cLogin.'.mp'));
+		$mp = unserialize($s);
+		$mess = $mp->getMessage();
+		foreach($mess as $m) {
+			if($this->forum->isMember($m->from)) echo '<a class="Lien" href="?private='.$m->from.'" title="'.PRIVATE_MSG.'">'.$m->from.'</a> '.strtolower(L_ON).' '.date('d/m/Y @ H:i',$m->time).' <br />';
+			else {
+				$m->from=preg_replace("/(([0-9]{1,3}\.[0-9]{1,3})\.([0-9]{1,3}\.[0-9]{1,3}))/i","\\2.x.x",$m->from);
+				echo $m->from.' '.strtolower(L_ON).' '.date('d/m/Y @ H:i',$m->time).' <br />';
+			}
+			echo stripslashes(BBCHelper::decode($m->content)).'<br /><hr />';
+		}
+		echo '<p class="text-right"><a href="?private='.$m->from.'" class="btn btn-green"><i class="halflings comments"></i> '. ANSWER.' '.TO.' '.$m->from.'</a>';
+	}
 	/********************************************************
 	 * VOUS POUVEZ MODIFIER LES LIGNES CI-DESSOUS
 	 * POUR PERSONNALISER LE THEME
 	 ********************************************************/
 
+	public function header() {
+		?><!DOCTYPE html>
+		<html lang="<? echo $this->lang; ?>">
+		<head>
+			<meta charset="utf-8">
+			<meta name="description" content="<? echo $this->metaDesc; ?>">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<link rel="icon" href="<?php echo Tools::img('icon','',true);?>" />
+			<base href="<?php echo MU_BASE_URL; ?>" />
+			<link rel="stylesheet" type="text/css" href="css/style_<?php echo $this->cStyle; ?>.css" />
+			<link rel="stylesheet" type="text/css" href="css/main.css" />
+			<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+			<!--[if lt IE 9]>
+			<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+			<![endif]-->
+			<!--[if lt IE 9]>
+			<script>
+			var head = document.getElementsByTagName('head')[0], style = document.createElement('style');
+			style.type = 'text/css';
+			style.styleSheet.cssText = ':before,:after{content:none !important';
+			head.appendChild(style);
+			setTimeout(function(){ head.removeChild(style); }, 0);
+			</script>
+			<![endif]-->
+			<?php echo $this->setHeader()->title ?>
+
+		</head>
+		<body onload="init();">
+			<div class="wrapper">
+
+			<header id="header" class="units-row">
+				<h1 id="root"><?php echo $this->setHeader()->h1?></h1>
+				<nav class="nav-g unit-100">
+				<ul>
+					<?php echo $this->menu(); if($this->isMember || !$this->forumMode){ echo $this->menu_admin(); }?>
+				
+				</ul>
+				</nav>
+			</header>
+
+		<div id="main">
+
+		<div class="units-row">
+			<article class="unit-100">
+				<noscript>
+					<div class="message message-error">
+						<span class="close"></span>
+						<header><i class="halflings warning-sign"></i> <?php echo JS_UNAVAILABLE?></header>
+						<?php echo JS_UNAVAILABLE_MSG?>
+
+					</div>
+				</noscript>
+		<?php 
+		// message d'erreur (en cas de mauvais mot de passe, membre déjà existant etc...)
+		echo $this->session->msg();
+		echo $this->setTemplate();
+		echo $this->footer();
+	}
+	public function content($mode) {
+		if(!$mode) :// MODE LIBRE?>
+
+			<nav class="onglets">
+			<ul>
+	            <li class="tabA tab" id="tabhome" onclick="javascript:tab('home');"><i class="halflings home"></i>&nbsp;<?php echo HOME?></li>
+	            <li class="tabA tab" id="tabtopics" onclick="javascript:tab('topics');"><i class="halflings th-list"></i>&nbsp;<?php echo FORUMS?></li>
+	            <li class="tabA tab" id="tabsignup" onclick="javascript:tab('signup');"><i class="halflings user"></i>&nbsp;<?php echo SIGN_UP?></li>
+	        </ul>
+	        </nav>
+	        <div class="tabContents">
+	            <div class="tabContent" id="tabContenthome">
+				<?php echo $this->welcomeText()?>
+				</div>
+				<div class="tabContent" id="tabContenttopics">
+				<?php echo $this->showTopics()?>
+				</div>
+				<div class="tabContent" id="tabContentsignup">
+				<?php echo $this->registrationForm()?>
+				</div>
+			</div>	
+		<?php else :// MODE PRIVÉ?>
+
+			<nav class="onglets">
+			<ul>
+		        <li class="tabA tab" id="tabhome" onclick="javascript:tab('home');"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></li>
+		        <li class="tabA tab" id="tabsignup" onclick="javascript:tab('signup');"><i class="halflings user"></i>&nbsp;<?php echo SIGN_UP;?></li>
+		    </ul>
+		    </nav>
+		    <div class="tabContents">
+		        <div class="tabContent" id="tabContenthome">
+				<?php echo $this->welcomeText();?>
+				</div>
+				<div class="tabContent" id="tabContentsignup">
+				<?php echo $this->registrationForm();?>
+				</div>
+			</div>
+		<?php endif;
+	}
+	public function footer() {
+		$f = $this->setFooter($this->forum->getStat())?>
+
+		<hr />
+
+		<div class="units-row units-split">
+
+			<div class="unit-33"><h4><?php echo STATISTICS?></h4>
+				
+				<p><?php echo WE_HAVE.' '.$f['stats']['messages'].' '.MESSAGE.$f['m'].' '.IN.' '.$f['stats']['topics'].' '.TOPIC.$f['s']?> 
+					<br />
+					<?php echo WELCOME_TO?>, <span class="color-orange"><?php echo $f['stats']['lastMb']?></span>
+					<br />
+					<?php echo TOTAL_MB.$f['mb']['singularPlural'].': '. $f['stats']['members']?>
+
+				</p>
+			</div>
+			<div class="unit-33">
+				<h4><?php echo LEGEND?></h4>
+				<p>
+				<i class="halflings folder-open"></i> <?php echo NO_UNREAD_MSG?><br />
+				<i class="halflings star"></i> <?php echo PINNED?><br />
+				<i class="halflings fire"></i> <?php echo UNREAD_MSG?><br />
+				<i class="halflings file"></i> <?php echo ATTACHMENT?>
+				</p>
+			</div>
+			<div class="unit-33">
+			<h4><?php echo WHO_IS_ONLINE?></h4>
+			<p><?php echo MB_ONLINE?> : <b><?php echo $f['updateVisit']['mbConnected']?></b>
+				<br /><?php echo GUESTS?> : <?php echo $f['updateVisit']['guestsConnected']?>
+
+			</p>
+			</div>
+		 
+		</div>
+			<footer id="footer">© 2011-<?php echo date('Y').' '.$this->siteName?>.
+				<span><?php echo POWEREDBY.' v.'.VERSION?>&nbsp;&nbsp;
+				&nbsp;&nbsp;<a href="<?php echo Tools::baseURL()?>#top" title="<?php echo TOP?>">
+					<i class="halflings chevron-up"></i>
+					</a>
+				</span>
+			</footer>
+		
+		<!-- Calendrier -->
+		<table class="ds_box" cellpadding="0" cellspacing="0" id="ds_conclass" style="display: none;">
+		<tr><td id="ds_calclass"></td></tr></table>
+		<!-- Le javascript
+		================================================== -->
+		<script src="js/scripts.js"></script>
+		<script type="text/javascript">
+			//<!--
+			<?php if (isset($_SERVER['argv'][0]) && $_SERVER['argv'][0] == 'register=true') {
+				$idTab = 'signup';
+			} else {
+				$idTab = 'home';
+			} ?>
+			var idTab = '<?php echo $idTab;?>';
+			tab(idTab);
+			//-->
+		</script>
+		<?php $MsgId = $this->session->MsgId();
+			if(!empty($MsgId)):?>
+
+		<script src="js/visual.js"></script>
+		<script>fadeOut("<?php echo $MsgId?>");</script>
+		<?php endif;
+			if (DEBUG == 1) {
+				 Debug::getDebugInstance($this->lang)->printBar();
+			}
+		?>
+
+		</body>
+		</html>
+		<?php
+	}
 	/**
 	*
 	* FORMULAIRE D'INSCRIPTION
@@ -3178,23 +3534,14 @@ class Template extends Init {
 				<span class="<?php echo $f['textClass']; ?>">
 					<strong><?php echo $f['login'];?></strong>
 				</span>
-		<?php if($this->haveMP):?> 
-				<a  href="javascript:switchLayer('privatebox');" rel="tooltip" title="<?php echo NEW_PRIVATE_MSG;?>" role="button" class="blink" data-toggle="modal"> <i class="halflings inbox"></i></a><?php echo $f['script'];
-			endif; ?>
+				<?php if($this->haveMP) {?>&nbsp;<a  href="javascript:switchLayer('privatebox');" rel="tooltip" title="<?php echo NEW_PRIVATE_MSG;?>" role="button" class="blink" data-toggle="modal"><i class="halflings inbox"></i></a><?php } ?>
 
 			</li>
 			<li><a href="<?php echo MU_BASE_URL;?>"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></a></li>
-		<?php if($this->haveMP) echo '<li><i class="halflings envelope"></i>&nbsp;'.PRIVATE_INBOX.'</li>';
-		if($this->get_editpost) echo '<li><i class="halflings pencil"></i>&nbsp;'.EDIT.'</li>';
-		else if($this->get_conf) echo '<li><i class="halflings cog"></i>&nbsp;'.CONFIG_OPTIONS.'</li>';
-		else if($this->get_topic) echo '<li><i class="halflings comments"></i>&nbsp;'.$this->forum->getPostsTitle($this->get_topic).'</li>';
-		else if($this->get_memberlist) echo '<li><i class="halflings user"></i>&nbsp;'.MEMBERS.'</li>';
-		else if($this->searchMember) echo '<li><i class="halflings user"></i>&nbsp;'.RESULT_FOR.$this->searchMember.'</li>';
-		else if($this->get_editprofil) echo '<li><i class="halflings eye-open"></i>&nbsp;'.EDIT_PROFIL.'</li>';
-		else if($this->get_private) echo '<li><i class="halflings leaf"></i>&nbsp;'.PRIVATE_MSG.'</li>';
-		else if($this->get_restore) echo '<li><i class="halflings refresh"></i>&nbsp;'.RESTORE.'</li>';
-		?>
+			<li>
+		<?php $this->setBreadcrumbsLinks();?>
 
+			</li>
 		</ul>
 		<?php
 	}
@@ -3288,284 +3635,295 @@ class Template extends Init {
 	* AFFICHAGE DE LA DISCUSSION
 	*/
 	public function showPosts() {
-		
-		$buffer='';
-		$avatars=array();
-		$quotes=array();
-		$modo=array();
-		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){?>
-		<p><?php $this->setPostPagination($this->topicObj) ?></p>
-		<?php
-			//list($time,$titre,$auteur,$posts,$last,$lasttime,$attach,$type)=
-			$this->topicObj->getInfo(0);
-			$buffer .= '<div class="gradient">';
-			if($this->isAdmin) {
-				$buffer .= '<form action="index.php?topic='.$this->get_topic.'" name="sub" method="post" class="forms-inline"><input type="hidden" name="topicID" value="'.$this->get_topic.'" />';
-				$buffer .= '<i class="halflings star" style="color:#111;"></i> <input style="border:none;" type="checkbox" onclick="window.location=\'?topic='.$this->get_topic.'&postit='.($this->topicObj->infos->type?'off':'on').'\'"';/*** On épingle le sujet ou pas ***/
-				$buffer .= $this->topicObj->infos->type?' checked="checked" /> ':'/> ';
-				$buffer .= '<input type="text" value="'.stripslashes($this->topicObj->infos->title).'" size="40" name="ntitle" /> <button type="submit" class="btn btn-blue"><i class="halflings pencil"></i>&nbsp;'.EDIT_TITLE.'</button></form>';/*** Modification du Titre du sujet ***/
-			} else $buffer .= stripslashes($this->topicObj->infos->title);
-			$buffer .= '</div>';
-			// tooltips
-			list($num,$auths)=$this->topicObj->getInfo(1);
-			foreach($auths as $m) {
-				if($this->forum->isMember($m)) {
-					$mb=$this->forum->getMember($m);
-					$buffer .= '<div class="tooltip" id="'.Tools::cleanUser($m).'">';
-					$buffer .= '<table style="width: 100%">';
-					$buffer .= '<tr><th class="formTD">'.PROFIL_OF.' <b>'.$m.'</b></th></tr>';
-					$buffer .= '<tr><td class="formTD">'.REGISTRED_ON.'</td><td class="tooltipTD">'.date('d M Y à H:i',$mb->time).'</td></tr>';
-					$buffer .= '<tr><td class="formTD">'.EMAIL.'</td><td class="tooltipTD">'.Tools::protect_email($mb->mail).'</td></tr>';
-					if(!empty($mb->url)) $buffer .= '<tr><td class="formTD">'.WEBSITE.'</td><td class="tooltipTD">'.$mb->url.'</td></tr>';
-					if(!empty($mb->birthday)) $buffer .= '<tr><td class="formTD">'.BORN_ON.'</td><td class="tooltipTD">'.$mb->birthday.' <span class="badge">'.MuDate::birthday($mb->birthday).' '.YEARS_OLD.'</span></td></tr>';
-					if(!empty($mb->quote)) {
-						$buffer .= '<tr><td class="formTD">'.SIGNATURE.'</td><td class="tooltipTD">'.$mb->quote.'</td></tr>';
-						if($this->quoteMode) $quotes[$m]=$mb->quote;
-					}
-					$buffer .= '</table></div>';
-					if($mb->mod) $modo[$m]=($mb->mod>1)?'<span class="label label-red">'.FOUNDER.'</span>':'<span class="label label-green">'.MODERATOR.'</span>';
-					else $modo[$m]='<span class="label label-blue">'.MEMBER.'</span>';
-				} else $mb->pic='';
-				// Avatar
-				$shortpic = str_replace(MU_UPLOAD,'',$mb->pic);
-				$avatars[$m]=($mb->pic!='')?'<img class="avatar" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="avatar"/>':Tools::img('avatar','avatar');
-			}
-			$cnt=0;
-			while($reply=$this->topicObj->nextReply()) {
-				$mb=$this->forum->getMember($reply->auth);
-				$buffer .= '<table class="width-100 table-bordered" id="p-'.$reply->time.'"><tr>';
-				if($this->forum->isMember($reply->auth)) {
-					$buffer .= '<td class="avatarTD" rowspan="2"><a onmouseover="showWMTT(\''.$reply->auth.'\')" onmouseout="hideWMTT()" href="?private='.$reply->auth.'" title="">'.$avatars[$reply->auth].'</a>';
-					$buffer .= '<div class="datePost"><a class="LienNonLu" href="?private='.$reply->auth.'" title="'.SEND_PRIVATE_MSG.'">'.$reply->auth.'</a></div>';
-					$buffer .= '<div>'.$modo[$reply->auth].'</div>';
-				} else {
-					$buffer .= '<td class="avatarTD" rowspan="2">'.$avatars[$reply->auth];
-					$buffer .= '<div class="datePost">'.$reply->auth.'</div>';
-				}
-				if(!empty($mb->url)) $buffer .= '<div class="datePost"><i class="halflings share"></i>&nbsp;<a href="'.$mb->url.'" onclick="window.open(this.href);return false;" title="'.$mb->url.'">'.WEBSITE.'</a></div>';
-				$buffer .= '<div class="datePost">'.MESSAGE.': '.$mb->post.'</div>';
-				$buffer .= '<td><div class="datePost"><a href="?topic='.$this->get_topic.'&page='.$this->page.'#p-'.$reply->time.'">'.date('d/m/Y H:i', $reply->time).'</a></div></td></tr>';
-				$buffer .= '<tr><td class="messageTD"><div id="td'.$cnt.'">'.BBCHelper::decode($reply->content).'</div>';
-				if(isset($quotes[$reply->auth])) $buffer .= '<div class="signature"><blockquote><p>'.$quotes[$reply->auth].'</p></blockquote></div>';
-				$buffer .= "</td></tr><tr><td style='text-align: center'><a href='".$_SERVER['REQUEST_URI']."#bottom' class='btn btn-small btn-orange' onclick='quote(\"".$reply->auth."\",$cnt)' title='".QUOTE_MSG_FROM." ".$reply->auth."' /><i class='halflings comments'></i> ".QUOTE."</a></td><td>";
-				if($this->isAdmin) {
-					$delmsg = ($cnt || $this->page > 1)?ANSWER_FROM.' '.$reply->auth:' '.WHOLE_TOPIC;
-					$buffer .= '<a class="btn btn-small" href="?topic='.$this->get_topic.'&amp;editpost='.$reply->time.'&amp;page='.$this->page.'" title="'.EDIT.'"><i class="halflings pencil"></i> '.EDIT.'</a>&nbsp;<a class="btn btn-small btn-red" href="?topic='.$this->get_topic.'&amp;delpost='.$reply->time.'&page='.$this->page.'" title="'.DEL.'" onclick="return confirmLink(this,\''.$delmsg.'\')"><i class="halflings trash"></i> '.DEL.'</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer(\'form\');" title="'.ANSWER.'"><i class="halflings share-alt"></i> '.ANSWER.'</a>'."\n";
-				}	
-				if(!empty($reply->attach)){
-					$attachment = explode('/', $reply->attach);
-					$buffer .= '<a class="image-right" href="?pid='.base64_encode($reply->attach).'" title="'.DOWNLOAD.'">'.$attachment[3].' '.Tools::img('clip').'</a>';
-				}	
-				$buffer .= '</td></tr>';
-				$buffer .= '</table>';
-				$cnt++;
-			}
-			$buffer .= $this->topicObj->pagination;
-			$buffer .= $this->replyForm('newpost');	
+		if($topic = $this->setPost()): ?>
 
-		} else {
-			$buffer .= '<div class="message">
-			<span class="close"></span>
-			<strong>'.TOPIC_UNKNONW.'</strong>
-			</div>';
-		}
-		return $buffer;
+			<p><?php echo $topic->pagination; ?></p>
+			<div class="gradient">
+			<?php if($this->isAdmin):?>
+
+				<form action="index.php?topic=<?php $this->topicId()?>" name="sub" method="post" class="forms-inline">
+					<input type="hidden" name="topicID" value="<?php $this->topicId()?>" />
+					<i class="halflings star" style="color:#111;"></i> 
+					<input style="border:none;" type="checkbox" onclick="window.location='?topic=<?php $this->topicId()?>&amp;postit=<?php $this->pinned($topic);?>"/> 
+					<input type="text" value="<?php $this->postTitle($topic) ?>" size="40" name="ntitle" /> 
+					<button type="submit" class="btn btn-blue"><i class="halflings pencil"></i>&nbsp;<?php echo EDIT_TITLE?></button>
+				</form>
+			<?php else: $this->postTitle($topic);endif;?>
+			
+			</div>
+			<?php 
+			$cnt=0;
+			while($reply=$topic->nextReply()) :
+				if($this->forum->isMember($reply->auth)) :
+					$mb=$this->forum->getMember($reply->auth);
+					//Tooltip ?>
+					
+					<div class="tooltip" id="<?php echo Tools::cleanUser($reply->auth)?>">
+						<table style="width: 100%">
+							<tr><th class="formTD"><?php echo PROFIL_OF?> <b><?php echo $reply->auth?></b></th></tr>
+							<tr><td class="formTD"><?php echo REGISTRED_ON?></td><td class="tooltipTD"><?php $this->dateOfAction($mb)?></td></tr>
+							<tr><td class="formTD"><?php echo EMAIL?></td><td class="tooltipTD"><?php $this->email($mb)?></td></tr>
+						<?php if(!empty($mb->url)) ?><tr><td class="formTD"><?php echo WEBSITE?></td><td class="tooltipTD"><?php echo $mb->url?></td></tr>
+						<?php if(!empty($mb->birthday))?><tr><td class="formTD"><?php echo BORN_ON?></td><td class="tooltipTD"><?php echo $mb->birthday?> <span class="badge"><?php echo MuDate::birthday($mb->birthday)?> <?php echo YEARS_OLD?></span></td></tr>
+						<?php if(!empty($mb->quote)) ?><tr><td class="formTD"><?php echo SIGNATURE?></td><td class="tooltipTD"><?php echo $mb->quote?></td></tr>
+						</table>
+					</div>
+					<table class="width-100 table-bordered" id="p-<?php echo $reply->time?>">
+						<tr>
+					<?php if($this->forum->isMember($reply->auth)) :?>
+						
+							<td class="avatarTD" rowspan="2">
+								<a onmouseover="showWMTT('<?php echo $reply->auth?>')" onmouseout="hideWMTT()" href="?private=<?php echo $reply->auth?>" title=""><?php echo $this->pic($mb,'avatar')?></a>
+								<div class="datePost"><a class="LienNonLu" href="?private=<?php echo $reply->auth?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $reply->auth?></a></div>
+								<div><span class="label label-<?php echo $this->statut($mb)->class?>"><?php echo $this->statut($mb)->title?></div>
+					<?php else :?>
+						
+							<td class="avatarTD" rowspan="2"><?php echo $this->pic($mb,'avatar')?>
+								<div class="datePost"><?php echo $reply->auth?></div>
+					<?php endif;
+					if(!empty($mb->url)) :?>
+
+								<div class="datePost"><i class="halflings share"></i>&nbsp;<a href="<?php echo $mb->url?>" onclick="window.open(this.href);return false;" title="<?php echo $mb->url?>"><?php echo WEBSITE?></a></div>
+					<?php endif; ?>
+
+								<div class="datePost"><?php echo MESSAGE.' : '.$mb->post?></div>
+							<td>
+								<div class="datePost"><a href="?topic=<?php echo $this->get_topic?>&amp;page=<?php echo $this->page.'#p-'.$reply->time?>"><?php $this->dateOfAction($reply)?></a></div>
+							</td>
+						</tr>
+						<tr>
+							<td class="messageTD">
+								<div id="td<?php echo $cnt?>"><?php echo BBCHelper::decode($reply->content)?></div>
+					<?php if($this->quoteMode) :?>
+
+								<div class="signature"><blockquote><p><?php echo $mb->quote?></p></blockquote></div>
+					<?php endif; ?>
+
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: center">
+								<a href="<?php echo $_SERVER['REQUEST_URI']?>#bottom" class="btn btn-small btn-orange" onclick="quote('<?php echo $reply->auth?>',<?php echo $cnt?>)" title="<?php echo QUOTE_MSG_FROM.' '.$reply->auth?>" /><i class='halflings comments'></i> <?php echo QUOTE?></a>
+							</td>
+							<td>
+					<?php if($this->isAdmin) :?>
+						
+								<a class="btn btn-small" href="?topic=<?php echo $this->get_topic?>&amp;editpost=<?php echo $reply->time?>&amp;page=<?php echo $this->page?>" title="<?php echo EDIT?>">
+									<i class="halflings pencil"></i> <?php echo EDIT?>
+								</a>&nbsp;<a class="btn btn-small btn-red" href="?topic=<?php echo $this->get_topic?>&amp;delpost=<?php echo $reply->time?>&amp;page=<?php echo $this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php $this->delMsg($cnt,$reply->auth)?>')">
+									<i class="halflings trash"></i> <?php echo DEL?>
+								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
+									<i class="halflings share-alt"></i> <?php echo ANSWER?>
+								</a>
+					<?php endif;	
+					if(!empty($reply->attach)) $this->downloadAttach($reply->attach,'image-right')?>
+
+							</td>
+						</tr>
+					</table>
+			<?php $cnt++;
+				endif;
+			endwhile?>
+			<p><?php echo $topic->pagination; ?></p>
+			<?php echo $this->replyForm('newpost');
+		else:?>
+			
+			<div class="message">
+				<span class="close"></span>
+				<strong><?php echo TOPIC_UNKNONW?></strong>
+			</div>
+		<?php endif;
 	}
 	/**
 	*
 	* LISTE DES MEMBRES
 	*/
 	public function showMemberlist() {
-		$pagination = '<p>'.$this->pagination($this->nbrMb, $this->page, $this->pagesMb).'</p>';
-		$form = '<form action="index.php?searchMember" method="post" autocomplete="off" class="text-right">
-			<input type="text" name="searchMember" placeholder="'.SEARCH.'">
-			<button type="submit" class="btn btn-info"><i class="halflings search"></i></button>
-			</form>';
-		$annu = '';
-		$annu .= $pagination;
-		$toolTip = '';
-		$wd=$this->isAdmin?45:60;
-		$annu .= $form;
-		$annu .= '<table class="width-100 table-striped"><thead>
-		<tr class="colorGrayDark">
-		<td style="width:15%;">'.MEMBER.'</td>
-		<td style="width:'.$wd.'%;">'.SIGNATURE.'</td>
-		<td style="width:13%;">'.BIRTH.'</td>
-		<td style="width:12%;">'.EMAIL.'</td>';
-		if($this->isAdmin) $annu .= '<td colspan="2" style="width:15%;">'.ADMIN.'</td>';
-			$annu .= '</tr></thead>';
-			$mb=$this->forum->listMember($this->nbrMb,$this->page,false);
-		foreach($mb as $m) {
-			$mb=$this->forum->getMember($m);
-			$mb->mail= Tools::protect_email($mb->mail);
-			$signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
-			if($mb->url!='') {
-				if (!preg_match('|http://|',$mb->url)) $mb->url='http://'.$mb->url;
-				$mb->url='<a href="'.$mb->url.'" title="'.$mb->url.'">'.Tools::img('window').'</a>';
-			}
-			if($mb->birthday!='') {
-				$mb->birthday = str_replace(' ', '', $mb->birthday);
-				$mb->birthday = preg_replace('/([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+(.*)/i', '\\1 \\2 \\3 \\4 \\5', $mb->birthday);
-			} else $mb->birthday = '&nbsp;';
-			$avatar=($mb->pic != '')?'<img style="width:80px; height:80px;" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="Avatar" />':Tools::img('avatar','img-circle');
-			$toolTip .= '<div class="tooltip" id="'.$m.'">
-			<p class="image-right"><span class="thumbnail">'.$avatar.'</span></p>
-			<h4>'.MINI_PROFIL_OF.' <b>'.$m.'</b></h4>
-			<p><b>'.REGISTRED_ON.' : </b> '.date('d M Y à H:i',$mb->time).'<br />';
-			if(!empty($mb->mail)) $toolTip .= '<b>'.EMAIL.' : </b> '.$mb->mail.'<br />';
-			if(!empty($mb->birthday)) $toolTip .= '<b>'.BORN_ON.' : </b> '.$mb->birthday.' <span class="label label-black">'.MuDate::birthday($mb->birthday).' '.YEARS_OLD.'</span><br />';
-			if(!empty($mb->quote)) {
-				$toolTip .= '<b>'.SIGNATURE.' : </b> <blockquote><p class="color-blue">'.$mb->quote.'</p></blockquote><br />';
-			}
-			if($mb->mod) $toolTip .= ($mb->mod>1)?'<span class="label label-red">'.FOUNDER.'</span>':'<span class="label label-green">'.MODERATOR.'</span>';
-			    $toolTip .= '</p></div>';
+		$ml = $this->setMemberList();?>
 
-			$annu .= '<tr>';
-			$annu .= ($m != $this->cLogin) ? '<td><a class="Lien" href="?private='.$m.'" onmouseover="showWMTT(\''.$m.'\')" onmouseout="hideWMTT()" title="'.SEND_PRIVATE_MSG.'">'.$m.'</a></td>'."\n" : '<td><a class="Lien" href="#" onmouseover="showWMTT(\''.$m.'\')" onmouseout="hideWMTT()" onclick="return false;">'.$m."</td>\n";
-			$annu .= '<td>'.$signature.'</td>';
-			$annu .= '<td>'.$mb->birthday.'</td>';
-			$annu .= '<td>'.$mb->mail.' '.$mb->url.'</td>';
+		<p><?php echo $ml['pagination'] ?></p>
+		<form action="index.php?searchMember" method="post" autocomplete="off" class="text-right">
+			<input type="text" name="searchMember" placeholder="<?php echo SEARCH?>">
+			<button type="submit" class="btn btn-info"><i class="halflings search"></i></button>
+		</form>
+		<table class="width-100 table-striped">
+			<thead>
+				<tr class="colorGrayDark">
+					<td style="width:15%;"><?php echo MEMBER?></td>
+					<td style="width:20%;"><?php echo REGISTRED_ON?></td>
+					<td style="width:<?php echo $ml['wd']?>%;"><?php echo SIGNATURE?></td>
+					<td style="width:13%;"><?php echo BIRTH?></td>
+					<td style="width:12%;"><?php echo EMAIL_URL?></td>
+		<?php if($this->isAdmin)?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td>
+				</tr>
+			</thead>
+		<?php foreach($this->forum->listMember($this->nbrMb,$this->page,false) as $m) {
+			$mb = $this->setMbOfList($m);?>
+
+				<tr>
+					<td>
+						<?php echo $mb->avatar; ?>
+			<?php if($m != $this->cLogin) :?>
+
+						<a class="Lien" href="?private=<?php echo $m?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $m?></a>
+			<?php else:?>
+
+						<a class="Lien" href="#" onclick="return false;"><?php echo $m?></a>
+			<?php endif; ?>
+					</td>
+					<td><?php $this->dateOfAction($mb)?></td>
+					<td><?php echo $mb->signature?></td>
+					<td><?php echo $mb->birthday?></td>
+					<td style="text-align:center;"><?php echo $mb->mail.'&nbsp;&nbsp;'.$mb->url?></td>
+			<?php 
 			if($this->isAdmin) {
 				if($mb->mod) {
 					if($m==$this->cLogin || $mb->mod==2) {
-						$str=($mb->mod>1)? ADMIN:MODO;
-						$annu .= '<td>&nbsp;</td>';
-						$annu .= "<td><form><input style='border:none;' type='checkbox' checked='checked' onclick=\"this.checked='checked'\"/>$str!</form></td>\n";
-					} else {
-						$annu .= "<td><a class='Lien' href='?memberlist=1&deluser=".$m."' onclick='return confirmLink(this,\"$m\")' title='".DEL_MEMBER."'><i class='halflings trash'></i></a></td>\n";
-						$annu .= "<td><form><input style='border:none;' type='checkbox' checked='checked' onclick=\"window.location='?memberlist=1&switchuser=".$m."';\" /> ".MODO."?</form></td>\n";
-					}
-				} else {
-					$annu .= "<td><a href='?memberlist=1&deluser=".$m."' onclick='return confirmLink(this,\"$m\")' title='".DEL_THIS_USER."'><i class='halflings trash'></i></a></td>\n";
-					$annu .= "<td><form><input style='border:none;' type='checkbox' onclick=\"window.location='?memberlist=1&switchuser=".$m."';\"/> ".MODO."?</form></td>\n";
-				}
-			}
-			$annu .= '</tr>';
-		}
-		$annu .= '</table>';
-		$annu .= $toolTip;
-		$annu .= $pagination;
-		return $annu;
-	}/**
+						$str=($mb->mod>1)? ADMIN:MODO;?>
+
+					<td>&nbsp;</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="this.checked='checked';"/>
+							<?php echo $str?>!
+						</form>
+					</td>
+			<?php 	} else {?>
+				
+					<td>
+						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo $m?>" onclick="return confirmLink(this,'<?php echo $m?>')" title="<?php echo DEL_MEMBER?>"><i class="halflings trash"></i></a>
+					</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $m?>';" /> 
+							<?php echo MODO?>?
+						</form>
+					</td>
+			<?php 	}
+				} else {?>
+
+					<td>
+						<a href="?memberlist=1&amp;deluser=<?php echo $m?>" onclick="return confirmLink(this,'<?php echo $m?>')" title="<?php echo DEL_THIS_USER?>"><i class="halflings trash"></i></a>
+					</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $m?>';"/> 
+							<?php echo MODO?>?
+						</form>
+					</td>
+			<?php }
+			}?>
+			
+			</tr>
+			<?php 
+		}?>
+
+		</table>
+		<p><?php echo $ml['pagination'] ?></p>
+		<?php
+	}
+	/**
 	*
 	* RECHERCHE D'UN MEMBRE
 	*/
 	public function searchMember() {
-		$annu = '';
-		$toolTip = '';
-		$wd=$this->isAdmin?45:60;
-		$annu .= '<table class="width-100 table-striped"><thead>
-		<tr class="colorGrayDark">
-			<td style="width:15%;">'.MEMBER.'</td>
-			<td style="width:'.$wd.'%;">'.SIGNATURE.'</td>
-			<td style="width:13%;">'.BIRTH.'</td>
-			<td style="width:12%;">'.EMAIL.'</td>';
-		if($this->isAdmin) $annu .= '<td colspan="2" style="width:15%;">'.ADMIN.'</td>';
-			$annu .= '</tr></thead>';
-			$mb=$this->forum->listMember();
-			// Calcul de la distance Levenshtein entre le mot recherché
-			// avec les pseudos enregistrés
-			// Aucune distance de trouvée pour le moment
-			$shortest = -1;
-			// Boucle sur les des mots pour trouver le plus près
-			foreach ($mb as $membre) {
-			    // Calcule la distance avec le mot mis en entrée,
-			    // et le mot courant
-			    $lev = levenshtein($this->searchMember, $membre);
-			    // Cherche une correspondance exacte
-			    if ($lev == 0) {
-			        // Le mot le plus près est celui-ci (correspondance exacte)
-			        $closest = $membre;
-			        $shortest = 0;
-			        // On sort de la boucle ; nous avons trouvé une correspondance exacte
-			        break;
-			    }
-			    // Si la distance est plus petite que la prochaine distance trouvée
-			    // OU, si le prochain mot le plus près n'a pas encore été trouvé
-			    if ($lev <= $shortest || $shortest < 0) {
-			        // Définition du mot le plus près ainsi que la distance
-			        $closest  = $membre;
-			        $shortest = $lev;
-			    }
-			}
-		//if (in_array($this->searchMember, $mb)) {
-			if ($shortest == 0) {
-			$mb=$this->forum->getMember($this->searchMember);
-			$mb->mail= Tools::protect_email($mb->mail);
-			$signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
-			if($mb->url!='') {
-				if (!preg_match('|http://|',$mb->url)) $mb->url='http://'.$mb->url;
-				$mb->url='<a href="'.$mb->url.'" title="'.$mb->url.'">'.Tools::img('window').'</a>';
-			}
-			if($mb->birthday!='') {
-				$mb->birthday = str_replace(' ', '', $mb->birthday);
-				$mb->birthday = preg_replace('/([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+([0-9]{2})+(.*)/i', '\\1 \\2 \\3 \\4 \\5', $mb->birthday);
-			} else $mb->birthday = '&nbsp;';
-			$avatar=($mb->pic != '')?'<img style="width:80px; height:80px;" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="Avatar" />':Tools::img('avatar','img-circle');
-			$toolTip .= '<div class="tooltip" id="'.$this->searchMember.'">
-			<p class="image-right"><span class="thumbnail">'.$avatar.'</span></p>
-			<h4>'.MINI_PROFIL_OF.' <b>'.$this->searchMember.'</b></h4>
-			<p><b>'.REGISTRED_ON.' : </b> '.date('d M Y à H:i',$mb->time).'<br />';
-			if(!empty($mb->mail)) $toolTip .= '<b>'.EMAIL.' : </b> '.$mb->mail.'<br />';
-			if(!empty($mb->birthday)) $toolTip .= '<b>'.BORN_ON.' : </b> '.$mb->birthday.' <span class="label label-black">'.MuDate::birthday($mb->birthday).' '.YEARS_OLD.'</span><br />';
-			if(!empty($mb->quote)) {
-				$toolTip .= '<b>'.SIGNATURE.' : </b> <blockquote><p class="color-blue">'.$mb->quote.'</p></blockquote><br />';
-			}
-			    $toolTip .= '</p></div>';
+		$mb = $this->setSearchMb();
+		?>
+		
+		<table class="width-100 table-striped">
+			<thead>
+				<tr class="colorGrayDark">
+					<td style="width:15%;"><?php echo MEMBER?></td>
+					<td style="width:<?php echo $mb->wd?>%;"><?php echo SIGNATURE?></td>
+					<td style="width:13%;"><?php echo BIRTH?></td>
+					<td style="width:12%;"><?php echo EMAIL?></td>
+				<?php if($this->isAdmin) ?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td>
+					
+				</tr>
+			</thead>
+				<tr>
+			<?php 
+			if($mb->avatar !== null) {?>
 
-			$annu .= '<tr>';
-			$annu .= ($this->searchMember != $this->cLogin) ? '<td><a class="Lien" href="?private='.$this->searchMember.'" onmouseover="showWMTT(\''.$this->searchMember.'\')" onmouseout="hideWMTT()" title="'.SEND_PRIVATE_MSG.'">'.$this->searchMember.'</a></td>'."\n" : '<td><a class="Lien" href="#" onmouseover="showWMTT(\''.$this->searchMember.'\')" onmouseout="hideWMTT()" onclick="return false;">'.$this->searchMember."</td>\n";
-			$annu .= '<td>'.$signature.'</td>';
-			$annu .= '<td>'.$mb->birthday.'</td>';
-			$annu .= '<td>'.$mb->mail.' '.$mb->url.'</td>';
+					<td>
+						<?php echo $mb->avatar; ?>
+			<?php if($this->searchMember != $this->cLogin):?>
+
+						<a class="Lien" href="?private=<?php echo $this->searchMember?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $this->searchMember?></a> 
+			<?php else:?>
+				
+						<a class="Lien" href="#" onclick="return false;"><?php echo $this->searchMember?></a>
+			<?php endif; ?>
+
+					</td>
+					<td><?php echo $mb->signature?></td>
+					<td><?php echo $mb->birthday?></td>
+					<td><?php echo $mb->mail.' '.$mb->url?></td>
+			<?php
 			if($this->isAdmin) {
 				if($mb->mod) {
-					if($m==$this->cLogin || $mb->mod==2) {
-						$str=($mb->mod>1)? ADMIN:MODO;
-						$annu .= '<td>&nbsp;</td>';
-						$annu .= "<td><form><input style='border:none;' type='checkbox' checked='checked' onclick=\"this.checked='checked'\"/>$str!</form></td>\n";
-					} else {
-						$annu .= "<td><a class='Lien' href='?memberlist=1&deluser=".$this->searchMember."' onclick='return confirmLink(this,\"$this->searchMember\")' title='".DEL_MEMBER."'><i class='halflings trash'></i></a></td>\n";
-						$annu .= "<td><form><input style='border:none;' type='checkbox' checked='checked' onclick=\"window.location='?memberlist=1&switchuser=".$this->searchMember."';\" /> ".MODO."?</form></td>\n";
-					}
-				} else {
-					$annu .= "<td><a href='?memberlist=1&deluser=".$this->searchMember."' onclick='return confirmLink(this,\"$this->searchMember\")' title='".DEL_THIS_USER."'><i class='halflings trash'></i></a></td>\n";
-					$annu .= "<td><form><input style='border:none;' type='checkbox' onclick=\"window.location='?memberlist=1&switchuser=".$this->searchMember."';\"/> ".MODO."?</form></td>\n";
-				}
-			}
-			$annu .= '</tr>';
-		} else {
-			$annu .= '<tr><td colspan="'.(($this->isAdmin) ? '6' : '4').'">'.NO_RESULT.'.&nbsp;'.DID_YOU_MEAN.'<a href="'.MU_BASE_URL.'?searchMember='.$closest.'">'.$closest.'</a> ?</td></tr>';
-		}
-		$annu .= '</table>';
-		$annu .= $toolTip;
-		return $annu;
+					if($mb==$this->cLogin || $mb->mod==2) {
+						$str=($mb->mod>1)? ADMIN:MODO;?>
+					
+					<td>&nbsp;</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="this.checked='checked'"/><?php echo $str?>!
+						</form>
+					</td>
+				<?php } else {?>
+					
+					<td>
+						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo $this->searchMember?>" onclick="return confirmLink(this,'<?php echo $this->searchMember?>')" title="<?php echo DEL_MEMBER?>">
+							<i class="halflings trash"></i>
+						</a>
+					</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $this->searchMember?>;" /> <?php echo MODO?>?</form></td>
+				<?php }
+				} else {?>
+
+					<td>
+						<a href="?memberlist=1&amp;deluser=<?php echo $this->searchMember?>" onclick="return confirmLink(this,'<?php echo $this->searchMember?>')" title="<?php echo DEL_THIS_USER?>">
+							<i class="halflings trash"></i>
+						</a>
+					</td>
+					<td>
+						<form>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $this->searchMember?>;'"/> <?php echo MODO?>?</form></td>
+				<?php }
+			}?>
+				
+				</tr>
+		<?php } else {?>
+			
+				<tr>
+					<td colspan="<?php echo (($this->isAdmin) ? '6' : '4')?>">
+						<?php echo NO_RESULT.'.&nbsp;'.DID_YOU_MEAN?>
+						<a href="<?php echo MU_BASE_URL?>?searchMember=<?php echo $mb->closest?>"><?php echo $mb->closest?></a> ?
+					</td>
+				</tr>
+
+		<?php }?>
+		
+		</table>
+		<?php
 	}
 	/**
 	*
-	* AFFICHE LA FENÊTRE MODALE DES MESSAGES PRIVÉS
+	* AFFICHE LA FENÊTRE DES MESSAGES PRIVÉS
 	*/
-	public function showPrivateMsg() {
-		$s=implode('', file(MU_MEMBER.md5($this->cLogin.SECURITY_SALT).'/'.$this->cLogin.'.mp'));
-		$mp = unserialize($s);
-		$mess=$mp->getMessage();
-		$pvtBox = '<a name="private" id="private" title="'.PRIVATE_MSG.'"></a>
-		<div class="Box">';
-		$pvtBox .= "<a class='toggleLink' href=\"javascript:switchLayer('privatebox');\" title='message privé'>".PRIVATE_INBOX."</a>\n";
-		$pvtBox .= "<div class='toggle' id='privatebox'>\n";
-		foreach($mess as $m) {
-			if($this->forum->isMember($m->from)) $pvtBox .= '<a class="Lien" href="?private='.$m->from.'" title="'.PRIVATE_MSG.'">'.$m->from.'</a> le '.date('d/m/Y @ H:i',$m->time).' <br />';
-			else {
-			$m->from=preg_replace("/(([0-9]{1,3}\.[0-9]{1,3})\.([0-9]{1,3}\.[0-9]{1,3}))/i","\\2.x.x",$m->from);
-			$pvtBox .= $m->from.' le '.date('d/m/Y @ H:i',$m->time).' <br />';
-			}
-			$pvtBox .= stripslashes(BBCHelper::decode($m->content)).'<br /><hr />';
-		}
-		$pvtBox .= '<p class="text-right"><a href="?private='.$m->from.'" class="btn btn-green"><i class="halflings comments"></i> '.ANSWER.' '.TO.' '.$m->from.'</a>
-		<a href="?delprivate=1" class="btn btn-red"><i class="halflings trash"></i> '.EMPTY_MAILBOX.'</a><p/>
+	public function showPrivateMsg() {?>
+
+		<div class="Box">
+			<a class="toggleLink" href="javascript:switchLayer('privatebox');" title="<?php echo PRIVATE_MSG?>"><?php echo PRIVATE_INBOX?></a>
+			<div class='toggle' id='privatebox'>
+				<?php $this->setPrivateMsg();?>
+				<a href="?delprivate=1" class="btn btn-red"><i class="halflings trash"></i> <?php echo EMPTY_MAILBOX?></a><p/>
+			</div>
 		</div>
-		</div>';
-		return $pvtBox;
+		<?php
 	}
 	/**
 	*
@@ -3634,22 +3992,21 @@ class Template extends Init {
 	*
 	* FORMULAIRE DE RESTAURATION DE LA SAUVEGARDE
 	*/
-	public function frestore() {
-		$form = '<!-- Edit config form -->';
-		$form .= '<div class="Box">
-			<h4 class="forms-section">'.RESTAURATION_FORUM.'</h4>
+	public function frestore() {?>
+
+		<!-- Edit config form -->
+		<div class="Box">
+			<h4 class="forms-section"><?php echo RESTAURATION_FORUM?></h4>
 			<div style="padding-top:10px">
 				<form action="index.php" method="post" enctype="multipart/form-data" class="forms forms-columnar">
 					<input type="hidden" name="restore" value="1" />
 					<input type="hidden" name="action" value="restore" />
-			' .//input($label, $name, $value='', $type='text', $placeholder='', $maxlength='255', $readonly=false, $class='', $icon, $require)
-					'<p class="forms-inline">'.Tools::input(UPLOAD_BACKUP, 'backup', '', 'file', '', '','','width-40').'</p>
-					<p><button type="submit" class="text-right btn btn-green"><i class="halflings hand-right"></i>&nbsp;'.SEND.'</button></p>
+					<p class="forms-inline"><?php echo Tools::input(UPLOAD_BACKUP, 'backup', '', 'file', '', '','','width-40')?></p>
+					<p><button type="submit" class="text-right btn btn-green"><i class="halflings hand-right"></i>&nbsp;<?php echo SEND?></button></p>
 				</form>
 			</div>
-		</div>';
-
-		return $form;
+		</div>
+		<?php 
 	}
 	/**
 	*
@@ -3709,201 +4066,5 @@ class Template extends Init {
 * INITIALISATION
 */
 header('Content-Type: text/html; charset=utf-8');
-$MF = new Template();//MF pour µForum
-
-$stats=$MF->forum->getStat();
-
-/**
-*
-* RENDUS HTML (Templates)
-*/
-// e($MF);
-?><!DOCTYPE html>
-<html lang="<? echo $MF->lang; ?>">
-<head>
-<meta charset="utf-8">
-<meta name="description" content="<? echo $MF->metaDesc; ?>">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="<?php echo Tools::img('icon','',true);?>" />
-<base href="<?php echo MU_BASE_URL; ?>" />
-<link rel="stylesheet" type="text/css" href="css/style_<?php echo $MF->cStyle; ?>.css" />
-<link rel="stylesheet" type="text/css" href="css/main.css" />
-<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-<!--[if lt IE 9]>
-<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<![endif]-->
-<!--[if lt IE 9]>
-<script>
-var head = document.getElementsByTagName('head')[0], style = document.createElement('style');
-style.type = 'text/css';
-style.styleSheet.cssText = ':before,:after{content:none !important';
-head.appendChild(style);
-setTimeout(function(){ head.removeChild(style); }, 0);
-</script>
-<![endif]-->
-
-<?php
-if(preg_match('/.gif$|.jpg$|.png$/i',$MF->uforum) && file_exists($MF->uforum)) {
-	$tmp='<a href="'.MU_BASE_URL.'" title="'.htmlspecialchars($MF->siteName, ENT_QUOTES).'"><img src="'.$MF->uforum.'" alt="'.htmlspecialchars($MF->siteName, ENT_QUOTES).'" /></a>';
-echo '<title>'.htmlspecialchars($MF->siteName, ENT_QUOTES).'</title>';
-} else {
-	if ($MF->uforum == '[b]&micro;[/b]Forum') {
-		$tmp='<a href="'.MU_BASE_URL.'" title="'.PROJECT.'">'.Tools::img('icon-big').'Forum</a>';
-	} else {
-		$tmp=BBCHelper::decode($MF->uforum);
-	}
-	$bbcodes=array('[b]','[/b]','[i]','[/i]','[u]','[/u]','[e]','[/e]','[hr]');
-	echo '<title>'.str_replace($bbcodes,'',$MF->uforum).'</title>';
-}
-
-echo '</head>';
-echo '<body onload="init();">';
-echo ' <!-- Navbar
-================================================== -->
-<div class="wrapper">
-
-<header id="header" class="units-row">
-<h1 id="root">'.$tmp.'</h1>
-<nav class="nav-g unit-100">
-<ul>';
-                       echo $MF->menu(); if($MF->isMember || !$MF->forumMode){ echo $MF->menu_admin(); }
-echo ' </ul>
-</nav>
-</header>
-
-<div id="main">
-
-<div class="units-row">
-<article class="unit-100">
-<noscript>
-<div class="message message-error">
-<span class="close"></span>
-<header><i class="halflings warning-sign"></i> '.JS_UNAVAILABLE.'</header>
-'.JS_UNAVAILABLE_MSG.'
-</div>
-</noscript>';
-
-// message d'erreur (en cas de mauvais mot de passe, membre déjà existant etc...)
-echo $MF->session->msg();
-if($MF->isMember || !$MF->forumMode) {
-    echo $MF->breadcrumbs();
-	if($MF->haveMP) echo $MF->showPrivateMsg();	
-	if($MF->get_editpost) echo $MF->replyForm('editpost');
-	else if($MF->get_conf) echo $MF->editConf();
-	else if($MF->get_topic) echo $MF->showPosts();
-	else if($MF->get_memberlist) echo $MF->showMemberlist();
-	else if($MF->searchMember) echo $MF->searchMember();
-	else if($MF->get_editprofil) $MF->editProfilForm();
-	else if($MF->get_private) echo $MF->replyForm('mp',$MF->get_private);
-	else if($MF->get_restore) echo $MF->frestore();
-	// MODE LIBRE
-	else if(!$MF->forumMode && !$MF->isMember) {
-		$st=1;
-	    echo '
-		<nav class="onglets">
-		<ul>
-            <li class="tabA tab" id="tabhome" onclick="javascript:tab(\'home\');"><i class="halflings home"></i>&nbsp;'.HOME.'</li>
-            <li class="tabA tab" id="tabsignup" onclick="javascript:tab(\'signup\');"><i class="halflings user"></i>&nbsp;'.SIGN_UP.'</li>
-            <li class="tabA tab" id="tabtopics" onclick="javascript:tab(\'topics\');"><i class="halflings th-list"></i>&nbsp;'.FORUMS.'</li>
-        </ul>
-        </nav>
-        <div class="tabContents">
-            <div class="tabContent" id="tabContenthome">
-			'.$MF->welcomeText().'
-			</div>
-			<div class="tabContent" id="tabContentsignup">
-			'.$MF->registrationForm().'
-			</div>
-			<div class="tabContent" id="tabContenttopics">
-			'.$MF->showTopics().'
-			</div>
-		</div>';	
-	} else { #on est connecté, alors on affiche uniquement la liste des forums
-		echo $MF->showTopics();
-	}
-} else {// MODE PRIVÉ
-	?>
-
-	<nav class="onglets">
-	<ul>
-        <li class="tabA tab" id="tabhome" onclick="javascript:tab('home');"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></li>
-        <li class="tabA tab" id="tabsignup" onclick="javascript:tab('signup');"><i class="halflings user"></i>&nbsp;<?php echo SIGN_UP;?></li>
-    </ul>
-    </nav>
-    <div class="tabContents">
-        <div class="tabContent" id="tabContenthome">
-		<?php echo $MF->welcomeText();?>
-		</div>
-		<div class="tabContent" id="tabContentsignup">
-		<?php echo $MF->registrationForm();?>
-		</div>
-	</div>
-	<?php
-}
-$arr_cnct=$MF->conn->updateVisit($MF->cLogin);
-$a=array();
-echo '
-<hr />
-
-<div class="units-row units-split">
-
-	<div class="unit-33"><h4>'.STATISTICS.'</h4>';
-if($stats['members']>1) {$a[0]='s';$a[1]='ont';}
-else {$a[0]='';$a[1]='a';}//Total membres
-$m=($stats['messages']>1)?'s':'';//Messages
-$s=($stats['topics']>1)?'s':'';//Sujets
-$arr_cnct[0]=($arr_cnct[0])?$arr_cnct[0]:L_NONE;
-
-		echo '<p>'.WE_HAVE.' '.$stats['messages'].' '.MESSAGE.$m.' '.IN.' '.$stats['topics'].' '.TOPIC.$s.'. <br />
-		'.WELCOME_TO.', <span class="color-orange">'.$stats['lastMb'].'</span><br />
-		'.TOTAL_MB.$a[0].': '. $stats['members'].'</p>
-	</div>
-	<div class="unit-33">
-		<h4>'.LEGEND.'</h4>
-		<p>
-		<i class="halflings folder-open"></i> '.NO_UNREAD_MSG.'<br />
-		<i class="halflings star"></i> '.PINNED.'<br />
-		<i class="halflings fire"></i> '.UNREAD_MSG.'<br />
-		<i class="halflings file"></i> '.ATTACHMENT.'
-		</p>
-	</div>
-	<div class="unit-33">
-	<h4>'.WHO_IS_ONLINE.'</h4>
-	<p>'.MB_ONLINE.' : <b>'.$arr_cnct[0].'</b><br />'.GUESTS.' : '.$arr_cnct[1].'</p>
-	</div>
-';
-
-echo ' 
-</div>
-	<footer id="footer">© 2011-'.date('Y').' '.$MF->siteName.'.
-	<span>'.POWEREDBY.' v.'.VERSION.'&nbsp;&nbsp;
-	&nbsp;&nbsp;<a href="' .Tools::baseURL(). '#top" title="'.TOP.'"><i class="halflings chevron-up"></i></a></span>
-	</footer>
-';
+new Template();
 ?>
-
-		<!-- Calendrier -->
-		<table class="ds_box" cellpadding="0" cellspacing="0" id="ds_conclass" style="display: none;">
-		<tr><td id="ds_calclass"></td></tr></table>
-		<!-- Le javascript
-		================================================== -->
-		<script src="js/scripts.js"></script>
-		<script type="text/javascript">//<!--
-<?php if (isset($_SERVER['argv'][0]) && $_SERVER['argv'][0] == 'register=true') {
-	$idTab = 'signup';
-} else {
-	$idTab = 'home';
-} ?>
-		var idTab = '<?php echo $idTab;?>';
-		tab(idTab);
-	//--></script>
-		<?php $MsgId = $MF->session->MsgId();
-			if(!empty($MsgId))
-			echo '<script src="js/visual.js"></script>
-			<script>fadeOut("'.$MsgId.'");</script>';
-			if (DEBUG == 1) {
-				 Debug::getDebugInstance($MF->lang)->printBar();
-			}
-		?>
-</body>
-</html>
