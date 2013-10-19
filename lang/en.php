@@ -21,7 +21,7 @@ $LANG = array(
 'PLUGIN'=>"Plugin",
 'CONFIG'=>"Configuration",
 'REDIRECT'=>"Redirect",
-'POWEREDBY'=>"Powered by <a id =\"bottom\"name =\"bottom\"href =\"http://uforum.byethost5.com\"rel =\"tooltip\"title =\"Forum without Sql\"> μForum < / a>",
+'POWEREDBY'=>"Powered by <a id =\"bottom\"name =\"bottom\"href =\"http://uforum.ecyseo.net\"rel =\"tooltip\"title =\"Forum without Sql\"> μForum < / a>",
 'BBCODE_WELCOM_TXT'=>"[b ] [i] Welcome to μforum [/ i] [ / b]
 
 This forum is single-threaded file-based only (no sql database ) .
@@ -93,6 +93,7 @@ The concept is a little different from other forums as the most important inform
 'YEARS_OLD'=>"year",
 'CONNECT'=>"Login",
 'EMAIL'=>"Mail Address",
+'EMAIL_URL' => 'Mail/Web',
 'WEBSITE'=>"Web Site",
 'SIGNATURE'=>"Signature",
 'SIGNATURE_MSG'=>"No formatting as possible and limited to 150 characters",
