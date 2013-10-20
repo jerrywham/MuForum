@@ -3,6 +3,27 @@ MuForum
 
 Fork of µForum (http://uforum.byethost5.com/)
 
+Installation
+---
+Afin d'augmenter la sécurité de l'application, il est recommandé de la configurer (mais cette étape est optionnelle).
+Pour cela, ouvrez le fichier index.php avec un éditeur de texte (Notepad++, Sublime Text ou autre).
+
+	Pour définir une constante, il suffit de changer la chaine de caractères située après la virgule. Par exemple, si je voulais définir la constante TEST avec la valeur Valeur, je devrais écrire : define('TEST','Valeur');
+
+Les lignes à modifier sont entre la ligne 23 et la ligne 30. Vous devez déterminer les valeurs de cinq constantes. 
+
+	- define('LANG','fr');
+	- define('STYLE_COLOR','default');
+	- define('PROJECT','µForum');
+	- define('SECURITY_SALT','DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ');
+	//Pensez à changer également le nom du dossier __captcha__ s'il existe déjà
+	- define('CAPTCHA','captcha');
+
+Placez le fichier index.php à la racine de votre serveur web (ou dans un sous dossier) à l'aide d'un client FTP.
+A l'aide d'un navigateur web (Firefox, Opera, Safari, Internet Explorer...) rendez-vous à l'adresse racine de votre site (par exemple http://www.votresite.com ou http://www.votresite.com/sousdossier/) et lancez le script.
+
+C'est tout. Enjoy :p
+
 Nouveautés
 ---
 * Refonte totale du code
@@ -17,7 +38,7 @@ Nouveautés
 * Plusieurs autres corrections mineures que je vous laisse découvrir
 
 Je me suis basé sur le code de µForum 0.9.6. J'ai repris l'essentiel des fonctions natives que j'ai réorganisées et corrigées.
-Les objets sont plus lisibles. Les appels de propriétés sont facilité (plus d'index obscurs dans les tableaux). Le code a été rafraichi (plus de variables globales).
+Les objets sont plus lisibles. Les appels de propriétés sont facilité (plus d'index obscurs dans les tableaux). Le code a été rafraîchi (plus de variables globales).
 
 MISES A JOUR
 ---
