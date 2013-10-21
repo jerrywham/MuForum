@@ -54,8 +54,8 @@ TODO
 
 J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionnalités encore manquantes :
 
-- [ ] liens vers nouveaux messages,
-- [x] ~~vers les différentes pages d'une conversation~~ (fait),
+- [x] ~~liens vers nouveaux messages~~,
+- [x] ~~vers les différentes pages d'une conversation~~,
 - [ ] flux rss,
 - [ ] Revoir le css pour l'alléger encore,
 - [ ] voir les messages d'un membre
@@ -64,8 +64,8 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [ ] gestion mots de passe à vérifier
 - [x] ~~email dans lien image (pour le tableau des membres)~~
 - [ ] interdire de poster à moins d'une minute d'intervalle (modif oui, new non)
-- [ ] création de templates
+- [x] ~~création de templates~~
 - [ ] liste déroulante vers les différentes catégories
-- [ ] En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)
+- [x] ~~En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)~~
 
 Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
