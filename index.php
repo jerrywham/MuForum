@@ -688,7 +688,7 @@ class Tools {
 			'L_SUND'    => 'Dim',
 
 			# Captcha
-			'CAPTCHA' => 'Répondez à la question :',
+			'L_CAPTCHA' => 'Répondez à la question :',
 			'CANT_OPEN_CAPTCHA_FILE' => 'Impossible d\'ouvrir le fichier de questions : ',
 			'CAPTCHA_WRONG_ANSWER' => 'La réponse n\'est pas la bonne. Merci de réessayer.',
 
@@ -2218,7 +2218,7 @@ class Init {
 	public $captcha;
 	public $conn;
 	public $session=null;
-	public $gzip=false;
+	public $gzip=0;
 
 	public $uforum='[b]&micro;[/b]Forum';
 	public $lang=LANG;
@@ -2547,7 +2547,7 @@ class Init {
 						//list($time,$title,$auth,$posts,$lastAuth,$tlastTime,$attach,$type)=
 						$this->topicObj->getInfo(0);
 						$this->forum->addTopic($this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->time,$this->topicObj->infos->attach,$this->topicObj->infos->type);
-						$this->topic=$time;
+						$this->topic=$this->topicObj->infos->time;
 						setCookie('uFread'.$this->topic,1,time()+2592000);
 					}
 				}
@@ -2701,22 +2701,23 @@ class Init {
 	*/
 	private function mkressources() {
 		if (!file_exists('config.php') || !file_exists(MU_MEMBER) || !file_exists(MU_MEMBER.'members.dat')) {
-			$config="<? 
-				".TM."\n"."
-				\$uforum='[b]&micro;[/b]Forum';
-				\$lang='fr';
-				\$metaDesc='Lightweight bulletin board without sql';
-				\$nbrMsgIndex=15;
-				\$nbMsgTopic=15;
-				\$nbrMb=30;
-				\$extensionsAutorises='gif,bmp,png,jpg,mp3,zip,rar,txt';
-				\$maxAvatarSize=30720;
-				\$forumMode=1;
-				\$quoteMode=1;
-				\$siteUrl='';
-				\$siteName='';
-				\$theme='default';
-				\$siteBase='".MU_BASE_URL."'\n;?>";
+			$config="<?";
+			$config.=TM."\n";
+			$config.="\$uforum='[b]&micro;[/b]Forum';\n";
+			$config.="\$lang='fr';";
+			$config.="\$metaDesc='Lightweight bulletin board without sql';\n";
+			$config.="\$nbrMsgIndex=15;\n";
+			$config.="\$nbMsgTopic=15;\n";
+			$config.="\$nbrMb=30;\n";
+			$config.="\$extensionsAutorises='gif,bmp,png,jpg,mp3,zip,rar,txt';\n";
+			$config.="\$maxAvatarSize=30720;\n";
+			$config.="\$forumMode=1;\n";
+			$config.="\$quoteMode=1;\n";
+			$config.="\$siteUrl='".MU_BASE_URL."';\n";
+			$config.="\$siteName='&micro;Forum';\n";
+			$config.="\$theme='default';\n";
+			$config.="\$gzip='0';\n";
+			$config.="\$siteBase='".MU_BASE_URL."'\n;?>";
 			file_put_contents('config.php', utf8_encode($config));
 
 			$errors='';
@@ -2734,7 +2735,7 @@ class Init {
 
 			$this->errors = $errors;
 
-			$this->session->setMsg($this->errors,'error');
+			$this->session->setMsg($this->errors,'error',false);
 			return true;
 		}
 		return false;
@@ -2819,7 +2820,7 @@ class Init {
 		foreach($this->cVals as $k=>$v) {
 			$css_copy = $default;
 			for($i=0;$i<count($this->cNames);$i++) {$css_copy=str_replace($this->cNames[$i],'#'.$v[$i],$css_copy);}
-			if($h=@fopen('css/style_'.$k.'.css','w')) {fputs($h,$css_copy);fclose($h);}
+			if($h=@fopen(MU_THEMES.$this->theme.DS.MU_CSS.'style_'.$k.'.css','w')) {fputs($h,$css_copy);fclose($h);}
 		}
 
 		if(!file_exists(MU_THEMES.$this->theme.DS.MU_CSS.'main.css')) {
@@ -2981,6 +2982,7 @@ class Init {
 class Template extends Init {	
 
 	private $aThemes=array();
+	private $aLang=array();
 	private $template=array();
 
 	public function __construct() {
@@ -3502,16 +3504,19 @@ class Template extends Init {
 		}
 		//$this->template['template'] = 'replyForm';
 	}
-	private function searchThemes() {
-		if(is_dir(MU_THEMES)) {
+	private function searchDirFile($dirToScan=MU_THEMES,$type='dir') {
+		if(is_dir($dirToScan)) {
 			# On ouvre le repertoire
-			if($dh = opendir(MU_THEMES)) {
+			if($dh = opendir($dirToScan)) {
 				# Pour chaque entree du repertoire
 				while(false !== ($file = readdir($dh))) {
 					if($file[0]!='.') {
-						$dir = is_dir(MU_THEMES.'/'.$file);
-						if($dir) {
+						$dir = is_dir($dirToScan.'/'.$file);
+						if($dir && $type=='dir') {
 							$this->aThemes[$file] = $file;
+						}else {
+							$file = str_replace('.php', '', $file);
+							$this->aLang[$file] = $file;
 						}
 					}
 				}
@@ -3735,7 +3740,7 @@ END;
 			<i class="halflings picture"></i>&nbsp;&nbsp;&nbsp;
 			<input type="file" id="avatar" name="avatar">
 		</p>
-		<p><label for="qid"><?php echo CAPTCHA;?></label><?php echo \$this->captcha->template();?></p>';
+		<p><label for="qid"><?php echo L_CAPTCHA;?></label><?php echo \$this->captcha->template();?></p>
 		<p><button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> <?php echo SIGN_UP;?></button></p>
 		<div class="message message-info"><i class="halflings exclamation-sign"></i> <?php echo MENDATORY_FIELDS;?>
 		<?php echo CHAR_NOT_ALLOWED;?>
@@ -4309,7 +4314,8 @@ END;
 	function editConf() {
 		$string =<<<END
 <?php include(dirname(__FILE__).'/header.php');
-		\$this->searchThemes();
+		\$this->searchDirFile();
+		\$this->searchDirFile(MU_LANG,'file');
 		if(!\$wtp=@file_get_contents('welcome.txt')) \$wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));?>
 		
 		<!-- Edit config form -->
@@ -4339,7 +4345,7 @@ END;
 			    <p class="forms-inline"><?php echo Tools::input(INDEX_MAX_MSG, 'nbmess', \$this->nbrMsgIndex, 'number', '', '2', '', 'width-10')?></p>
 			    <p class="forms-inline"><?php echo Tools::input(TOPIC_MAX_MSG, 'nbmessTopic', \$this->nbMsgTopic, 'number', '', '2', '', 'width-10')?></p>
 			    <p class="forms-inline"><?php echo Tools::input(MEM_MAX_DISP, 'nbmb', \$this->nbrMb, 'number', '', '2', '', 'width-10')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(LANGUAGE, 'uflang', \$this->lang, 'text', '', '2', '', 'width-10')?></p>
+			    <p class="forms-inline"><?php echo Tools::select(LANGUAGE, 'uflang', \$this->aLang, \$this->lang, false, '', true)?></p>
 			    <p class="forms-inline"><?php echo Tools::input(MAX_AVATAR_WEIGHT, 'maxav', (\$this->maxAvatarSize/1024), 'number', '', '10', '', 'width-10', 'resize-small')?></p>
 			     <p class="forms-inline"><?php echo Tools::input(ALLOWED_EXT, 'exts', Tools::clean(\$this->extStr), 'text', '', '50', '', 'width-40')?></p>
 				<p>
