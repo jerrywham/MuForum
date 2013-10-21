@@ -3,6 +3,8 @@ MuForum
 
 Fork of µForum (http://uforum.byethost5.com/)
 
+Version actuelle : 1.0
+
 Installation
 ---
 Afin d'augmenter la sécurité de l'application, il est recommandé de la configurer (mais cette étape est optionnelle).
