@@ -4,7 +4,7 @@
 #
 # This file is part of µForum project: http://uforum.byethost5.com
 #
-# @update     2013-10-20 
+# @update     2013-10-21
 # @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
@@ -14,7 +14,7 @@
 #
 # ------------------- END LICENSE BLOCK -------------------
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
-define('DEBUG',1); // 0 = pas de débugage, 1 = débugage activé
+define('DEBUG',0); // 0 = pas de débugage, 1 = débugage activé
 
 # ---------------- CONFIGURATION ----------------------------
 /**
@@ -47,19 +47,22 @@ define('MU_BACK', MU_ROOT.'backup'.DS);
 define('MU_LANG', MU_ROOT.'lang'.DS);
 
 define('MU_JS', MU_ROOT.'js'.DS);
-define('MU_CSS', MU_ROOT.'css'.DS);
+define('MU_THEMES', MU_ROOT.'themes'.DS);
+define('MU_URL_THEMES', str_replace(MU_ROOT,'',MU_THEMES));
+define('MU_CSS', 'css'.DS);
 define('MU_IMG', MU_ROOT.'img'.DS);
 define('MU_UPLOAD', MU_ROOT.'upload'.DS);
 
 /**
 * Fixe les date en Français
 */
+define('CHARSET','UTF-8');
 setlocale(LC_TIME, 'fr_FR.utf8','fra');
 date_default_timezone_set('Europe/Paris');
 /*
-** Version de µForum
+* Version de µForum
 */
-define('VERSION','0.9.9.alpha');
+define('VERSION','1.0');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
@@ -81,7 +84,6 @@ define('TM',$trademarkBlock);
 # ---------------- TRADUCTION ----------------------
 Tools::mklang();
 /**
-*
 * Vérification de la version de php
 */
 if (version_compare(PHP_VERSION, '5.3', '<')) {
@@ -119,8 +121,7 @@ $GLOBALS['config']['BAN_DURATION'] = 1800; // Ban duration for IP address after 
 if (is_dir(MU_DATA) && !is_dir($GLOBALS['config']['DATADIR'])) { mkdir($GLOBALS['config']['DATADIR'],0705); chmod($GLOBALS['config']['DATADIR'],0705); }
 if (is_dir(MU_DATA) && !is_file($GLOBALS['config']['DATADIR'].'/.htaccess')) { file_put_contents($GLOBALS['config']['DATADIR'].'/.htaccess',"Allow from none\nDeny from all\n"); } // Protect data files.
 
-function logm($message)
-{
+function logm($message) {
     $t = strval(date('Y/m/d_H:i:s')).' - '.$_SERVER["REMOTE_ADDR"].' - '.strval($message)."\n";
     file_put_contents($GLOBALS['config']['DATADIR'].'/log.txt',$t,FILE_APPEND);
 }
@@ -136,8 +137,7 @@ if (is_dir(MU_DATA) && !is_file($GLOBALS['config']['IPBANS_FILENAME'])) {
 }
 
 // Signal a failed login. Will ban the IP if too many failures:
-function ban_loginFailed()
-{
+function ban_loginFailed() {
     $ip=$_SERVER["REMOTE_ADDR"]; $gb=$GLOBALS['IPBANS'];
     if (!isset($gb['FAILURES'][$ip])) $gb['FAILURES'][$ip]=0;
     $gb['FAILURES'][$ip]++;
@@ -151,8 +151,7 @@ function ban_loginFailed()
 }
 
 // Signals a successful login. Resets failed login counter.
-function ban_loginOk()
-{
+function ban_loginOk() {
     $ip=$_SERVER["REMOTE_ADDR"]; $gb=$GLOBALS['IPBANS'];
     unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);
     $GLOBALS['IPBANS'] = $gb;
@@ -161,8 +160,7 @@ function ban_loginOk()
 }
 
 // Checks if the user CAN login. If 'true', the user can try to login.
-function ban_canLogin()
-{
+function ban_canLogin() {
     $ip=$_SERVER["REMOTE_ADDR"]; $gb=$GLOBALS['IPBANS'];
     if (isset($gb['BANS'][$ip]))
     {
@@ -181,8 +179,8 @@ function ban_canLogin()
 # ------------ FIN FONCTION DE BANNISSEMENT -----------
 # ---------------- CLASSES STATIQUES-------------------
 /**
- * Outils
- */
+* Outils
+*/
 class Tools {
 	/**
 	 * TRADUCTIONS
@@ -208,6 +206,18 @@ class Tools {
 		    return $str;
 	}
 	/**
+	 * Méthode qui convertit une chaine de caractères au format valide pour une url
+	 *
+	 * @param	str			chaine de caractères à formater
+	 * @return	string		nom d'url valide
+	 **/
+	public static function title2url($str) {
+
+		$str = strtolower(self::removeAccents($str,CHARSET));
+		$str = preg_replace('/[^[:alnum:]]+/',' ',$str);
+		return strtr(trim($str), ' ', '-');
+	}
+	/**
 	*
 	* SUPPRIME LES CARACTERES SPÉCIAUX
 	*/
@@ -220,6 +230,20 @@ class Tools {
 		    return $str;
 	}
 	/**
+	 * Méthode qui convertit une chaine de caractères au format valide pour un nom de fichier
+	 *
+	 * @param	str			chaine de caractères à formater
+	 * @return	string		nom de fichier valide
+	 **/
+	public static function title2filename($str) {
+
+		$str = strtolower(self::removeAccents($str,CHARSET));
+		$str = str_replace('|','',$str);
+		$str = preg_replace('/\.{2,}/', '.', $str);
+		$str = preg_replace('/[^[:alnum:]|.|_]+/',' ',$str);
+		return strtr(ltrim(trim($str),'.'), ' ', '-');
+	}
+	/**
 	*
 	* RETOURNE L'URL de base
 	*/
@@ -230,6 +254,22 @@ class Tools {
 		$serverport = (preg_match('/:[0-9]+/', $servername) OR $_SERVER['SERVER_PORT'])=='80' ? '' : ':'.$_SERVER['SERVER_PORT'];
 		$racine = rtrim($protocol.$servername.$serverport.$dir, '/').'/';
 		return $racine;
+	}
+	/**
+	 * Méthode qui retourne le type de compression disponible
+	 *
+	 * @return	stout
+	 * @author	Stephane F., Amaury Graillat
+	 **/
+	public static function httpEncoding() {
+		if(headers_sent()){
+			$encoding = false;
+		}elseif(strpos($_SERVER['HTTP_ACCEPT_ENCODING'],'gzip') !== false){
+			$encoding = 'gzip';
+		}else{
+			$encoding = false;
+		}
+		return $encoding;
 	}
 	/**
 	*
@@ -315,6 +355,7 @@ class Tools {
 			'THEME' => 'Thème',
 			'LANGUAGE' => 'Langue',
 			'PLUGIN' => 'Plugin',
+			'CONFIG_GZIP' => 'Activer la compression GZIP',
 			'CONFIG' => 'Configuration',
 			'REDIRECT' => 'Redirection vers',
 			'POWEREDBY' => 'Propulsé par <a id=\"bottom\" name=\"bottom\" href=\"http://uforum.ecyseo.net\" rel=\"tooltip\" title=\"Forum sans Sql\">µForum</a>',
@@ -379,6 +420,8 @@ class Tools {
 			'RESULT_FOR' => 'Résultat pour : ',
 			'CHANGE_SECURITY_SALT' => 'Vous devriez modifier la chaîne de sécurité (SECURITY_SALT) du fichier index.php',
 			'CHANGE_CAPTCHA_DIR_NAME' => 'Vous devriez modifier le nom du dossier captcha et le nom de la constante CAPTCHA du fichier index.php',
+			'L_YES' => 'oui',
+			'L_NO' => 'non',
 			 
 			# Comptes
 			'JOIN_COMMUNITY' => 'Rejoindre notre communauté',
@@ -562,6 +605,7 @@ class Tools {
 			'MSG_PRIVATE_REC' => 'Le message a bien été envoyé',
 
 			# Confirmations
+			'MKTHEME' => 'Création du répertoire de thèmes',
 			'MKCSS' => 'Création du répertoire css',
 			'MKLANG' => 'Création du répertoire lang',
 			'MKBAK' => 'Création du répertoire backup',
@@ -576,7 +620,9 @@ class Tools {
 			'MSG_DATA_REC' => 'Données enregistrées avec succès',
 			'MSG_DATA_DEL' => 'Données supprimées avec succès',
 
+
 			# Erreurs
+			'ERROR_MKTHEME' => 'Echec à la création du répertoire de thèmes',
 			'ERROR_MKCSS' => 'Echec à la création du répertoire css',
 			'ERROR_MKLANG' => 'Echec à la création du répertoire lang',
 			'ERROR_MKBAK' => 'Echec à la création du répertoire backup',
@@ -604,6 +650,8 @@ class Tools {
 			'ERROR_PSEUDO_ALREADY_USED' => 'Un membre est déjà inscrit sous ce pseudonyme.',
 			'ERROR_INVALID_TOPIC' => 'Ce sujet n\'existe pas.',
 			'ERROR_EMPTY_PSEUDO' => 'Vous n\'avez pas indiqué de pseudonyme.',
+			'ERROR_THEME_NOTFOUND' => 'Le theme principal est introuvable',
+			'ERROR_FILE_NOTFOUND' => 'Le fichier cible est introuvable',
 
 			# Temps
 			'DAY' => 'Jour',
@@ -707,7 +755,47 @@ class Tools {
 			$form .= '<textarea id="'.$name.'" name="'.$name.'"'.($class!=''?' class="'.$class.'"':'').' cols="'.$cols.'" rows="'.$rows.'"'.($maxlength!=''?' maxlength="'.$maxlength.'"':'').($placeholder!=''?' placeholder="'.$placeholder.'"':'').'>'.$value.'</textarea>';
 		return $form;
 	}	
+	/**
+	 * Méthode qui affiche une liste de sélection
+	 *
+	 * @param	label		label de la liste
+	 * @param	name		nom de la liste
+	 * @param	array		valeurs de la liste sous forme de tableau (nom, valeur)
+	 * @param	selected	valeur par défaut
+	 * @param	readonly	vrai si la liste est en lecture seule (par défaut à faux)
+	 * @param	class		class css à utiliser pour formater l'affichage
+	 * @param	id			si à vrai génère un id
+	 * @return	stdout
+	 **/
+	public static function select($label, $name, $array, $selected='', $readonly=false, $class='', $id=true) {
 
+		if(!is_array($array)) $array=array();
+
+		$id = ($id?' id="id_'.$name.'"':'');
+			echo '<label class="control-label" for="'.$name.'">' .$label. '</label>';
+		if($readonly)
+			echo '<select'.$id.' name="'.$name.'" disabled="disabled" class="readonly">'."\n";
+		else
+			echo '<select'.$id.' name="'.$name.'"'.($class!=''?' class="'.$class.'"':'').'>'."\n";
+		foreach($array as $a => $b) {
+			if(is_array($b)) {
+				echo '<optgroup label="'.$a.'">'."\n";
+				foreach($b as $c=>$d) {
+					if($c == $selected)
+						echo "\t".'<option value="'.$c.'" selected="selected">'.$d.'</option>'."\n";
+					else
+						echo "\t".'<option value="'.$c.'">'.$d.'</option>'."\n";
+				}
+				echo '</optgroup>'."\n";
+			} else {
+				if($a == $selected)
+					echo "\t".'<option value="'.$a.'" selected="selected">'.$b.'</option>'."\n";
+				else
+					echo "\t".'<option value="'.$a.'">'.$b.'</option>'."\n";
+			}
+		}
+		echo '</select>'."\n";
+	}
 	/**
 	 * Méthode qui encode une chaine de caractère en hexadecimal
 	 *
@@ -751,7 +839,6 @@ class Tools {
 			$text = stripslashes($text);
 		return htmlspecialchars(trim($text), ENT_QUOTES);
 	}
-
 }
 /**
 * BBCode
@@ -855,7 +942,7 @@ class BBCHelper {
 		$replace[] = '<fieldset><legend>'.BLOCKQUOTE.' : $1</legend>$2</fieldset>';
 
 		$pattern[] = '%\[e\]([^\n]+?)\[/e\]%';
-		$replace[] = '<p class="muted">'.EDIT_BY.' : $1</p>';
+		$replace[] = '<p class="editby">'.EDIT_BY.' : $1</p>';
 		
 	    /* smiley */
 	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
@@ -956,14 +1043,14 @@ class MuDate {
 
 # ---------------- CLASSES ----------------------
 /**
- * Cette classe permet de sécuriser le debugage PHP dans vos scripts (locaux
- * et distant).
- * 
- * A l'utilisation il vous suffit de l'inclure dans vos script.
- *
- * @author Jacksay<studio@jacksay.com>
- * @author Cyril MAGUIRE<contact@ecyseo.net>
- */
+* Cette classe permet de sécuriser le debugage PHP dans vos scripts (locaux
+* et distant).
+* 
+* A l'utilisation il vous suffit de l'inclure dans vos script.
+*
+* @author Jacksay<studio@jacksay.com>
+* @author Cyril MAGUIRE<contact@ecyseo.net>
+*/
 class Debug {
 
 		private static $DEBUG_FLOW = '';
@@ -1367,29 +1454,32 @@ class Debug {
     	<?php endif;
     }
 }
-if (DEBUG == 1) {
 /**
-* Dump variable
-* Alias of Debug::trac()
-*/
-if ( !function_exists( 'd' ) ) {
-  function d() {
-    call_user_func_array( array( 'Debug', 'trac' ), func_get_args() );
-  }
-}
-/**
-* Dump variable
-* Alias of Debug::flow()
-*/
-if ( !function_exists( 'f' ) ) {
-  function f() {
-    call_user_func_array( array( 'Debug', 'flow' ), func_get_args() );
-  }
-}
-}
-/**
- * Sessions
+ * Définition des alias de la classe Debug
  */
+if (DEBUG == 1) {
+	/**
+	* Dump variable
+	* Alias of Debug::trac()
+	*/
+	if ( !function_exists( 'd' ) ) {
+	  function d() {
+	    call_user_func_array( array( 'Debug', 'trac' ), func_get_args() );
+	  }
+	}
+	/**
+	* Dump variable
+	* Alias of Debug::flow()
+	*/
+	if ( !function_exists( 'f' ) ) {
+	  function f() {
+	    call_user_func_array( array( 'Debug', 'flow' ), func_get_args() );
+	  }
+	}
+}
+/**
+* Sessions
+*/
 class Session {
 
 	public $MsgId;
@@ -1403,11 +1493,12 @@ class Session {
 			 $_SESSION['mu_lang'] = LANG;
 	}
 
-	public function setMsg($msg,$type = 'success-msg') {
+	public function setMsg($msg,$type = 'success-msg',$fadeout=true) {
 		$_SESSION['msg'] = array(
 			'msg' => $msg,
 			'type' => $type,
-			'id' => mt_rand(1,50)
+			'id' => mt_rand(1,50),
+			'fadeout' => $fadeout
 		);
 	}
 
@@ -1415,7 +1506,8 @@ class Session {
 		if (isset($_SESSION['msg']['msg'])) {
 			$_GET = array();
 			$_POST = array();
-			$r = '<div class="msgFlash '.$_SESSION['msg']['type'].'" id="id_'.$_SESSION['msg']['id'].'"><p>'.$_SESSION['msg']['msg'].'</p><p class="close-right" onclick="document.getElementById(\'id_'.$_SESSION['msg']['id'].'\').className=\'closed\';">X</p></div>';
+			$id = ($_SESSION['msg']['fadeout']?$_SESSION['msg']['id']:'stop');
+			$r = '<div class="msgFlash '.$_SESSION['msg']['type'].'" id="id_'.$id.'"><p>'.$_SESSION['msg']['msg'].'</p><p class="close-right" onclick="document.getElementById(\'id_'.$id.'\').className=\'closed\';">X</p></div>';
 			$this->MsgId = 'id_'.$_SESSION['msg']['id'];
 			$_SESSION['msg'] = array();
 			return $r;
@@ -1458,10 +1550,9 @@ class Session {
 	}
 } 
 /**
- * CAPTCHA
- * D'après LionWiki 3.2.9, (c) Adam Zivner, licensed under GNU/GPL v2 (Plugin Captcha)
- */
-
+* CAPTCHA
+* D'après LionWiki 3.2.9, (c) Adam Zivner, licensed under GNU/GPL v2 (Plugin Captcha)
+*/
 class Captcha {
 
 	private $question_file;
@@ -1470,7 +1561,7 @@ class Captcha {
 	public function __construct($lang,$session) {
 		$this->session = $session;
 
-		$this->question_file = "captcha".DS;
+		$this->question_file = CAPTCHA.DS;
 
 		if (!is_dir($this->question_file)) {
 			@mkdir($this->question_file);
@@ -2113,7 +2204,6 @@ class Messages extends saveObj {
 		return $this->mess;
 	}
 }
-
 /**
 * Initialisation du forum
 */
@@ -2122,11 +2212,13 @@ class Init {
 	public $colors;
 	public $cNames=array();
 	public $cVals=array();
+	public $theme = 'default';
 
 	public $forum;
 	public $captcha;
 	public $conn;
 	public $session=null;
+	public $gzip=false;
 
 	public $uforum='[b]&micro;[/b]Forum';
 	public $lang=LANG;
@@ -2195,6 +2287,8 @@ class Init {
 			$this->siteUrl = $siteUrl;
 			$this->siteName = $siteName;
 			$this->siteBase = $siteBase;
+			$this->theme = $theme;
+			$this->gzip = $gzip;
 		}
 
 		Tools::loadlang($this->lang);
@@ -2203,21 +2297,23 @@ class Init {
 			file_put_contents('version', VERSION);
 			if(!$this->mkressources()) {
 				if (is_file('config.php')){include('config.php');}
-				$config="<?php 
-				".TM."\n"."
-				\$uforum='$this->uforum';\n
-				\$lang='$this->lang';\n
-				\$metaDesc='$this->metaDesc';\n
-				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";\n
-				\$nbMsgTopic=".abs($this->nbMsgTopic).";\n
-				\$nbrMb=".abs($this->nbrMb).";\n
-				\$extensionsAutorises='$this->extensionsAutorises';\n
-				\$maxAvatarSize=$this->maxAvatarSize;\n
-				\$forumMode=$this->forumMode;\n
-				\$quoteMode=$this->quoteMode;\n
-				\$siteUrl='$this->siteUrl';\n
-				\$siteName='$this->siteName';\n
-				\$siteBase='".MU_BASE_URL."'\n?>";
+				$config="<?php\n";
+				$config.=TM."\n";
+				$config.="\$uforum='".$this->uforum."';\n";
+				$config.="\$lang='".$this->lang."';\n";
+				$config.="\$metaDesc='".$this->metaDesc."';\n";
+				$config.="\$nbrMsgIndex='".abs($this->nbrMsgIndex)."';\n";
+				$config.="\$nbMsgTopic='".abs($this->nbMsgTopic)."';\n";
+				$config.="\$nbrMb='".abs($this->nbrMb)."';\n";
+				$config.="\$extensionsAutorises='".$this->extensionsAutorises."';\n";
+				$config.="\$maxAvatarSize='".$this->maxAvatarSize."';\n";
+				$config.="\$forumMode='".$this->forumMode."';\n";
+				$config.="\$quoteMode='".$this->quoteMode."';\n";
+				$config.="\$siteUrl='".$this->siteUrl."';\n";
+				$config.="\$siteName='".$this->siteName."';\n";
+				$config.="\$theme='".$this->theme."';\n";
+				$config.="\$gzip='".$this->gzip."';\n";
+				$config.="\$siteBase='".MU_BASE_URL."';\n?>";
 				file_put_contents('config.php', utf8_encode($config));
 			}
 			$this->mkhtaccess();
@@ -2242,7 +2338,7 @@ class Init {
 		*
 		* GET & POST
 		*/
-		$gets=array('topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','topicID','postID','deluser','switchuser','delpost','editpost','style','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans');
+		$gets=array('topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','topicID','postID','deluser','switchuser','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans');
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
 			if(!$$o) $$o=(isset($_POST[$o]) && is_string($_POST[$o]))?$_POST[$o]:'';
@@ -2494,21 +2590,25 @@ class Init {
 				$this->lang=$uflang?$uflang:'fr';
 				$this->metaDesc=$ufmetadesc?$ufmetadesc:'';
 				$this->siteName=$ufsitename?$ufsitename:'';
-				$config ="<? 
-				".TM."\n"."
-				\$uforum='$this->uforum';
-				\$lang='$this->lang';
-				\$metaDesc='$this->metaDesc';
-				\$nbrMsgIndex=".abs($this->nbrMsgIndex).";
-				\$nbMsgTopic=".abs($this->nbMsgTopic).";
-				\$nbrMb=".abs($this->nbrMb).";
-				\$extensionsAutorises='$this->extStr';
-				\$maxAvatarSize=$this->maxAvatarSize;
-				\$forumMode=$this->forumMode;
-				\$quoteMode=$this->quoteMode;
-				\$siteUrl='$this->siteUrl';
-				\$siteName='$this->siteName';
-				\$siteBase='".MU_BASE_URL."'\n?>";
+				$this->theme=$theme?$theme:'default';
+				$this->gzip=$gzip?$gzip:false;
+				$config ="<?\n"; 
+				$config .=TM."\n";
+				$config .="\$uforum='".$this->uforum."';\n";
+				$config .="\$lang='".$this->lang."';\n";
+				$config .="\$metaDesc='".$this->metaDesc."';\n";
+				$config .="\$nbrMsgIndex='".abs($this->nbrMsgIndex)."';\n";
+				$config .="\$nbMsgTopic='".abs($this->nbMsgTopic)."';\n";
+				$config .="\$nbrMb='".abs($this->nbrMb)."';\n";
+				$config .="\$extensionsAutorises='".$this->extStr."';\n";
+				$config .="\$maxAvatarSize='".$this->maxAvatarSize."';\n";
+				$config .="\$forumMode='".$this->forumMode."';\n";
+				$config .="\$quoteMode='".$this->quoteMode."';\n";
+				$config .="\$siteUrl='".$this->siteUrl."';\n";
+				$config .="\$siteName='".$this->siteName."';\n";
+				$config .="\$theme='".$this->theme."';\n";
+				$config .="\$gzip='".$this->gzip."';\n";
+				$config .="\$siteBase='".MU_BASE_URL."'\n?>";
 				file_put_contents('config.php', utf8_encode($config));
 				if(empty($message) && file_exists('welcome.txt')) @unlink('welcome.txt');
 				else {
@@ -2537,7 +2637,8 @@ class Init {
 			else if($topicID && $action=='editpost' && $postID && $message!='') {
 				if($s = implode('', file(MU_THREAD.$topicID.'.dat'))) {
 					$message = Tools::clean($message);
-					$message = '[e]'.$this->cLogin.' le '.date('d/m/y \à H:i',time()).'[/e]'.$message;
+					$message = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$message);
+					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/y \à H:i',time()).'[/e]';
 					$this->topicObj = unserialize($s);
 					$this->topicObj->setReply($postID,'',$message);
 					$this->topicObj->getInfo(0);
@@ -2614,10 +2715,13 @@ class Init {
 				\$quoteMode=1;
 				\$siteUrl='';
 				\$siteName='';
+				\$theme='default';
 				\$siteBase='".MU_BASE_URL."'\n;?>";
 			file_put_contents('config.php', utf8_encode($config));
+
 			$errors='';
-			$errors.= (@mkdir(MU_CSS))? sprintf("&#10004;&nbsp;".MKCSS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKCSS." .\n");
+			$errors.= ($this->mkDefaultTheme())? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
+			$errors.= (@mkdir(MU_THEMES.$this->theme.DS.MU_CSS))? sprintf("&#10004;&nbsp;".MKCSS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKCSS." .\n");
 	        $errors.= (is_file(MU_LANG.LANG.'.php'))? sprintf("&#10004;&nbsp;".MKLANG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKLANG.".\n");
 	        $errors.= (@mkdir(MU_BACK))? sprintf("&#10004;&nbsp;".MKBAK.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKBAK.".\n");
 	        $errors.= (@mkdir(MU_UPLOAD))? sprintf("&#10004;&nbsp;".MKUPL.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKUPL.".\n");
@@ -2635,7 +2739,17 @@ class Init {
 		}
 		return false;
 	}
-
+	private function mkDefaultTheme() {
+		$return = false;
+		if(!is_dir(MU_THEMES)) {
+			mkdir(MU_THEMES);
+		}
+		if(!is_dir(MU_THEMES.'default')) {
+			mkdir(MU_THEMES.'default');
+			$return = true;
+		}
+		return $return;
+	}
 	/**
 	*
 	* CRÉATION DES FICHIERS .HTACCESS
@@ -2697,9 +2811,9 @@ class Init {
 	private function mkcss() {
 
 		$default = '/* =Uforum -----------------------------------------------------------------------------*/ .Ligne{font-size:11px; border-bottom:1px solid [br]; padding-left:4px; vertical-align:middle} .mess{font-size:16px; border-bottom:1px solid [br]; text-align:center; vertical-align:middle} /* Formulaire */ .red{color:#c00} .blue{color:#00f} .orange{color:#f90} .grey{color:#aaa} .avatar{width:80px; height:80px} .avatarTD{width:18%; font-size:12px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-bottom:10px} .messageTD{padding:10px; font-size:14px} .tooltipTD{padding-left:5px; vertical-align:middle; font-size:9px; font-family:Courrier,Monaco,monospaced} .formTD{background:[lt]; font-size:12px; color:#666; padding:3px 6px 3px 0px; vertical-align:middle; text-align:right; width:150px} .titreCol{background:[lt]; font-size:13px; color:#666; padding:4px; vertical-align:middle} .colDate{font-size:11px; color:#666; padding:4px; vertical-align:middle; border-bottom:1px solid [br]} /* BOUTONS */ .titreLien:link, .titreLien:visited{color:#fff; text-decoration:none} .titreLien:hover{color:#fff; text-decoration:underline} .bImage:link, .bImage:visited, .bImage:hover{padding:2px; opacity:.6} .bImage:hover{padding:2px; opacity:1} .Lien:link, .Lien:visited{color:[lk]; text-decoration:none} .Lien:hover{color:[lk]; text-decoration:underline} .LienNonLu:link, .LienNonLu:visited{color:[ct]; text-decoration:none} .LienNonLu:hover{color:[ct]; text-decoration:underline} .avatarTooltip:hover{cursor:help} .uForum{background:[dk]; display:block; text-align:left; border:1px solid [br]; padding:6px; margin-bottom:3px; color:#fff; font-size:30px; font-weight:100} .Box{background:#fff; border:1px solid [br]; vertical-align:middle; padding:4px; margin-bottom:3px; text-align:left} .titreDiv{background:[dk]; border:1px solid [br]; color:#fff; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left} .titrePost{text-align:left; font-size:14px; color:[dk]} .gradient{background:[dk]; border:1px solid [br]; color:#fff; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left; font-weight:bold} .datePost{color:#9a9a9a; font-size:12px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-top:5px; padding-right:3px} .postMod{font-size:9px; font-family:Courrier,Monaco,monospaced; text-align:right; padding-top:6px; padding-right:3px; color:[dk]} .poster{color:#f90} .poster:link, .poster:visited{text-decoration:none} .poster:hover{text-decoration:underline} .attachLink{text-decoration:none; display:block; padding-top:5px; font-size:9px; font-family:Courrier,Monaco,monospaced; text-align:right} .attachLink:link, .attachLink:visited{color:#999} .attachLink:hover{color:[ct]} .toggle{padding-top:10px; margin:0px; display:none; visibility:hidden} .toggleLink{text-decoration:none; display:block; padding:3px 3px 3px 6px; margin:2px} .toggleLink:link, .toggleLink:visited{color:#666; background:[lt]} .toggleLink:hover{background:#b1c5d0; color:#fff} .tooltip{position:absolute; border:1px solid #999; text-align:left; display:none; background-color:rgba(255,255,255,0.9); padding:6px; color:#666; font-size:11px; z-index:999; width:400px} @keyframes blink { 0% { color: red; } 100% { color: black; } } @-webkit-keyframes blink { 0% { color: red; } 100% { color: black; } } .blink { -webkit-animation: blink 0.5s linear infinite; -moz-animation: blink 0.5s linear infinite; -ms-animation: blink 0.5s linear infinite; -o-animation: blink 0.5s linear infinite; animation: blink 0.5s linear infinite; } /* =Layout -----------------------------------------------------------------------------*/ .wrapper { margin: auto; max-width: 980px; padding: 36px 10px; } #main aside { background-color: #f6f6f6; } #blocks li { background-color: #f8f8f8; padding: 3.3em 0; text-align: center; } .well { display: block; background-color: #f8f8f8; padding: 3.3em 0; border-radius: 5px } .link-show-code { background-color: #eee; border-radius: 10px; color: #555; font-size: 12px; display: inline-block; line-height: 1; padding: 5px 11px; text-decoration: none; } .link-show-code:hover { background-color: #ef6465; color: #fff; } .link-show-code-active { background-color: #444; color: #fff; padding: 5px 14px; } .label {text-transform: uppercase; font-size: 9px !important; font-weight: bold} /* =Editor -----------------------------------------------------------------------------*/ ul.smileys { width: 170px } .smileys li{ float:left } /* =Header -----------------------------------------------------------------------------*/ #header { overflow: hidden; margin-bottom: 1.5em; border-bottom: 1px solid #eee; } #header h1 { float: left; margin: 0; } #header nav { padding-top: 10px; float: right; } /* =Footer -----------------------------------------------------------------------------*/ #footer { border-top: 1px solid #eee; padding-top: 1.5em; margin: 1.5em 0; font-size: .85em; } #footer span { float: right; } /* =Tablet (Portrait) -----------------------------------------------------------------------------*/ @media only screen and (min-width: 768px) and (max-width: 959px) { .wrapper { width: 748px; } } /* =Mobile (Portrait) -----------------------------------------------------------------------------*/ @media only screen and (max-width: 767px) { .wrapper { width: 300px; } #nav, #header h1 { float: none; } #header h1 { margin-bottom: .5em; } #nav ul li { margin: 0; float: none; margin-bottom: 1px; background-color: #f6f6f6; } #nav ul li a, #nav ul li span { display: block; padding: 2px 5px; } } /* =Mobile (Landscape) -----------------------------------------------------------------------------*/ @media only screen and (min-width: 480px) and (max-width: 767px) { .wrapper { width: 420px; } } ';
-		$main = 'html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,body,div,span,object,iframe,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video,h1,h2,h3,h4,h5,h6{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent;font-style:normal}a:active,a:hover{outline:0}button,input{line-height:normal}button,select{text-transform:none}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}blockquote,q{quotes:none}blockquote p:before,blockquote p:after,q:before,q:after{content:\'\';content:none}table{border-collapse:collapse;border-spacing:0}caption,th,td{text-align:left;vertical-align:top;font-weight:normal}thead th,thead td{font-weight:bold;vertical-align:bottom}a img,th img,td img{vertical-align:top}button,input,select,textarea{margin:0}textarea{overflow:auto;vertical-align:top}button{width:auto;overflow:visible}input[type=button],input[type=submit],button{cursor:pointer}input[type="radio"],input[type="checkbox"]{font-size:110%;box-sizing:border-box}input[type="search"]{-webkit-appearance:textfield;-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}hr{display:block;height:1px;border:0;border-top:1px solid #ddd}.group:after{content:".";display:block;height:0;clear:both;visibility:hidden}body{background:#fff;color:#333;font-size:.875em;line-height:1.65em;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif}a{color:#369}a:focus,a:hover{color:#ef6465}h1,h2,h3,h4,h5,h6{color:#222;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;font-weight:bold}h1{font-size:2.142em;line-height:1.1333em;margin-bottom:.2666em}h2{font-size:1.714em;line-height:1.1666em;margin-bottom:.4555em}h3{font-size:1.429em;line-height:1.4em;margin-bottom:.4em}h4{font-size:1.143em;line-height:1.65em;margin-bottom:.4555em}h5{font-size:1em;line-height:1.65em;margin-bottom:.5em}h6{font-size:.857em;line-height:1.5em;margin-bottom:.4555em;text-transform:uppercase}hgroup h1,hgroup h2,hgroup h3,hgroup h4,hgroup h5,hgroup h6{margin-bottom:0}hgroup{margin-bottom:.6em}.subheader{font-weight:300;color:#888}h1.subheader{font-size:1.357em;line-height:1.263em}h2.subheader{font-size:1.214em;line-height:1.412em}h3.subheader{font-size:1em;line-height:1.286em}h4.subheader,h5.subheader{font-size:.95em;line-height:1.385em}h6.subheader{font-size:.8em;line-height:1.364em}p,ul,ol,dl,dd,dt,blockquote,td,th{line-height:1.65em}ul,ol,ul ul,ol ol,ul ol,ol ul{margin:0 0 0 2em}ol ol li{list-style-type:lower-alpha}ol ol ol li{list-style-type:lower-roman}p,ul,ol,dl,blockquote,hr,pre,table,form,fieldset,figure{margin-bottom:1.65em}dl dt{font-weight:bold}dd{margin-left:1em}blockquote{margin-bottom:1.65em;position:relative;color:#777;padding-left:1.65em;margin-left:1.65em;border-left:1px solid #ddd}blockquote small,cite{color:#999;font-style:normal}blockquote p{margin-bottom:.5em}small,blockquote cite{font-size:.85em;line-height:1}blockquote .pull-right,.units-row blockquote .pull-right{float:none;text-align:right;display:block}address{font-style:italic}del{text-decoration:line-through}abbr[title],dfn[title]{border-bottom:1px dotted #000;cursor:help}strong,b{font-weight:bold}em,i{font-style:italic}sub,sup{font-size:.7em;line-height:0;position:relative}sup{top:-0.5em}sub{bottom:-0.25em}figcaption{font-size:.85em;font-style:italic}ins,mark{background-color:#fe5;color:#000;text-decoration:none}pre,code,kbd,samp{font-size:90%;font-family:Consolas,Monaco,monospace,sans-serif}pre{font-size:90%;color:#444;background:#f5f5f5;padding:.85em;overflow:auto}code{padding:2px 3px;display:inline-block;line-height:1;background:#f5f5f5;border:1px solid #ddd}kbd{padding:2px 6px 1px 6px;line-height:1;display:inline-block;border-radius:.3em;box-shadow:0 2px 0 rgba(0,0,0,0.2),0 0 0 1px #fff inset;background-color:#fafafa;border-color:#ccc #ccc white;border-style:solid solid none;border-width:1px 1px medium;color:#444;font-weight:normal;white-space:nowrap}input[type="text"],input[type="password"],input[type="email"],textarea{font-size:.95em}fieldset{padding:1.65em;margin-bottom:1.65em;border:1px solid #e3e3e3}legend{font-weight:bold;padding:0 1em}.com{color:#888}.lit{color:#195f91}.pun,.opn,.clo{color:#93a1a1}.fun{color:#005cb9}.str,.atv{color:#8a6343}.kwd,.linenums,.tag{color:#000}.typ,.atn,.dec,.var{color:#666}.pln{color:#5890ad}tfoot th,tfoot td{background-color:#f2f2f2}th,td{border-bottom:1px solid #eee;padding:.5em .8em}table caption{text-transform:uppercase;padding:0 1em;color:#999;font-size:.85em}table.table-flat td,table.table-flat th{border:0;padding:0}table.table-simple td,table.table-simple th{border:0;padding:.825em .7em .825em 0}table.table-simple caption{padding-left:0}table.table-bordered td,table.table-bordered th{border:1px solid #ddd}table.table-stroked td,table.table-stroked th{border-bottom:1px solid #eee}table.table-striped tbody tr:nth-child(odd) td{background-color:#f5f5f5}table.table-hovered tbody tr:hover td,table.table-hovered thead tr:hover th{background-color:#f6f6f6}.table-container{width:100%;overflow:auto;margin-bottom:1.65em}.table-container table{margin-bottom:0}.table-container::-webkit-scrollbar{-webkit-appearance:none;width:14px;height:14px}.table-container::-webkit-scrollbar-thumb{border-radius:8px;border:3px solid #fff;background-color:rgba(0,0,0,0.3)}.lists-simple{margin-left:0;list-style:none}.lists-simple ul,.lists-simple ol{list-style:none;margin-left:1.5em}.lists-dash{margin-left:18px}.lists-dash li{list-style-type:none}.lists-dash li:before{content:"\2013";position:relative;margin-left:-10px;left:-7px}.forms label{display:block;margin-bottom:1.65em}.forms input[type="text"],.forms input[type="password"],.forms input[type="email"],.forms input[type="url"],.forms input[type="phone"],.forms input[type="tel"],.forms input[type="number"],.forms input[type="datetime"],.forms input[type="date"],.forms input[type="search"],.forms input[type="range"],.forms input[type="file"],.forms input[type="datetime-local"],.forms textarea,.forms select,.forms button{display:block}.forms-inline input[type="text"],.forms-inline input[type="password"],.forms-inline input[type="email"],.forms-inline input[type="url"],.forms-inline input[type="phone"],.forms-inline input[type="tel"],.forms-inline input[type="number"],.forms-inline input[type="datetime"],.forms-inline input[type="date"],.forms-inline input[type="search"],.forms-inline input[type="range"],.forms-inline input[type="file"],.forms-inline input[type="datetime-local"],.forms-inline textarea,.forms-inline select,.forms-inline button,.forms-inline-list input[type="text"],.forms-inline-list input[type="password"],.forms-inline-list input[type="email"],.forms-inline-list input[type="url"],.forms-inline-list input[type="phone"],.forms-inline-list input[type="tel"],.forms-inline-list input[type="number"],.forms-inline-list input[type="datetime"],.forms-inline-list input[type="date"],.forms-inline-list input[type="search"],.forms-inline-list input[type="range"],.forms-inline-list input[type="file"],.forms-inline-list input[type="datetime-local"],.forms-inline-list textarea,.forms-inline-list select,.forms-inline-list button{display:inline-block}.forms-list,.forms-inline-list{margin:0;padding:0;margin-bottom:1.65em;list-style:none}.forms-list label,.forms-inline-list li,.forms-inline-list li label{display:inline-block;margin-bottom:0}.forms-inline-list li label{margin-right:1.65em}.forms-list li{margin-bottom:6px}.forms-desc{margin-top:4px;color:#999;font-size:.85em;line-height:1.4em}.forms fieldset{padding-bottom:.5em;border-radius:.5em}fieldset.forms-row{padding:0;border:0;margin-bottom:0}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;float:none;width:auto;text-align:left;margin-right:0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1) inset;-webkit-transition:border ease .5s;-moz-transition:border ease .5s;-o-transition:border ease .5s;transition:border ease .5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.error,.success{margin-left:5px;font-weight:normal;font-size:.85em}input.input-error,textarea.input-error,select.input-error,.input-error{border-color:#da3e5a;box-shadow:0 0 0 2px rgba(218,62,90,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-success,textarea.input-success,select.input-success,.input-success{border-color:#18a011;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-gray,textarea.input-gray,select.input-gray,.input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input:focus,textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}.input-append,.input-prepend{display:inline-block;background-color:#eee;height:23px;border:1px solid #ccc;margin:0;padding:1px 8px;color:#333;font-size:1em;line-height:23px}.input-prepend{margin-right:-1px}.input-append{position:relative;z-index:1;margin-left:-1px}:-moz-placeholder{color:#999}::-moz-placeholder{color:#999}:-ms-input-placeholder{color:#999}::-webkit-input-placeholder{color:#999;padding:2px}.color-black{color:#000}.color-gray-dark{color:#555}.color-gray{color:#777}.color-gray-light{color:#999}.color-white{color:#fff}.color-red,.error{color:#ef6465}.color-green,.success{color:#90af45}.color-orange{color:#f48a30}.color-green{color:#90af45}.color-blue{color:#1c7ab4}.color-yellow{color:#f3c835}a.color-white:focus,a.color-white:hover{color:#bfbfbf;color:rgba(255,255,255,0.6)}a.color-green:focus,a.color-green:hover,a.color-red:focus,a.color-red:hover,a.color-error:focus,a.color-error:hover{color:#000}.label,.label-badge{border-radius:2em;border:1px solid #ddd;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em .6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-black{border-color:#000;background-color:#2e2e2e;background-image:-moz-linear-gradient(top,#4d4d4d,#000);background-image:-ms-linear-gradient(top,#4d4d4d,#000);background-image:-webkit-gradient(linear,0 0,0 100%,from(#4d4d4d),to(#000));background-image:-webkit-linear-gradient(top,#4d4d4d,#000);background-image:-o-linear-gradient(top,#4d4d4d,#000);background-image:linear-gradient(top,#4d4d4d,#000);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#4d4d4d\',endColorstr=\'#000\',GradientType=0)}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-black{text-shadow:0 -1px 0 #000}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0 -1px 0 rgba(0,0,0,0.24)}.btn-black,.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-black:hover,.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-black:hover{background:#000}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-round{border-radius:20px}.btn-active,.btn-active:hover,.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{filter:alpha(opacity=100);-moz-opacity:1;opacity:1;background:#d1d1d1;border:1px solid #b3b3b3;text-shadow:0 1px 1px #fff}.btn-active,.btn-active:hover{color:#666}.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{color:#999}.btn:focus .halflings,.btn:hover .halflings{color:#555}.btn-black:hover .halflings,.btn-red:hover .halflings,.btn-orange:hover .halflings,.btn-green:hover .halflings,.btn-blue:hover .halflings,.btn-yellow:hover .halflings{color:rgba(255,255,255,0.8)}.btn-disabled:hover .halflings{color:#999}.btn-active .halflings{color:#555}.btn-single,.btn-group{display:inline-block;margin-right:2px;vertical-align:bottom}.btn-single:after,.btn-group:after{content:".";display:block;height:0;clear:both;visibility:hidden}.btn-single>.btn,.btn-single>input,.btn-group>.btn,.btn-group>input{float:left;border-radius:0;margin-left:-1px}.btn-single>.btn{border-radius:4px}.btn-group>.btn:first-child{border-radius:4px 0 0 4px}.btn-group>.btn:last-child{border-radius:0 4px 4px 0}.btn-group>.btn.btn-round:first-child,.btn-group>.input-search:first-child{border-radius:15px 0 0 15px}.btn-group>.btn.btn-round:last-child,.btn-group>.input-search:last-child{border-radius:0 15px 15px 0}.btn-append,.btn-group .btn{padding:7px 1.1em 6px 1.1em}.btn-append{position:relative;top:-1px;margin-left:-2px;border-radius:0 4px 4px 0}@-moz-document url-prefix("http://"){input[type=submit].btn::-moz-focus-inner,button.btn::-moz-focus-inner{border:0;padding:0}}.first-letter::first-letter {font-size:4em;line-height:.75em;float:left;position:relative;padding-right:6px;margin-top:-2px;font-weight:normal;color:#333}.supersmall{font-size:.7em}.small{font-size:.85em}.big{font-size:1.2em}input.big{padding:2px 0;font-size:1.2em}.text-centered{text-align:center}.text-right{text-align:right}.text-uppercase{text-transform:uppercase}.nowrap{white-space:nowrap}.zero{margin:0!important;padding:0!important}.clear{clear:both}.last{margin-right:0!important}.pause{margin-bottom:.75em!important}.end{margin-bottom:0!important}.handle{cursor:move}.normal{font-weight:normal}.bold{font-weight:bold}.italic{font-style:italic}.req,.required{font-weight:normal;color:#ef6465}.highlight{background-color:#ffff9e!important}.close{padding:4px 6px;line-height:1;font-size:18px;cursor:pointer;color:#000;text-decoration:none;opacity:.4}.close:before{content:\'\00D7\'}.close:hover{color:#000;opacity:1}.image-left{float:left;margin:0 1em 1em 0}.image-right{float:right;margin:0 0 1em 1em}.image-left img,.image-right img{position:relative;top:.4em}.image-centered{text-align:center}.image-container:after{content:".";display:block;height:0;clear:both;visibility:hidden}.image-content{overflow:hidden}.nav-h,.nav-g{margin:20px 0 1.65em 0;height:50px;padding:10px;border:1px solid #dedede;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-h:after,.nav-g:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul,.nav-g ul{list-style:none;margin:0}.nav-h ul:after,.nav-g ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul li,.nav-g ul li{float:right;margin-right:1.5em}.nav-h ul li a,.nav-h ul li span,.nav-g ul li a,.nav-g ul li span{display:block}.nav-h ul li a,.nav-g ul li a{text-decoration:none}.nav-h ul li a:hover,.nav-g ul li a:hover{color:#ef6465;text-decoration:underline}.nav-h ul li span,.nav-g ul li span{color:#999}.nav-v{margin-bottom:1.65em}.nav-v ul{list-style:none;margin:0}.nav-v ul li{border-bottom:1px solid #eee}.nav-v ul li ul{margin-left:2em;font-size:.95em}.nav-v ul li ul li:last-child{border-bottom:0}.nav-v ul li ul li a,.nav-v ul li ul li span{padding:4px 0}.nav-v ul li a,.nav-v ul li span{display:block;padding:5px 0}.nav-v ul li a{text-decoration:none}.nav-v ul li a:hover{color:#ef6465;text-decoration:underline}.nav-v ul li span{color:#999}.nav-stacked ul{border:1px solid #eee;border-bottom:0}.nav-stacked ul li a,.nav-stacked ul li span{padding:5px 10px}.nav-stacked ul li a:hover{background-color:#f5f5f5}.nav-stats li{position:relative}.nav-stats li a,.nav-stats li span{padding-right:50px}.nav-stats .label,.nav-stats .label-badge{position:absolute;top:50%;margin-top:-8px;right:0}.nav-stats.nav-stacked .label,.nav-stats.nav-stacked .label-badge{right:4px}.nav-stats .label.label-data,.nav-stacked .label-data{margin-top:-6px;right:6px}.nav-v h1,.nav-v h2,.nav-v h3,.nav-v h4,.nav-v h5,.nav-v h6{margin-top:1.5em;margin-bottom:3px}.nav-v h1:first-child,.nav-v h2:first-child,.nav-v h3:first-child,.nav-v h4:first-child,.nav-v h5:first-child,.nav-v h6:first-child{margin-top:0}.breadcrumbs{margin-bottom:1.65em}.breadcrumbs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs, .breadcrumbs ul{font-size:.9em;color:#999;list-style:none;margin:0;}.breadcrumbs:after, .breadcrumbs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs li,.breadcrumbs ul li{float:left;margin-right:3px}.breadcrumbs li+li:before{content:" > ";color:#aaa;font-size:12px;margin:0 3px;position:relative;top:-1px}.breadcrumbs-sections li+li:before{content:" | ";top:0}.breadcrumbs-path li+li:before{content:" / ";top:0}.breadcrumbs li a, .breadcrumbs ul li a{color:#000;text-decoration:none}.breadcrumbs li a.active, .breadcrumbs ul li a.active{color:#999}.breadcrumbs li a:hover, .breadcrumbs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs{border-bottom:1px solid #e3e3e3;margin-bottom:1.65em}.nav-tabs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul{list-style:none;margin:0}.nav-tabs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul li{float:left;margin-right:2px}.nav-tabs ul li a,.nav-tabs ul li span{display:block;line-height:1;padding:8px 12px 9px 12px}.nav-tabs ul li a{color:#999;text-decoration:none}.nav-tabs ul li a:focus,.nav-tabs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs ul li .active,.nav-tabs ul li span{color:#000;background:#fff;margin-top:-2px;position:relative;padding:8px 11px 9px 11px;border:1px solid #ddd;border-bottom:1px solid #fff;bottom:-1px}.nav-tabs ul li .active{cursor:default}.nav-tabs-v{border:0;border-right:1px solid #e3e3e3}.nav-tabs-v ul li{float:none}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:-3px;border:1px solid #ddd;border-right:1px solid #fff}.nav-pills{margin-bottom:1.15em}.nav-pills:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul{list-style:none;margin:0}.nav-pills ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul li{float:left;margin-right:.5em;margin-bottom:.6499999999999999em}.nav-pills ul li a,.nav-pills ul li span{display:block;padding:6px 15px;line-height:1;border-radius:15px}.nav-pills ul li a{color:#777;text-decoration:none;background-color:#f3f4f5}.nav-pills ul li a:hover{color:#555;text-decoration:underline}.nav-pills ul li .active,.nav-pills ul li .active:hover,.nav-pills ul li span{color:#777;padding:5px 14px;border:1px solid #ddd;background:0}.nav-pills ul li .active,.nav-pills ul li .active:hover{cursor:default;text-decoration:none}.pagination{position:relative;left:-9px;margin-left:0;list-style:none}.pagination:after{content:".";display:block;height:0;clear:both;visibility:hidden}.pagination li{float:left;margin-right:2px}.pagination li a,.pagination li span{display:block;padding:7px 9px;line-height:1;border-radius:2em;color:#000;text-decoration:none}.pagination span{border:1px solid #ddd}.pagination li a:focus,.pagination li a:hover{text-decoration:underline;background-color:#333;color:#fff}.pagination li.pagination-older{margin-left:7px}.pagination li.pagination-older a,.pagination li.pagination-newest a,.pagination li.pagination-older span,.pagination li.pagination-newest span{padding:5px 15px;border-radius:2em;border:1px solid #ddd}.pagination li.pagination-older span,.pagination li.pagination-newest span{border-color:#eee;color:#999}.pagination li.pagination-pull{float:right;margin-right:-7px;margin-left:.5em}.message{position:relative;padding:9px 13px;border:1px solid #f7dc7d;border-radius:5px;margin-bottom:1.65em;color:#9f7d09;background-color:#fdf7e2}.message-error{color:#c01415;border-color:#f9c0c1;background-color:#fdefef}.message-success{color:#546628;border-color:#d1dfae;background-color:#f0f5e5}.message-info{color:#124d72;border-color:#b3dbf3;background-color:#dff0fa}.message header{font-weight:bold;font-size:1.2em}.message .close{cursor:pointer;position:absolute;right:3px;top:6px}.units-container:after,.units-row-end:after,.units-row:after{content:".";display:block;height:0;clear:both;visibility:hidden}.units-container{padding-top:1px;margin-top:-1px}.units-container,.units-row-end,.units-row{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row{margin-bottom:1.5em}.units-row-end{margin-bottom:0}.width-100,.unit-100{width:100%}.width-80,.unit-80{width:80%}.width-75,.unit-75{width:75%}.width-70,.unit-70{width:70%}.width-66,.unit-66{width:66.6%}.width-60,.unit-60{width:60%}.width-50,.unit-50{width:50%}.width-40,.unit-40{width:40%}.width-33,.unit-33{width:33.3%}.width-30,.unit-30{width:30%}.width-25,.unit-25{width:25%}.width-20,.unit-20{width:20%}input.width-100,input.unit-100{width:98.6%}textarea.width-100,textarea.unit-100{width:98.8%}select.width-100,select.unit-100{width:99.4%}.width-100,.width-80,.width-75,.width-70,.width-66,.width-60,.width-50,.width-40,.width-33,.width-30,.width-25,.width-20,.units-row .unit-100,.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{float:left;margin-left:3%}.units-row .unit-80:first-child,.units-row .unit-75:first-child,.units-row .unit-70:first-child,.units-row .unit-66:first-child,.units-row .unit-60:first-child,.units-row .unit-50:first-child,.units-row .unit-40:first-child,.units-row .unit-33:first-child,.units-row .unit-30:first-child,.units-row .unit-25:first-child,.units-row .unit-20:first-child,.units-row-end .unit-100:first-child,.units-row-end .unit-80:first-child,.units-row-end .unit-75:first-child,.units-row-end .unit-70:first-child,.units-row-end .unit-66:first-child,.units-row-end .unit-60:first-child,.units-row-end .unit-50:first-child,.units-row-end .unit-40:first-child,.units-row-end .unit-33:first-child,.units-row-end .unit-30:first-child,.units-row-end .unit-25:first-child,.units-row-end .unit-20:first-child{margin-left:0}.units-row .unit-80,.units-row-end .unit-80{width:79.4%}.units-row .unit-75,.units-row-end .unit-75{width:74.25%}.units-row .unit-70,.units-row-end .unit-70{width:69.1%}.units-row .unit-66,.units-row-end .unit-66{width:65.66666666666666%}.units-row .unit-60,.units-row-end .unit-60{width:58.800000000000004%}.units-row .unit-50,.units-row-end .unit-50{width:48.5%}.units-row .unit-40,.units-row-end .unit-40{width:38.2%}.units-row .unit-30,.units-row-end .unit-30{width:27.9%}.units-row .unit-33,.units-row-end .unit-33{width:31.333333333333332%}.units-row .unit-25,.units-row-end .unit-25{width:22.75%}.units-row .unit-20,.units-row-end .unit-20{width:17.6%}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{position:relative}.unit-push-30{left:30.9%}.unit-push-80{left:82.4%}.unit-push-75{left:77.25%}.unit-push-70{left:72.1%}.unit-push-66{left:68.66666666666666%}.unit-push-60{left:61.800000000000004%}.unit-push-50{left:51.5%}.unit-push-40{left:41.2%}.unit-push-33{left:34.33333333333333%}.unit-push-25{left:25.75%}.unit-push-20{left:20.6%}.unit-push-right{float:right}.centered,.unit-centered{float:none!important;margin:0 auto!important}.unit-padding{padding:1.65em}.units-padding .unit-100,.units-padding .unit-80,.units-padding .unit-75,.units-padding .unit-70,.units-padding .unit-66,.units-padding .unit-60,.units-padding .unit-50,.units-padding .unit-40,.units-padding .unit-33,.units-padding .unit-30,.units-padding .unit-25,.units-padding .unit-20{padding:1.65em}.units-split .unit-80,.units-split .unit-75,.units-split .unit-70,.units-split .unit-66,.units-split .unit-60,.units-split .unit-50,.units-split .unit-40,.units-split .unit-33,.units-split .unit-30,.units-split .unit-25,.units-split .unit-20{margin-left:0}.units-split .unit-80{width:80%}.units-split .unit-75{width:75%}.units-split .unit-70{width:70%}.units-split .unit-66{width:66.6%}.units-split .unit-60{width:60%}.units-split .unit-50{width:50%}.units-split .unit-40{width:40%}.units-split .unit-33{width:33.3%}.units-split .unit-30{width:30%}.units-split .unit-25{width:25%}.units-split .unit-20{width:20%}.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{padding-left:0;list-style:none;margin-left:-3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2:after,.blocks-3:after,.blocks-4:after,.blocks-5:after,.blocks-6:after{content:".";display:block;height:0;clear:both;visibility:hidden}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{height:auto;float:left;margin-bottom:1.65em;margin-left:3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2>li{width:47%}.blocks-3>li{width:30.333333333333332%}.blocks-4>li{width:22%}.blocks-5>li{width:17%}.blocks-6>li{width:13.666666666666666%}.block-first{clear:both}@media(min-width:768px){.desktop-hide{display:none}}@media only screen and (max-width:767px){.mobile-text-centered{text-align:center}.mobile-hide{display:none}}img,video{max-width:100%;height:auto}img{-ms-interpolation-mode:bicubic}audio{width:100%}.video-wrapper{height:0;padding-bottom:56.25%;position:relative;margin-bottom:1.65em}.video-wrapper iframe,.video-wrapper object,.video-wrapper embed{position:absolute;top:0;left:0;width:100%;height:100%}@media only screen and (max-width:767px){.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{width:100%;float:none;margin-left:0;margin-bottom:1.65em}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{left:0}.units-row-end .unit-push-right,.units-row .unit-push-right{float:none}.units-mobile-50 .unit-80,.units-mobile-50 .unit-75,.units-mobile-50 .unit-70,.units-mobile-50 .unit-66,.units-mobile-50 .unit-60,.units-mobile-50 .unit-40,.units-mobile-50 .unit-30,.units-mobile-50 .unit-33,.units-mobile-50 .unit-25,.units-mobile-50 .unit-20{float:left;margin-left:3%;width:48.5%}.units-mobile-50 .unit-80:first-child,.units-mobile-50 .unit-75:first-child,.units-mobile-50 .unit-70:first-child,.units-mobile-50 .unit-66:first-child,.units-mobile-50 .unit-60:first-child,.units-mobile-50 .unit-40:first-child,.units-mobile-50 .unit-30:first-child,.units-mobile-50 .unit-33:first-child,.units-mobile-50 .unit-25:first-child,.units-mobile-50 .unit-20:first-child{margin-left:0}}@media only screen and (max-width:767px){.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{margin-left:0;margin-bottom:1.65em}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{float:none;margin-left:0;width:100%}.blocks-mobile-50>li,.blocks-mobile-33>li{float:left;margin-left:3%}.blocks-mobile-33,.blocks-mobile-50{margin-left:-3%}.blocks-mobile-50>li{width:47%}.blocks-mobile-33>li{width:30.333333333333332%}}@media only screen and (max-width:767px){.nav-h,.nav-h ul,.nav-h ul li,.nav-h,.nav-g,.nav-g ul,.nav-g ul li,.nav-g,.nav-v ul,.nav-v,.nav-tabs ul,.nav-pills,.nav-pills ul{float:none}.nav-h ul li,.nav-g ul li{margin:0;margin-bottom:1px}.nav-tabs ul li{float:none;margin-right:0}.nav-tabs ul li a,.nav-tabs ul li span,.nav-tabs ul li .active{margin-top:0;bottom:0;padding:8px 12px 9px 12px;border:1px solid #ddd;border-bottom:0}.nav-tabs-v{border-bottom:1px solid #ddd;border-right:0}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:0}}@media only screen and (max-width:767px){.forms-columnar label{float:none;text-align:left;width:auto;margin-bottom:0}.forms-push label{position:relative}.forms-push,.forms-columnar .forms-section{padding-left:0}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:0}}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid #dedede;cursor:pointer;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.tabA{background:#dedede;border-bottom:0px solid #dedede;padding-bottom:6px;}.tabB{background:#fff;border-bottom:1px solid #fff;}.tabContent{background-color:#fff;border:1px solid #dedede;margin-top:-24px;padding:15px;display:none;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.ds_box{background-color:#FFF;border:1px solid rgb(179, 219, 243);position:absolute;z-index:32767;}.ds_tbl{background-color:#FFF;}.ds_head{background-color:rgb(223, 240, 250);color:rgb(18, 77, 114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18, 77, 114);color:rgb(223, 240, 250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:1px solid rgb(179, 219, 243);-webkit-border-radius:25px;-moz-border-radius:25px;border-radius:25px;} #root{color:#a1a1a1;} #root a{text-decoration: none;} #root a img {width:32px;height:32px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"], select, textarea {-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"] {height:25px;border: 1px solid #a1a1a1;}.msgFlash{position:absolute;width:70%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.close-right{float:right;margin-top:-35px;cursor:pointer}.closed{display:none}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}article.unit-100{border: 1px solid #dedede;padding:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-g ul li form.text-right input {width:170px;height:24px;}.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);background-color:#49afcd;background-image:-moz-linear-gradient(top, #5bc0de, #2f96b4);background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#5bc0de), to(#2f96b4));background-image:-webkit-linear-gradient(top, #5bc0de, #2f96b4);background-image:-o-linear-gradient(top, #5bc0de, #2f96b4);background-image:linear-gradient(to bottom, #5bc0de, #2f96b4);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff5bc0de\', endColorstr=\'#ff2f96b4\', GradientType=0);border-color:#2f96b4 #2f96b4 #1f6377;border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);*background-color:#2f96b4;filter:progid:DXImageTransform.Microsoft.gradient(enabled = false);}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#2f96b4;*background-color:#2a85a0;}.btn-info:active,.btn-info.active{background-color:#24748c \9;}.btn-info:hover .ok{color:#fff;}.signature{clear:both;margin-top: 40px;border-top: 1px solid #dedede;}.messageTD div fieldset {border-left:3px solid #dedede;}.selectColor{position:relative;display: inline-block; border-radius: 3px; width: 16px; height: 16px; line-height: 18px; cursor: pointer;}.text-warning{padding:5px;background-color:#e2e468;border:1px solid red;}';
+		$main = 'html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}html,body,div,span,object,iframe,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video,h1,h2,h3,h4,h5,h6{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent;font-style:normal}a:active,a:hover{outline:0}button,input{line-height:normal}button,select{text-transform:none}article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}blockquote,q{quotes:none}blockquote p:before,blockquote p:after,q:before,q:after{content:\'\';content:none}table{border-collapse:collapse;border-spacing:0}caption,th,td{text-align:left;vertical-align:top;font-weight:normal}thead th,thead td{font-weight:bold;vertical-align:bottom}a img,th img,td img{vertical-align:top}button,input,select,textarea{margin:0}textarea{overflow:auto;vertical-align:top}button{width:auto;overflow:visible}input[type=button],input[type=submit],button{cursor:pointer}input[type="radio"],input[type="checkbox"]{font-size:110%;box-sizing:border-box}input[type="search"]{-webkit-appearance:textfield;-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}hr{display:block;height:1px;border:0;border-top:1px solid #ddd}.group:after{content:".";display:block;height:0;clear:both;visibility:hidden}body{background:#fff;color:#333;font-size:.875em;line-height:1.65em;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif}a{color:#369}a:focus,a:hover{color:#ef6465}h1,h2,h3,h4,h5,h6{color:#222;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;font-weight:bold}h1{font-size:2.142em;line-height:1.1333em;margin-bottom:.2666em}h2{font-size:1.714em;line-height:1.1666em;margin-bottom:.4555em}h3{font-size:1.429em;line-height:1.4em;margin-bottom:.4em}h4{font-size:1.143em;line-height:1.65em;margin-bottom:.4555em}h5{font-size:1em;line-height:1.65em;margin-bottom:.5em}h6{font-size:.857em;line-height:1.5em;margin-bottom:.4555em;text-transform:uppercase}hgroup h1,hgroup h2,hgroup h3,hgroup h4,hgroup h5,hgroup h6{margin-bottom:0}hgroup{margin-bottom:.6em}.subheader{font-weight:300;color:#888}h1.subheader{font-size:1.357em;line-height:1.263em}h2.subheader{font-size:1.214em;line-height:1.412em}h3.subheader{font-size:1em;line-height:1.286em}h4.subheader,h5.subheader{font-size:.95em;line-height:1.385em}h6.subheader{font-size:.8em;line-height:1.364em}p,ul,ol,dl,dd,dt,blockquote,td,th{line-height:1.65em}ul,ol,ul ul,ol ol,ul ol,ol ul{margin:0 0 0 2em}ol ol li{list-style-type:lower-alpha}ol ol ol li{list-style-type:lower-roman}p,ul,ol,dl,blockquote,hr,pre,table,form,fieldset,figure{margin-bottom:1.65em}dl dt{font-weight:bold}dd{margin-left:1em}blockquote{margin-bottom:1.65em;position:relative;color:#777;padding-left:1.65em;margin-left:1.65em;border-left:1px solid #ddd}blockquote small,cite{color:#999;font-style:normal}blockquote p{margin-bottom:.5em}small,blockquote cite{font-size:.85em;line-height:1}blockquote .pull-right,.units-row blockquote .pull-right{float:none;text-align:right;display:block}address{font-style:italic}del{text-decoration:line-through}abbr[title],dfn[title]{border-bottom:1px dotted #000;cursor:help}strong,b{font-weight:bold}em,i{font-style:italic}sub,sup{font-size:.7em;line-height:0;position:relative}sup{top:-0.5em}sub{bottom:-0.25em}figcaption{font-size:.85em;font-style:italic}ins,mark{background-color:#fe5;color:#000;text-decoration:none}pre,code,kbd,samp{font-size:90%;font-family:Consolas,Monaco,monospace,sans-serif}pre{font-size:90%;color:#444;background:#f5f5f5;padding:.85em;overflow:auto}code{padding:2px 3px;display:inline-block;line-height:1;background:#f5f5f5;border:1px solid #ddd}kbd{padding:2px 6px 1px 6px;line-height:1;display:inline-block;border-radius:.3em;box-shadow:0 2px 0 rgba(0,0,0,0.2),0 0 0 1px #fff inset;background-color:#fafafa;border-color:#ccc #ccc white;border-style:solid solid none;border-width:1px 1px medium;color:#444;font-weight:normal;white-space:nowrap}input[type="text"],input[type="password"],input[type="email"],textarea{font-size:.95em}fieldset{padding:1.65em;margin-bottom:1.65em;border:1px solid #e3e3e3}legend{font-weight:bold;padding:0 1em}.com{color:#888}.lit{color:#195f91}.pun,.opn,.clo{color:#93a1a1}.fun{color:#005cb9}.str,.atv{color:#8a6343}.kwd,.linenums,.tag{color:#000}.typ,.atn,.dec,.var{color:#666}.pln{color:#5890ad}tfoot th,tfoot td{background-color:#f2f2f2}th,td{border-bottom:1px solid #eee;padding:.5em .8em}table caption{text-transform:uppercase;padding:0 1em;color:#999;font-size:.85em}table.table-flat td,table.table-flat th{border:0;padding:0}table.table-simple td,table.table-simple th{border:0;padding:.825em .7em .825em 0}table.table-simple caption{padding-left:0}table.table-bordered td,table.table-bordered th{border:1px solid #ddd}table.table-stroked td,table.table-stroked th{border-bottom:1px solid #eee}table.table-striped tbody tr:nth-child(odd) td{background-color:#f5f5f5}table.table-hovered tbody tr:hover td,table.table-hovered thead tr:hover th{background-color:#f6f6f6}.table-container{width:100%;overflow:auto;margin-bottom:1.65em}.table-container table{margin-bottom:0}.table-container::-webkit-scrollbar{-webkit-appearance:none;width:14px;height:14px}.table-container::-webkit-scrollbar-thumb{border-radius:8px;border:3px solid #fff;background-color:rgba(0,0,0,0.3)}.lists-simple{margin-left:0;list-style:none}.lists-simple ul,.lists-simple ol{list-style:none;margin-left:1.5em}.lists-dash{margin-left:18px}.lists-dash li{list-style-type:none}.lists-dash li:before{content:"\2013";position:relative;margin-left:-10px;left:-7px}.forms label{display:block;margin-bottom:1.65em}.forms input[type="text"],.forms input[type="password"],.forms input[type="email"],.forms input[type="url"],.forms input[type="phone"],.forms input[type="tel"],.forms input[type="number"],.forms input[type="datetime"],.forms input[type="date"],.forms input[type="search"],.forms input[type="range"],.forms input[type="file"],.forms input[type="datetime-local"],.forms textarea,.forms select,.forms button{display:block}.forms-inline input[type="text"],.forms-inline input[type="password"],.forms-inline input[type="email"],.forms-inline input[type="url"],.forms-inline input[type="phone"],.forms-inline input[type="tel"],.forms-inline input[type="number"],.forms-inline input[type="datetime"],.forms-inline input[type="date"],.forms-inline input[type="search"],.forms-inline input[type="range"],.forms-inline input[type="file"],.forms-inline input[type="datetime-local"],.forms-inline textarea,.forms-inline select,.forms-inline button,.forms-inline-list input[type="text"],.forms-inline-list input[type="password"],.forms-inline-list input[type="email"],.forms-inline-list input[type="url"],.forms-inline-list input[type="phone"],.forms-inline-list input[type="tel"],.forms-inline-list input[type="number"],.forms-inline-list input[type="datetime"],.forms-inline-list input[type="date"],.forms-inline-list input[type="search"],.forms-inline-list input[type="range"],.forms-inline-list input[type="file"],.forms-inline-list input[type="datetime-local"],.forms-inline-list textarea,.forms-inline-list select,.forms-inline-list button{display:inline-block}.forms-list,.forms-inline-list{margin:0;padding:0;margin-bottom:1.65em;list-style:none}.forms-list label,.forms-inline-list li,.forms-inline-list li label{display:inline-block;margin-bottom:0}.forms-inline-list li label{margin-right:1.65em}.forms-list li{margin-bottom:6px}.forms-desc{margin-top:4px;color:#999;font-size:.85em;line-height:1.4em}.forms fieldset{padding-bottom:.5em;border-radius:.5em}fieldset.forms-row{padding:0;border:0;margin-bottom:0}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;float:none;width:auto;text-align:left;margin-right:0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1) inset;-webkit-transition:border ease .5s;-moz-transition:border ease .5s;-o-transition:border ease .5s;transition:border ease .5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.error,.success{margin-left:5px;font-weight:normal;font-size:.85em}input.input-error,textarea.input-error,select.input-error,.input-error{border-color:#da3e5a;box-shadow:0 0 0 2px rgba(218,62,90,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-success,textarea.input-success,select.input-success,.input-success{border-color:#18a011;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-gray,textarea.input-gray,select.input-gray,.input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input:focus,textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2) inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}.input-append,.input-prepend{display:inline-block;background-color:#eee;height:23px;border:1px solid #ccc;margin:0;padding:1px 8px;color:#333;font-size:1em;line-height:23px}.input-prepend{margin-right:-1px}.input-append{position:relative;z-index:1;margin-left:-1px}:-moz-placeholder{color:#999}::-moz-placeholder{color:#999}:-ms-input-placeholder{color:#999}::-webkit-input-placeholder{color:#999;padding:2px}.color-black{color:#000}.color-gray-dark{color:#555}.color-gray{color:#777}.color-gray-light{color:#999}.color-white{color:#fff}.color-red,.error{color:#ef6465}.color-green,.success{color:#90af45}.color-orange{color:#f48a30}.color-green{color:#90af45}.color-blue{color:#1c7ab4}.color-yellow{color:#f3c835}a.color-white:focus,a.color-white:hover{color:#bfbfbf;color:rgba(255,255,255,0.6)}a.color-green:focus,a.color-green:hover,a.color-red:focus,a.color-red:hover,a.color-error:focus,a.color-error:hover{color:#000}.label,.label-badge{border-radius:2em;border:1px solid #ddd;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em .6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-black{border-color:#000;background-color:#2e2e2e;background-image:-moz-linear-gradient(top,#4d4d4d,#000);background-image:-ms-linear-gradient(top,#4d4d4d,#000);background-image:-webkit-gradient(linear,0 0,0 100%,from(#4d4d4d),to(#000));background-image:-webkit-linear-gradient(top,#4d4d4d,#000);background-image:-o-linear-gradient(top,#4d4d4d,#000);background-image:linear-gradient(top,#4d4d4d,#000);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#4d4d4d\',endColorstr=\'#000\',GradientType=0)}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-black{text-shadow:0 -1px 0 #000}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0 -1px 0 rgba(0,0,0,0.24)}.btn-black,.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-black:hover,.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-black:hover{background:#000}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-round{border-radius:20px}.btn-active,.btn-active:hover,.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{filter:alpha(opacity=100);-moz-opacity:1;opacity:1;background:#d1d1d1;border:1px solid #b3b3b3;text-shadow:0 1px 1px #fff}.btn-active,.btn-active:hover{color:#666}.btn.disabled,.btn[disabled],.btn-disabled,.btn-disabled:hover{color:#999}.btn:focus .halflings,.btn:hover .halflings{color:#555}.btn-black:hover .halflings,.btn-red:hover .halflings,.btn-orange:hover .halflings,.btn-green:hover .halflings,.btn-blue:hover .halflings,.btn-yellow:hover .halflings{color:rgba(255,255,255,0.8)}.btn-disabled:hover .halflings{color:#999}.btn-active .halflings{color:#555}.btn-single,.btn-group{display:inline-block;margin-right:2px;vertical-align:bottom}.btn-single:after,.btn-group:after{content:".";display:block;height:0;clear:both;visibility:hidden}.btn-single>.btn,.btn-single>input,.btn-group>.btn,.btn-group>input{float:left;border-radius:0;margin-left:-1px}.btn-single>.btn{border-radius:4px}.btn-group>.btn:first-child{border-radius:4px 0 0 4px}.btn-group>.btn:last-child{border-radius:0 4px 4px 0}.btn-group>.btn.btn-round:first-child,.btn-group>.input-search:first-child{border-radius:15px 0 0 15px}.btn-group>.btn.btn-round:last-child,.btn-group>.input-search:last-child{border-radius:0 15px 15px 0}.btn-append,.btn-group .btn{padding:7px 1.1em 6px 1.1em}.btn-append{position:relative;top:-1px;margin-left:-2px;border-radius:0 4px 4px 0}@-moz-document url-prefix("http://"){input[type=submit].btn::-moz-focus-inner,button.btn::-moz-focus-inner{border:0;padding:0}}.first-letter::first-letter {font-size:4em;line-height:.75em;float:left;position:relative;padding-right:6px;margin-top:-2px;font-weight:normal;color:#333}.supersmall{font-size:.7em}.small{font-size:.85em}.big{font-size:1.2em}input.big{padding:2px 0;font-size:1.2em}.text-centered{text-align:center}.text-right{text-align:right}.text-uppercase{text-transform:uppercase}.nowrap{white-space:nowrap}.zero{margin:0!important;padding:0!important}.clear{clear:both}.last{margin-right:0!important}.pause{margin-bottom:.75em!important}.end{margin-bottom:0!important}.handle{cursor:move}.normal{font-weight:normal}.bold{font-weight:bold}.italic{font-style:italic}.req,.required{font-weight:normal;color:#ef6465}.highlight{background-color:#ffff9e!important}.close{padding:4px 6px;line-height:1;font-size:18px;cursor:pointer;color:#000;text-decoration:none;opacity:.4}.close:before{content:\'\00D7\'}.close:hover{color:#000;opacity:1}.image-left{float:left;margin:0 1em 1em 0}.image-right{float:right;margin:0 0 1em 1em}.image-left img,.image-right img{position:relative;top:.4em}.image-centered{text-align:center}.image-container:after{content:".";display:block;height:0;clear:both;visibility:hidden}.image-content{overflow:hidden}.nav-h,.nav-g{margin:20px 0 1.65em 0;height:50px;padding:10px;border:1px solid #dedede;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-h:after,.nav-g:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul,.nav-g ul{list-style:none;margin:0}.nav-h ul:after,.nav-g ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-h ul li,.nav-g ul li{float:right;margin-right:1.5em}.nav-h ul li a,.nav-h ul li span,.nav-g ul li a,.nav-g ul li span{display:block}.nav-h ul li a,.nav-g ul li a{text-decoration:none}.nav-h ul li a:hover,.nav-g ul li a:hover{color:#ef6465;text-decoration:underline}.nav-h ul li span,.nav-g ul li span{color:#999}.nav-v{margin-bottom:1.65em}.nav-v ul{list-style:none;margin:0}.nav-v ul li{border-bottom:1px solid #eee}.nav-v ul li ul{margin-left:2em;font-size:.95em}.nav-v ul li ul li:last-child{border-bottom:0}.nav-v ul li ul li a,.nav-v ul li ul li span{padding:4px 0}.nav-v ul li a,.nav-v ul li span{display:block;padding:5px 0}.nav-v ul li a{text-decoration:none}.nav-v ul li a:hover{color:#ef6465;text-decoration:underline}.nav-v ul li span{color:#999}.nav-stacked ul{border:1px solid #eee;border-bottom:0}.nav-stacked ul li a,.nav-stacked ul li span{padding:5px 10px}.nav-stacked ul li a:hover{background-color:#f5f5f5}.nav-stats li{position:relative}.nav-stats li a,.nav-stats li span{padding-right:50px}.nav-stats .label,.nav-stats .label-badge{position:absolute;top:50%;margin-top:-8px;right:0}.nav-stats.nav-stacked .label,.nav-stats.nav-stacked .label-badge{right:4px}.nav-stats .label.label-data,.nav-stacked .label-data{margin-top:-6px;right:6px}.nav-v h1,.nav-v h2,.nav-v h3,.nav-v h4,.nav-v h5,.nav-v h6{margin-top:1.5em;margin-bottom:3px}.nav-v h1:first-child,.nav-v h2:first-child,.nav-v h3:first-child,.nav-v h4:first-child,.nav-v h5:first-child,.nav-v h6:first-child{margin-top:0}.breadcrumbs{margin-bottom:1.65em}.breadcrumbs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs, .breadcrumbs ul{font-size:.9em;color:#999;list-style:none;margin:0;}.breadcrumbs:after, .breadcrumbs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.breadcrumbs li,.breadcrumbs ul li{float:left;margin-right:3px}.breadcrumbs li+li:before{content:" > ";color:#aaa;font-size:12px;margin:0 3px;position:relative;top:-1px}.breadcrumbs-sections li+li:before{content:" | ";top:0}.breadcrumbs-path li+li:before{content:" / ";top:0}.breadcrumbs li a, .breadcrumbs ul li a{color:#000;text-decoration:none}.breadcrumbs li a.active, .breadcrumbs ul li a.active{color:#999}.breadcrumbs li a:hover, .breadcrumbs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs{border-bottom:1px solid #e3e3e3;margin-bottom:1.65em}.nav-tabs:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul{list-style:none;margin:0}.nav-tabs ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-tabs ul li{float:left;margin-right:2px}.nav-tabs ul li a,.nav-tabs ul li span{display:block;line-height:1;padding:8px 12px 9px 12px}.nav-tabs ul li a{color:#999;text-decoration:none}.nav-tabs ul li a:focus,.nav-tabs ul li a:hover{color:#000;text-decoration:underline}.nav-tabs ul li .active,.nav-tabs ul li span{color:#000;background:#fff;margin-top:-2px;position:relative;padding:8px 11px 9px 11px;border:1px solid #ddd;border-bottom:1px solid #fff;bottom:-1px}.nav-tabs ul li .active{cursor:default}.nav-tabs-v{border:0;border-right:1px solid #e3e3e3}.nav-tabs-v ul li{float:none}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:-3px;border:1px solid #ddd;border-right:1px solid #fff}.nav-pills{margin-bottom:1.15em}.nav-pills:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul{list-style:none;margin:0}.nav-pills ul:after{content:".";display:block;height:0;clear:both;visibility:hidden}.nav-pills ul li{float:left;margin-right:.5em;margin-bottom:.6499999999999999em}.nav-pills ul li a,.nav-pills ul li span{display:block;padding:6px 15px;line-height:1;border-radius:15px}.nav-pills ul li a{color:#777;text-decoration:none;background-color:#f3f4f5}.nav-pills ul li a:hover{color:#555;text-decoration:underline}.nav-pills ul li .active,.nav-pills ul li .active:hover,.nav-pills ul li span{color:#777;padding:5px 14px;border:1px solid #ddd;background:0}.nav-pills ul li .active,.nav-pills ul li .active:hover{cursor:default;text-decoration:none}.pagination{position:relative;left:-9px;margin-left:0;list-style:none}.pagination:after{content:".";display:block;height:0;clear:both;visibility:hidden}.pagination li{float:left;margin-right:2px}.pagination li a,.pagination li span{display:block;padding:7px 9px;line-height:1;border-radius:2em;color:#000;text-decoration:none}.pagination span{border:1px solid #ddd}.pagination li a:focus,.pagination li a:hover{text-decoration:underline;background-color:#333;color:#fff}.pagination li.pagination-older{margin-left:7px}.pagination li.pagination-older a,.pagination li.pagination-newest a,.pagination li.pagination-older span,.pagination li.pagination-newest span{padding:5px 15px;border-radius:2em;border:1px solid #ddd}.pagination li.pagination-older span,.pagination li.pagination-newest span{border-color:#eee;color:#999}.pagination li.pagination-pull{float:right;margin-right:-7px;margin-left:.5em}.message{position:relative;padding:9px 13px;border:1px solid #f7dc7d;border-radius:5px;margin-bottom:1.65em;color:#9f7d09;background-color:#fdf7e2}.message-error{color:#c01415;border-color:#f9c0c1;background-color:#fdefef}.message-success{color:#546628;border-color:#d1dfae;background-color:#f0f5e5}.message-info{color:#124d72;border-color:#b3dbf3;background-color:#dff0fa}.message header{font-weight:bold;font-size:1.2em}.message .close{cursor:pointer;position:absolute;right:3px;top:6px}.units-container:after,.units-row-end:after,.units-row:after{content:".";display:block;height:0;clear:both;visibility:hidden}.units-container{padding-top:1px;margin-top:-1px}.units-container,.units-row-end,.units-row{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row{margin-bottom:1.5em}.units-row-end{margin-bottom:0}.width-100,.unit-100{width:100%}.width-80,.unit-80{width:80%}.width-75,.unit-75{width:75%}.width-70,.unit-70{width:70%}.width-66,.unit-66{width:66.6%}.width-60,.unit-60{width:60%}.width-50,.unit-50{width:50%}.width-40,.unit-40{width:40%}.width-33,.unit-33{width:33.3%}.width-30,.unit-30{width:30%}.width-25,.unit-25{width:25%}.width-20,.unit-20{width:20%}input.width-100,input.unit-100{width:98.6%}textarea.width-100,textarea.unit-100{width:98.8%}select.width-100,select.unit-100{width:99.4%}.width-100,.width-80,.width-75,.width-70,.width-66,.width-60,.width-50,.width-40,.width-33,.width-30,.width-25,.width-20,.units-row .unit-100,.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-100,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{float:left;margin-left:3%}.units-row .unit-80:first-child,.units-row .unit-75:first-child,.units-row .unit-70:first-child,.units-row .unit-66:first-child,.units-row .unit-60:first-child,.units-row .unit-50:first-child,.units-row .unit-40:first-child,.units-row .unit-33:first-child,.units-row .unit-30:first-child,.units-row .unit-25:first-child,.units-row .unit-20:first-child,.units-row-end .unit-100:first-child,.units-row-end .unit-80:first-child,.units-row-end .unit-75:first-child,.units-row-end .unit-70:first-child,.units-row-end .unit-66:first-child,.units-row-end .unit-60:first-child,.units-row-end .unit-50:first-child,.units-row-end .unit-40:first-child,.units-row-end .unit-33:first-child,.units-row-end .unit-30:first-child,.units-row-end .unit-25:first-child,.units-row-end .unit-20:first-child{margin-left:0}.units-row .unit-80,.units-row-end .unit-80{width:79.4%}.units-row .unit-75,.units-row-end .unit-75{width:74.25%}.units-row .unit-70,.units-row-end .unit-70{width:69.1%}.units-row .unit-66,.units-row-end .unit-66{width:65.66666666666666%}.units-row .unit-60,.units-row-end .unit-60{width:58.800000000000004%}.units-row .unit-50,.units-row-end .unit-50{width:48.5%}.units-row .unit-40,.units-row-end .unit-40{width:38.2%}.units-row .unit-30,.units-row-end .unit-30{width:27.9%}.units-row .unit-33,.units-row-end .unit-33{width:31.333333333333332%}.units-row .unit-25,.units-row-end .unit-25{width:22.75%}.units-row .unit-20,.units-row-end .unit-20{width:17.6%}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{position:relative}.unit-push-30{left:30.9%}.unit-push-80{left:82.4%}.unit-push-75{left:77.25%}.unit-push-70{left:72.1%}.unit-push-66{left:68.66666666666666%}.unit-push-60{left:61.800000000000004%}.unit-push-50{left:51.5%}.unit-push-40{left:41.2%}.unit-push-33{left:34.33333333333333%}.unit-push-25{left:25.75%}.unit-push-20{left:20.6%}.unit-push-right{float:right}.centered,.unit-centered{float:none!important;margin:0 auto!important}.unit-padding{padding:1.65em}.units-padding .unit-100,.units-padding .unit-80,.units-padding .unit-75,.units-padding .unit-70,.units-padding .unit-66,.units-padding .unit-60,.units-padding .unit-50,.units-padding .unit-40,.units-padding .unit-33,.units-padding .unit-30,.units-padding .unit-25,.units-padding .unit-20{padding:1.65em}.units-split .unit-80,.units-split .unit-75,.units-split .unit-70,.units-split .unit-66,.units-split .unit-60,.units-split .unit-50,.units-split .unit-40,.units-split .unit-33,.units-split .unit-30,.units-split .unit-25,.units-split .unit-20{margin-left:0}.units-split .unit-80{width:80%}.units-split .unit-75{width:75%}.units-split .unit-70{width:70%}.units-split .unit-66{width:66.6%}.units-split .unit-60{width:60%}.units-split .unit-50{width:50%}.units-split .unit-40{width:40%}.units-split .unit-33{width:33.3%}.units-split .unit-30{width:30%}.units-split .unit-25{width:25%}.units-split .unit-20{width:20%}.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{padding-left:0;list-style:none;margin-left:-3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2:after,.blocks-3:after,.blocks-4:after,.blocks-5:after,.blocks-6:after{content:".";display:block;height:0;clear:both;visibility:hidden}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{height:auto;float:left;margin-bottom:1.65em;margin-left:3%;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.blocks-2>li{width:47%}.blocks-3>li{width:30.333333333333332%}.blocks-4>li{width:22%}.blocks-5>li{width:17%}.blocks-6>li{width:13.666666666666666%}.block-first{clear:both}@media(min-width:768px){.desktop-hide{display:none}}@media only screen and (max-width:767px){.mobile-text-centered{text-align:center}.mobile-hide{display:none}}img,video{max-width:100%;height:auto}img{-ms-interpolation-mode:bicubic}audio{width:100%}.video-wrapper{height:0;padding-bottom:56.25%;position:relative;margin-bottom:1.65em}.video-wrapper iframe,.video-wrapper object,.video-wrapper embed{position:absolute;top:0;left:0;width:100%;height:100%}@media only screen and (max-width:767px){.units-row .unit-80,.units-row .unit-75,.units-row .unit-70,.units-row .unit-66,.units-row .unit-60,.units-row .unit-50,.units-row .unit-40,.units-row .unit-33,.units-row .unit-30,.units-row .unit-25,.units-row .unit-20,.units-row-end .unit-80,.units-row-end .unit-75,.units-row-end .unit-70,.units-row-end .unit-66,.units-row-end .unit-60,.units-row-end .unit-50,.units-row-end .unit-40,.units-row-end .unit-33,.units-row-end .unit-30,.units-row-end .unit-25,.units-row-end .unit-20{width:100%;float:none;margin-left:0;margin-bottom:1.65em}.unit-push-80,.unit-push-75,.unit-push-70,.unit-push-66,.unit-push-60,.unit-push-50,.unit-push-40,.unit-push-33,.unit-push-30,.unit-push-25,.unit-push-20{left:0}.units-row-end .unit-push-right,.units-row .unit-push-right{float:none}.units-mobile-50 .unit-80,.units-mobile-50 .unit-75,.units-mobile-50 .unit-70,.units-mobile-50 .unit-66,.units-mobile-50 .unit-60,.units-mobile-50 .unit-40,.units-mobile-50 .unit-30,.units-mobile-50 .unit-33,.units-mobile-50 .unit-25,.units-mobile-50 .unit-20{float:left;margin-left:3%;width:48.5%}.units-mobile-50 .unit-80:first-child,.units-mobile-50 .unit-75:first-child,.units-mobile-50 .unit-70:first-child,.units-mobile-50 .unit-66:first-child,.units-mobile-50 .unit-60:first-child,.units-mobile-50 .unit-40:first-child,.units-mobile-50 .unit-30:first-child,.units-mobile-50 .unit-33:first-child,.units-mobile-50 .unit-25:first-child,.units-mobile-50 .unit-20:first-child{margin-left:0}}@media only screen and (max-width:767px){.blocks-2,.blocks-3,.blocks-4,.blocks-5,.blocks-6{margin-left:0;margin-bottom:1.65em}.blocks-2>li,.blocks-3>li,.blocks-4>li,.blocks-5>li,.blocks-6>li{float:none;margin-left:0;width:100%}.blocks-mobile-50>li,.blocks-mobile-33>li{float:left;margin-left:3%}.blocks-mobile-33,.blocks-mobile-50{margin-left:-3%}.blocks-mobile-50>li{width:47%}.blocks-mobile-33>li{width:30.333333333333332%}}@media only screen and (max-width:767px){.nav-h,.nav-h ul,.nav-h ul li,.nav-h,.nav-g,.nav-g ul,.nav-g ul li,.nav-g,.nav-v ul,.nav-v,.nav-tabs ul,.nav-pills,.nav-pills ul{float:none}.nav-h ul li,.nav-g ul li{margin:0;margin-bottom:1px}.nav-tabs ul li{float:none;margin-right:0}.nav-tabs ul li a,.nav-tabs ul li span,.nav-tabs ul li .active{margin-top:0;bottom:0;padding:8px 12px 9px 12px;border:1px solid #ddd;border-bottom:0}.nav-tabs-v{border-bottom:1px solid #ddd;border-right:0}.nav-tabs-v ul li span{margin-top:0;bottom:0;margin-right:0}}@media only screen and (max-width:767px){.forms-columnar label{float:none;text-align:left;width:auto;margin-bottom:0}.forms-push label{position:relative}.forms-push,.forms-columnar .forms-section{padding-left:0}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:0}}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid #dedede;cursor:pointer;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.tabA{background:#dedede;border-bottom:0px solid #dedede;padding-bottom:6px;}.tabB{background:#fff;border-bottom:1px solid #fff;}.tabContent{background-color:#fff;border:1px solid #dedede;margin-top:-24px;padding:15px;display:none;-moz-border-radius-topright: 5px;-webkit-border-top-right-radius: 5px;border-top-right-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-top-left-radius: 5px;}.ds_box{background-color:#FFF;border:1px solid rgb(179, 219, 243);position:absolute;z-index:32767;}.ds_tbl{background-color:#FFF;}.ds_head{background-color:rgb(223, 240, 250);color:rgb(18, 77, 114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18, 77, 114);color:rgb(223, 240, 250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:1px solid rgb(179, 219, 243);-webkit-border-radius:25px;-moz-border-radius:25px;border-radius:25px;} #root{color:#a1a1a1;} #root a{text-decoration: none;} #root a img {width:32px;height:32px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"], select, textarea {-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;}input[type="text"],input[type="password"],input[type="date"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="datetime-local"],input[type="search"],input[type="range"] {height:25px;border: 1px solid #a1a1a1;}.msgFlash{position:absolute;width:70%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px}.close-right{float:right;margin-top:-35px;cursor:pointer}.closed{display:none}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}article.unit-100{border: 1px solid #dedede;padding:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}.nav-g ul li form.text-right input {width:170px;height:24px;}.btn-info{color:#fff;text-shadow:0 -1px 0 rgba(0, 0, 0, 0.25);background-color:#49afcd;background-image:-moz-linear-gradient(top, #5bc0de, #2f96b4);background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#5bc0de), to(#2f96b4));background-image:-webkit-linear-gradient(top, #5bc0de, #2f96b4);background-image:-o-linear-gradient(top, #5bc0de, #2f96b4);background-image:linear-gradient(to bottom, #5bc0de, #2f96b4);background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff5bc0de\', endColorstr=\'#ff2f96b4\', GradientType=0);border-color:#2f96b4 #2f96b4 #1f6377;border-color:rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);*background-color:#2f96b4;filter:progid:DXImageTransform.Microsoft.gradient(enabled = false);}.btn-info:hover,.btn-info:focus,.btn-info:active,.btn-info.active,.btn-info.disabled,.btn-info[disabled]{color:#fff;background-color:#2f96b4;*background-color:#2a85a0;}.btn-info:active,.btn-info.active{background-color:#24748c \9;}.btn-info:hover .ok{color:#fff;}.signature{clear:both;margin-top: 40px;border-top: 1px solid #dedede;}.messageTD div fieldset {border-left:3px solid #dedede;}.selectColor{position:relative;display: inline-block; border-radius: 3px; width: 16px; height: 16px; line-height: 18px; cursor: pointer;}.text-warning{padding:5px;background-color:#e2e468;border:1px solid red;}.editby{margin-top:10px;font-style:italic;color:#a1a1a1;}';
 
-		$halflings = '/*! * * Project: GLYPHICONS HALFLINGS * Author: Jan Kovarik - www.glyphicons.com * Twitter: @jankovarik * */html,html .halflings{-webkit-font-smoothing:antialiased!important}@font-face{font-family:\'Glyphicons Halflings\';src:url(\'../fonts/glyphiconshalflings-regular.eot\');src:url(\'../fonts/glyphiconshalflings-regular.eot?#iefix\') format(\'embedded-opentype\'),url(\'../fonts/glyphiconshalflings-regular.woff\') format(\'woff\'),url(\'../fonts/glyphiconshalflings-regular.ttf\') format(\'truetype\'),url(\'../fonts/glyphiconshalflings-regular.svg#glyphicons_halflingsregular\') format(\'svg\');font-weight:normal;font-style:normal}.halflings{font-family:\'Glyphicons Halflings\';font-size:11px/1em;font-style:normal;display:inline-block;line-height:.8em}.halflings.big{position:relative;top:2px}.halflings.glass:before{content:"\e001"}.halflings.music:before{content:"\e002"}.halflings.search:before{content:"\e003"}.halflings.envelope:before{content:"\2709"}.halflings.heart:before{content:"\e005"}.halflings.star:before{content:"\e006"}.halflings.star-empty:before{content:"\e007"}.halflings.user:before{content:"\e008"}.halflings.film:before{content:"\e009"}.halflings.th-large:before{content:"\e010"}.halflings.th:before{content:"\e011"}.halflings.th-list:before{content:"\e012"}.halflings.ok:before{content:"\e013"}.halflings.remove:before{content:"\e014"}.halflings.zoom-in:before{content:"\e015"}.halflings.zoom-out:before{content:"\e016"}.halflings.off:before{content:"\e017"}.halflings.signal:before{content:"\e018"}.halflings.cog:before{content:"\e019"}.halflings.trash:before{content:"\e020"}.halflings.home:before{content:"\e021"}.halflings.file:before{content:"\e022"}.halflings.time:before{content:"\e023"}.halflings.road:before{content:"\e024"}.halflings.download-alt:before{content:"\e025"}.halflings.download:before{content:"\e026"}.halflings.upload:before{content:"\e027"}.halflings.inbox:before{content:"\e028"}.halflings.play-circle:before{content:"\e029"}.halflings.repeat:before{content:"\e030"}.halflings.refresh:before{content:"\e031"}.halflings.list-alt:before{content:"\e032"}.halflings.lock:before{content:"\e033"}.halflings.flag:before{content:"\e034"}.halflings.headphones:before{content:"\e035"}.halflings.volume-off:before{content:"\e036"}.halflings.volume-down:before{content:"\e037"}.halflings.volume-up:before{content:"\e038"}.halflings.qrcode:before{content:"\e039"}.halflings.barcode:before{content:"\e040"}.halflings.tag:before{content:"\e041"}.halflings.tags:before{content:"\e042"}.halflings.book:before{content:"\e043"}.halflings.bookmark:before{content:"\e044"}.halflings.print:before{content:"\e045"}.halflings.camera:before{content:"\e046"}.halflings.font:before{content:"\e047"}.halflings.bold:before{content:"\e048"}.halflings.italic:before{content:"\e049"}.halflings.text-height:before{content:"\e050"}.halflings.text-width:before{content:"\e051"}.halflings.align-left:before{content:"\e052"}.halflings.align-center:before{content:"\e053"}.halflings.align-right:before{content:"\e054"}.halflings.align-justify:before{content:"\e055"}.halflings.list:before{content:"\e056"}.halflings.indent-left:before{content:"\e057"}.halflings.indent-right:before{content:"\e058"}.halflings.facetime-video:before{content:"\e059"}.halflings.picture:before{content:"\e060"}.halflings.pencil:before{content:"\270f"}.halflings.map-marker:before{content:"\e062"}.halflings.adjust:before{content:"\e063"}.halflings.tint:before{content:"\e064"}.halflings.edit:before{content:"\e065"}.halflings.share:before{content:"\e066"}.halflings.check:before{content:"\e067"}.halflings.move:before{content:"\e068"}.halflings.step-backward:before{content:"\e069"}.halflings.fast-backward:before{content:"\e070"}.halflings.backward:before{content:"\e071"}.halflings.play:before{content:"\e072"}.halflings.pause:before{content:"\e073"}.halflings.stop:before{content:"\e074"}.halflings.forward:before{content:"\e075"}.halflings.fast-forward:before{content:"\e076"}.halflings.step-forward:before{content:"\e077"}.halflings.eject:before{content:"\e078"}.halflings.chevron-left:before{content:"\e079"}.halflings.chevron-right:before{content:"\e080"}.halflings.plus-sign:before{content:"\e081"}.halflings.minus-sign:before{content:"\e082"}.halflings.remove-sign:before{content:"\e083"}.halflings.ok-sign:before{content:"\e084"}.halflings.question-sign:before{content:"\e085"}.halflings.info-sign:before{content:"\e086"}.halflings.screenshot:before{content:"\e087"}.halflings.remove-circle:before{content:"\e088"}.halflings.ok-circle:before{content:"\e089"}.halflings.ban-circle:before{content:"\e090"}.halflings.arrow-left:before{content:"\e091"}.halflings.arrow-right:before{content:"\e092"}.halflings.arrow-up:before{content:"\e093"}.halflings.arrow-down:before{content:"\e094"}.halflings.share-alt:before{content:"\e095"}.halflings.resize-full:before{content:"\e096"}.halflings.resize-small:before{content:"\e097"}.halflings.plus:before{content:"\002b"}.halflings.minus:before{content:"\2212"}.halflings.asterisk:before{content:"\002a"}.halflings.exclamation-sign:before{content:"\e101"}.halflings.gift:before{content:"\e102"}.halflings.leaf:before{content:"\e103"}.halflings.fire:before{content:"\e104"}.halflings.eye-open:before{content:"\e105"}.halflings.eye-close:before{content:"\e106"}.halflings.warning-sign:before{content:"\e107"}.halflings.plane:before{content:"\e108"}.halflings.calendar:before{content:"\e109"}.halflings.random:before{content:"\e110"}.halflings.comments:before{content:"\e111"}.halflings.magnet:before{content:"\e113"}.halflings.chevron-up:before{content:"\e113"}.halflings.chevron-down:before{content:"\e114"}.halflings.retweet:before{content:"\e115"}.halflings.shopping-cart:before{content:"\e116"}.halflings.folder-close:before{content:"\e117"}.halflings.folder-open:before{content:"\e118"}.halflings.resize-vertical:before{content:"\e119"}.halflings.resize-horizontal:before{content:"\e120"}.halflings.hdd:before{content:"\e121"}.halflings.bullhorn:before{content:"\e122"}.halflings.bell:before{content:"\e123"}.halflings.certificate:before{content:"\e124"}.halflings.thumbs-up:before{content:"\e125"}.halflings.thumbs-down:before{content:"\e126"}.halflings.hand-right:before{content:"\e127"}.halflings.hand-left:before{content:"\e128"}.halflings.hand-top:before{content:"\e129"}.halflings.hand-down:before{content:"\e130"}.halflings.circle-arrow-right:before{content:"\e131"}.halflings.circle-arrow-left:before{content:"\e132"}.halflings.circle-arrow-top:before{content:"\e133"}.halflings.circle-arrow-down:before{content:"\e134"}.halflings.globe:before{content:"\e135"}.halflings.wrench:before{content:"\e136"}.halflings.tasks:before{content:"\e137"}.halflings.filter:before{content:"\e138"}.halflings.briefcase:before{content:"\e139"}.halflings.fullscreen:before{content:"\e140"}.halflings.dashboard:before{content:"\e141"}.halflings.paperclip:before{content:"\e142"}.halflings.heart-empty:before{content:"\e143"}.halflings.link:before{content:"\e144"}.halflings.phone:before{content:"\e145"}.halflings.pushpin:before{content:"\e146"}.halflings.euro:before{content:"\20ac"}.halflings.usd:before{content:"\e148"}.halflings.gbp:before{content:"\e149"}.halflings.sort:before{content:"\e150"}.halflings.sort-by-alphabet:before{content:"\e151"}.halflings.sort-by-alphabet-alt:before{content:"\e152"}.halflings.sort-by-order:before{content:"\e153"}.halflings.sort-by-order-alt:before{content:"\e154"}.halflings.sort-by-attributes:before{content:"\e155"}.halflings.sort-by-attributes-alt:before{content:"\e156"}.halflings.unchecked:before{content:"\e157"}.halflings.expand:before{content:"\e158"}.halflings.collapse:before{content:"\e159"}.halflings.collapse-top:before{content:"\e160"}';
+		$halflings = '/*! * * Project: GLYPHICONS HALFLINGS * Author: Jan Kovarik - www.glyphicons.com * Twitter: @jankovarik * */html,html .halflings{-webkit-font-smoothing:antialiased!important}@font-face{font-family:\'Glyphicons Halflings\';src:url(\'../../../fonts/glyphiconshalflings-regular.eot\');src:url(\'../../../fonts/glyphiconshalflings-regular.eot?#iefix\') format(\'embedded-opentype\'),url(\'../../../fonts/glyphiconshalflings-regular.woff\') format(\'woff\'),url(\'../../../fonts/glyphiconshalflings-regular.ttf\') format(\'truetype\'),url(\'../../../fonts/glyphiconshalflings-regular.svg#glyphicons_halflingsregular\') format(\'svg\');font-weight:normal;font-style:normal}.halflings{font-family:\'Glyphicons Halflings\';font-size:11px/1em;font-style:normal;display:inline-block;line-height:.8em}.halflings.big{position:relative;top:2px}.halflings.glass:before{content:"\e001"}.halflings.music:before{content:"\e002"}.halflings.search:before{content:"\e003"}.halflings.envelope:before{content:"\2709"}.halflings.heart:before{content:"\e005"}.halflings.star:before{content:"\e006"}.halflings.star-empty:before{content:"\e007"}.halflings.user:before{content:"\e008"}.halflings.film:before{content:"\e009"}.halflings.th-large:before{content:"\e010"}.halflings.th:before{content:"\e011"}.halflings.th-list:before{content:"\e012"}.halflings.ok:before{content:"\e013"}.halflings.remove:before{content:"\e014"}.halflings.zoom-in:before{content:"\e015"}.halflings.zoom-out:before{content:"\e016"}.halflings.off:before{content:"\e017"}.halflings.signal:before{content:"\e018"}.halflings.cog:before{content:"\e019"}.halflings.trash:before{content:"\e020"}.halflings.home:before{content:"\e021"}.halflings.file:before{content:"\e022"}.halflings.time:before{content:"\e023"}.halflings.road:before{content:"\e024"}.halflings.download-alt:before{content:"\e025"}.halflings.download:before{content:"\e026"}.halflings.upload:before{content:"\e027"}.halflings.inbox:before{content:"\e028"}.halflings.play-circle:before{content:"\e029"}.halflings.repeat:before{content:"\e030"}.halflings.refresh:before{content:"\e031"}.halflings.list-alt:before{content:"\e032"}.halflings.lock:before{content:"\e033"}.halflings.flag:before{content:"\e034"}.halflings.headphones:before{content:"\e035"}.halflings.volume-off:before{content:"\e036"}.halflings.volume-down:before{content:"\e037"}.halflings.volume-up:before{content:"\e038"}.halflings.qrcode:before{content:"\e039"}.halflings.barcode:before{content:"\e040"}.halflings.tag:before{content:"\e041"}.halflings.tags:before{content:"\e042"}.halflings.book:before{content:"\e043"}.halflings.bookmark:before{content:"\e044"}.halflings.print:before{content:"\e045"}.halflings.camera:before{content:"\e046"}.halflings.font:before{content:"\e047"}.halflings.bold:before{content:"\e048"}.halflings.italic:before{content:"\e049"}.halflings.text-height:before{content:"\e050"}.halflings.text-width:before{content:"\e051"}.halflings.align-left:before{content:"\e052"}.halflings.align-center:before{content:"\e053"}.halflings.align-right:before{content:"\e054"}.halflings.align-justify:before{content:"\e055"}.halflings.list:before{content:"\e056"}.halflings.indent-left:before{content:"\e057"}.halflings.indent-right:before{content:"\e058"}.halflings.facetime-video:before{content:"\e059"}.halflings.picture:before{content:"\e060"}.halflings.pencil:before{content:"\270f"}.halflings.map-marker:before{content:"\e062"}.halflings.adjust:before{content:"\e063"}.halflings.tint:before{content:"\e064"}.halflings.edit:before{content:"\e065"}.halflings.share:before{content:"\e066"}.halflings.check:before{content:"\e067"}.halflings.move:before{content:"\e068"}.halflings.step-backward:before{content:"\e069"}.halflings.fast-backward:before{content:"\e070"}.halflings.backward:before{content:"\e071"}.halflings.play:before{content:"\e072"}.halflings.pause:before{content:"\e073"}.halflings.stop:before{content:"\e074"}.halflings.forward:before{content:"\e075"}.halflings.fast-forward:before{content:"\e076"}.halflings.step-forward:before{content:"\e077"}.halflings.eject:before{content:"\e078"}.halflings.chevron-left:before{content:"\e079"}.halflings.chevron-right:before{content:"\e080"}.halflings.plus-sign:before{content:"\e081"}.halflings.minus-sign:before{content:"\e082"}.halflings.remove-sign:before{content:"\e083"}.halflings.ok-sign:before{content:"\e084"}.halflings.question-sign:before{content:"\e085"}.halflings.info-sign:before{content:"\e086"}.halflings.screenshot:before{content:"\e087"}.halflings.remove-circle:before{content:"\e088"}.halflings.ok-circle:before{content:"\e089"}.halflings.ban-circle:before{content:"\e090"}.halflings.arrow-left:before{content:"\e091"}.halflings.arrow-right:before{content:"\e092"}.halflings.arrow-up:before{content:"\e093"}.halflings.arrow-down:before{content:"\e094"}.halflings.share-alt:before{content:"\e095"}.halflings.resize-full:before{content:"\e096"}.halflings.resize-small:before{content:"\e097"}.halflings.plus:before{content:"\002b"}.halflings.minus:before{content:"\2212"}.halflings.asterisk:before{content:"\002a"}.halflings.exclamation-sign:before{content:"\e101"}.halflings.gift:before{content:"\e102"}.halflings.leaf:before{content:"\e103"}.halflings.fire:before{content:"\e104"}.halflings.eye-open:before{content:"\e105"}.halflings.eye-close:before{content:"\e106"}.halflings.warning-sign:before{content:"\e107"}.halflings.plane:before{content:"\e108"}.halflings.calendar:before{content:"\e109"}.halflings.random:before{content:"\e110"}.halflings.comments:before{content:"\e111"}.halflings.magnet:before{content:"\e113"}.halflings.chevron-up:before{content:"\e113"}.halflings.chevron-down:before{content:"\e114"}.halflings.retweet:before{content:"\e115"}.halflings.shopping-cart:before{content:"\e116"}.halflings.folder-close:before{content:"\e117"}.halflings.folder-open:before{content:"\e118"}.halflings.resize-vertical:before{content:"\e119"}.halflings.resize-horizontal:before{content:"\e120"}.halflings.hdd:before{content:"\e121"}.halflings.bullhorn:before{content:"\e122"}.halflings.bell:before{content:"\e123"}.halflings.certificate:before{content:"\e124"}.halflings.thumbs-up:before{content:"\e125"}.halflings.thumbs-down:before{content:"\e126"}.halflings.hand-right:before{content:"\e127"}.halflings.hand-left:before{content:"\e128"}.halflings.hand-top:before{content:"\e129"}.halflings.hand-down:before{content:"\e130"}.halflings.circle-arrow-right:before{content:"\e131"}.halflings.circle-arrow-left:before{content:"\e132"}.halflings.circle-arrow-top:before{content:"\e133"}.halflings.circle-arrow-down:before{content:"\e134"}.halflings.globe:before{content:"\e135"}.halflings.wrench:before{content:"\e136"}.halflings.tasks:before{content:"\e137"}.halflings.filter:before{content:"\e138"}.halflings.briefcase:before{content:"\e139"}.halflings.fullscreen:before{content:"\e140"}.halflings.dashboard:before{content:"\e141"}.halflings.paperclip:before{content:"\e142"}.halflings.heart-empty:before{content:"\e143"}.halflings.link:before{content:"\e144"}.halflings.phone:before{content:"\e145"}.halflings.pushpin:before{content:"\e146"}.halflings.euro:before{content:"\20ac"}.halflings.usd:before{content:"\e148"}.halflings.gbp:before{content:"\e149"}.halflings.sort:before{content:"\e150"}.halflings.sort-by-alphabet:before{content:"\e151"}.halflings.sort-by-alphabet-alt:before{content:"\e152"}.halflings.sort-by-order:before{content:"\e153"}.halflings.sort-by-order-alt:before{content:"\e154"}.halflings.sort-by-attributes:before{content:"\e155"}.halflings.sort-by-attributes-alt:before{content:"\e156"}.halflings.unchecked:before{content:"\e157"}.halflings.expand:before{content:"\e158"}.halflings.collapse:before{content:"\e159"}.halflings.collapse-top:before{content:"\e160"}';
 
 		
 		foreach($this->cVals as $k=>$v) {
@@ -2708,9 +2822,9 @@ class Init {
 			if($h=@fopen('css/style_'.$k.'.css','w')) {fputs($h,$css_copy);fclose($h);}
 		}
 
-		if(!file_exists(MU_CSS.'main.css')) {
+		if(!file_exists(MU_THEMES.$this->theme.DS.MU_CSS.'main.css')) {
 			$css = $main."\n".$halflings;
-			@file_put_contents(MU_CSS.'main.css', $css);
+			@file_put_contents(MU_THEMES.$this->theme.DS.MU_CSS.'main.css', $css);
 		}
 	}
 
@@ -2724,14 +2838,14 @@ class Init {
 
 	    if (!extension_loaded('zip')) {
 	        $this->session->setMsg(ERROR_TYPE_NOT_ZIP_FILE,'error');
-		    header('location: index.php');
+		    header('location: index.php?conf=1');
 			exit();
 	    }
 
 	    $zip = new ZipArchive();
 	    if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
 	        $this->session->setMsg(ERROR_ZIP_NOT_OPEN,'error');
-		    header('location: index.php');
+		    header('location: index.php?conf=1');
 			exit();
 	    }
 
@@ -2766,8 +2880,8 @@ class Init {
 
 	    $zip->close();
 	    $msg= ARCHIVE_REC.'  <a class="btn btn-success pull-right" href="'.$destination.'" title="'.DOWNLOAD.'"><i class="icon-download-alt icon-white"></i>&nbsp;'.DOWNLOAD_ARCHIVE.'</a>';
-	    $this->session->setMsg($msg);
-	    header('location: index.php');
+	    $this->session->setMsg($msg,'success-msg',false);
+	    header('location: index.php?conf=1');
 		exit();
 	}
 	/**
@@ -2839,7 +2953,7 @@ class Init {
 		if(is_uploaded_file($_FILES[$name]['tmp_name'])) {
 			if(preg_match($match,$_FILES[$name]['name'])) {
 				if(($_FILES[$name]['size']<$size) || !$type){
-					if (move_uploaded_file($_FILES[$name]['tmp_name'],$dir.DS.str_replace(" ","",$_FILES[$name]['name']))) { 
+					if (move_uploaded_file($_FILES[$name]['tmp_name'],$dir.DS.Tools::title2filename($_FILES[$name]['name']))) { 
 						$avatar=$dir.DS.str_replace("+","",urlencode($_FILES[$name]['name']));
 						if($type) { 
 							$old=$this->forum->getMember($login);
@@ -2860,6 +2974,53 @@ class Init {
 			return $avatar;
 		}
 	}
+}
+/**
+* Mise en forme du forum
+*/
+class Template extends Init {	
+
+	private $aThemes=array();
+	private $template=array();
+
+	public function __construct() {
+		parent::__construct();
+		$this->template = $this->setTemplate();
+		# On démarre la bufferisation
+		ob_start();
+		ob_implicit_flush(0);
+
+		# Traitements du thème
+		if(MU_THEMES == '' or !is_dir(MU_THEMES)) {
+			header('Content-Type: text/plain');
+			echo ERROR_THEME_NOTFOUND.' ('.MU_THEMES.$this->theme.'.php) !';
+		} elseif(file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
+			# On impose le charset
+			header('Content-Type: text/html; charset='.CHARSET);
+			$this->showTemplate($this->template);
+			# Insertion du template
+			include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
+		} else {
+			$this->showTemplate($this->template);
+			if (!file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
+				header('Content-Type: text/plain');
+				echo ERROR_FILE_NOTFOUND.' ('.MU_THEMES.$this->theme.DS.$this->template['template'].'.php) !';
+			} else {
+				# Insertion du template
+				include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
+			}
+		}
+
+		# Récuperation de la bufférisation
+		$output = ob_get_clean();
+
+		# On applique la compression gzip si nécessaire et disponible
+		if($this->gzip) {
+			if($encoding=Tools::httpEncoding()) {
+				header('Content-Encoding: '.$encoding);
+				$output = gzencode($output,-1,FORCE_GZIP);
+		    }
+		}
 
 	// A FAIRE
 	// 
@@ -2876,12 +3037,6 @@ class Init {
 	// 	$css = str_replace(array('/*'.TM.'*/', "\n"), '', $css);
 	// 	$css = $this->_compress($css);
 	// 	$css = '/*'.TM.'*/'."\n".$css;
-
-	// 	# On compresse si possible
-	// 	if($encoding=Tools::httpEncoding()) {
-	// 		header('Content-Encoding: '.$encoding);
-	// 		$css = gzencode($css,-1,FORCE_GZIP);
-	//     }
 
 	//     # On force la mise en cache et le type du fichier
 	// 	header('Content-Type: text/css');
@@ -2919,18 +3074,11 @@ class Init {
 		 
 	// 		return $buffer;
 	// }
-}
-/**
- * Mise en forme du forum
- */
-class Template extends Init {	
 
-	public function __construct() {
-		parent::__construct();
-		$this->header();
+		# Restitution écran
+		echo $output;
 	}
 	/**
-	*
 	* TEXTE D'ACCUEIL
 	*/
 	public function welcomeText() {
@@ -2984,7 +3132,6 @@ class Template extends Init {
 			return $pagination;
 	}
 	/**
-	*
 	* LISTE LES FICHIERS ENVOYÉS DANS LE PROFIL DE L'UTILISATEUR
 	*/
 	private function listFiles() {
@@ -3028,25 +3175,65 @@ class Template extends Init {
 		return $header;
 	}
 	private function setTemplate() {
-		$template = $this->breadcrumbs();
+		$template = array('options'=>0);
 		if($this->isMember || !$this->forumMode) {
-			if($this->haveMP) $template .= $this->showPrivateMsg();	
-			if($this->get_editpost) $template .= $this->replyForm('editpost');
-			else if($this->get_conf) $template .= $this->editConf();
-			else if($this->get_topic) $template .= $this->showPosts();
-			else if($this->get_memberlist) $template .= $this->showMemberlist();
-			else if($this->searchMember) $template .= $this->searchMember();
-			else if($this->get_editprofil)$template .= $this->editProfilForm();
-			else if($this->get_private) $template .= $this->replyForm('mp',$this->get_private);
-			else if($this->get_restore) $template .= $this->frestore();
+			if($this->get_editpost) $template['template'] = 'replyForm-editpost';
+			else if($this->get_conf) $template['template'] = 'editConf';
+			else if($this->get_topic) $template = array('template'=>'showPosts','options'=>$this->get_private);
+			else if($this->get_memberlist) $template['template'] = 'showMemberlist';
+			else if($this->searchMember) $template['template'] = 'searchMember';
+			else if($this->get_editprofil)$template['template'] = 'editProfilForm';
+			else if($this->get_private) $template = array('template'=>'replyForm-mp','options'=>$this->get_private);
+			else if($this->get_restore) $template['template'] = 'frestore';
 			// MODE LIBRE
-			else if(!$this->forumMode && !$this->isMember) $template .= $this->content($this->forumMode);
+			else if(!$this->forumMode && !$this->isMember) $template['template'] = 'content';
 			#on est connecté, alors on affiche uniquement la liste des forums
-			else  $template .=  $this->showTopics();
+			else  $template['template'] =  'showTopics';
 		} else {// MODE PRIVÉ
-			$template .= $this->content($this->forumMode);
+			$template['template'] = 'content';
 		}
 		return $template;
+	}
+	private function showTemplate($template) {
+		if (!is_file(MU_THEMES.$this->theme.DS.'header.php')) {
+			$this->header();
+		}
+		if($this->haveMP) $this->showPrivateMsg();
+		if (!is_file(MU_THEMES.$this->theme.DS.'footer.php')) {
+			$this->footer();
+		}
+		switch ($template['template']) {
+			case 'replyForm-editpost':
+				$this->setReplyForm('editpost');
+				break;
+			case 'editConf':
+				$this->editConf();
+				break;
+			case 'showPosts':
+				$this->showPosts();
+				break;
+			case 'showMemberlist':
+				$this->showMemberlist();
+				break;
+			case 'searchMember':
+				$this->searchMember();
+				break;
+			case 'editProfilForm':
+				$this->editProfilForm();
+				break;
+			case 'replyForm-mp':
+				$this->setReplyForm('mp',$template['options']);
+				break;
+			case 'frestore':
+				$this->frestore();
+				break;
+			case 'content':
+				$this->content();
+				break;
+			case 'showTopics':
+				$this->showTopics();
+				break;
+		}
 	}
 	private function setFooter($stats) {
 		$f['updateVisit']=$this->conn->updateVisit($this->cLogin);
@@ -3089,8 +3276,8 @@ class Template extends Init {
 	/**
 	 * INITIALISATION DES VARIABLES DU FIL D'ARIANE
 	 */
-	private function setBreadcrumbs($form=array()) {
-
+	private function setBreadcrumbs() {
+		$form=array();
 		$url = Tools::getURLParams();
 		$url .= ($url)? '&':'?';
 
@@ -3101,7 +3288,7 @@ class Template extends Init {
 		return $form;
 	}
 	private function setBreadcrumbsLinks() {
-		if($this->get_editpost){?><i class="halflings pencil"></i>&nbsp;<?php echo EDIT?>
+		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?topic=<?php echo $this->get_topic?>"><i class="halflings comments"></i>&nbsp;<?php echo $this->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="halflings pencil"></i>&nbsp;<?php echo EDIT?>
 		<?php }else{if($this->get_conf){?><i class="halflings cog"></i>&nbsp;<?php echo CONFIG_OPTIONS?>
 		<?php }else{if($this->get_topic){?><i class="halflings comments"></i>&nbsp;<?php echo $this->forum->getPostsTitle($this->get_topic)?>
 		<?php }else{if($this->get_memberlist){?><i class="halflings user"></i>&nbsp;<?php echo MEMBERS?>
@@ -3120,7 +3307,7 @@ class Template extends Init {
 				return $this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page);
 				break;
 			case 'reply':
-				echo $this->replyForm('newtopic',count($this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page)));
+				$this->setReplyForm('newtopic',count($this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page)));
 				break;
 		}
 	}
@@ -3161,7 +3348,6 @@ class Template extends Init {
 		}
 		return false;
 	}
-
 	private function topicId() {
 		echo $this->get_topic;
 	}
@@ -3200,7 +3386,7 @@ class Template extends Init {
 		echo ($cnt || $this->page > 1)?ANSWER_FROM.' '.$auth:' '.WHOLE_TOPIC;
 	}
 	private function downloadAttach($attach,$class='') {
-		$attachment = substr($attach,strrpos($attach, '/')+1);
+		$attachment = Tools::title2filename(substr($attach,strrpos($attach, '/')+1));
 		echo '<a '.($class!=''? 'class="'.$class.'" ':'').'href="?pid='.base64_encode($attach).'" title="'.DOWNLOAD.'">'.$attachment.' '.Tools::img('clip').'</a>';
 	}
 	private function setMemberList() {
@@ -3298,14 +3484,41 @@ class Template extends Init {
 			if($s = implode("", file(MU_THREAD.$this->get_topic.'.dat'))) $topicObj = unserialize($s);
 			else return false;
 			$reply=$topicObj->getReply($this->get_editpost);
-			$r->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$reply->content);
+			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$reply->content);
 			$r->name= CHANGE;
 			$r->edit=1;
 		} else {
 			$r->name= SEND_PRIVATE_MSG.' '.TO.' '.$mpTo;
 			$r->show=1;
 		}
-		return $r;
+		$this->replyForm();
+		if (in_array($this->template['template'],array('replyForm-mp','replyForm-editpost'))) {
+			include(MU_THEMES.$this->theme.DS.'header.php');
+			include(MU_THEMES.$this->theme.DS.'replyForm.php');
+			include(MU_THEMES.$this->theme.DS.'footer.php');
+			exit();
+		}else {
+			include(MU_THEMES.$this->theme.DS.'replyForm.php'); 
+		}
+		//$this->template['template'] = 'replyForm';
+	}
+	private function searchThemes() {
+		if(is_dir(MU_THEMES)) {
+			# On ouvre le repertoire
+			if($dh = opendir(MU_THEMES)) {
+				# Pour chaque entree du repertoire
+				while(false !== ($file = readdir($dh))) {
+					if($file[0]!='.') {
+						$dir = is_dir(MU_THEMES.'/'.$file);
+						if($dir) {
+							$this->aThemes[$file] = $file;
+						}
+					}
+				}
+				# On ferme la ressource sur le repertoire
+				closedir($dh);
+			}
+		}
 	}
 	/********************************************************
 	 * VOUS POUVEZ MODIFIER LES LIGNES CI-DESSOUS
@@ -3313,65 +3526,72 @@ class Template extends Init {
 	 ********************************************************/
 
 	public function header() {
-		?><!DOCTYPE html>
-		<html lang="<? echo $this->lang; ?>">
-		<head>
-			<meta charset="utf-8">
-			<meta name="description" content="<? echo $this->metaDesc; ?>">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<link rel="icon" href="<?php echo Tools::img('icon','',true);?>" />
-			<base href="<?php echo MU_BASE_URL; ?>" />
-			<link rel="stylesheet" type="text/css" href="css/style_<?php echo $this->cStyle; ?>.css" />
-			<link rel="stylesheet" type="text/css" href="css/main.css" />
-			<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-			<!--[if lt IE 9]>
-			<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-			<![endif]-->
-			<!--[if lt IE 9]>
-			<script>
-			var head = document.getElementsByTagName('head')[0], style = document.createElement('style');
-			style.type = 'text/css';
-			style.styleSheet.cssText = ':before,:after{content:none !important';
-			head.appendChild(style);
-			setTimeout(function(){ head.removeChild(style); }, 0);
-			</script>
-			<![endif]-->
-			<?php echo $this->setHeader()->title ?>
+		$string =<<<END
+<?php if(!defined('MU_ROOT')) exit; ?><!DOCTYPE html>
+<html lang="<? echo \$this->lang; ?>">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="<? echo \$this->metaDesc; ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="<?php echo Tools::img('icon','',true);?>" />
+	<base href="<?php echo MU_BASE_URL; ?>" />
+	<link rel="stylesheet" type="text/css" href="<?php echo MU_BASE_URL.MU_URL_THEMES.\$this->theme; ?>/css/style_<?php echo \$this->cStyle; ?>.css" />
+	<link rel="stylesheet" type="text/css" href="<?php echo MU_BASE_URL.MU_URL_THEMES.\$this->theme; ?>/css/main.css" />
+	<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+	<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<!--[if lt IE 9]>
+	<script>
+	var head = document.getElementsByTagName('head')[0], style = document.createElement('style');
+	style.type = 'text/css';
+	style.styleSheet.cssText = ':before,:after{content:none !important';
+	head.appendChild(style);
+	setTimeout(function(){ head.removeChild(style); }, 0);
+	</script>
+	<![endif]-->
+	<?php echo \$this->setHeader()->title ?>
 
-		</head>
-		<body onload="init();">
-			<div class="wrapper">
+</head>
+<body onload="init();">
+	<div class="wrapper">
 
-			<header id="header" class="units-row">
-				<h1 id="root"><?php echo $this->setHeader()->h1?></h1>
-				<nav class="nav-g unit-100">
-				<ul>
-					<?php echo $this->menu(); if($this->isMember || !$this->forumMode){ echo $this->menu_admin(); }?>
-				
-				</ul>
-				</nav>
-			</header>
+	<header id="header" class="units-row">
+		<h1 id="root"><?php echo \$this->setHeader()->h1?></h1>
+		<nav class="nav-g unit-100">
+		<ul>
+			<?php echo \$this->menu(); if(\$this->isMember || !\$this->forumMode){ echo \$this->menu_admin(); }?>
+		
+		</ul>
+		</nav>
+	</header>
 
-		<div id="main">
+<div id="main">
 
-		<div class="units-row">
-			<article class="unit-100">
-				<noscript>
-					<div class="message message-error">
-						<span class="close"></span>
-						<header><i class="halflings warning-sign"></i> <?php echo JS_UNAVAILABLE?></header>
-						<?php echo JS_UNAVAILABLE_MSG?>
+<div class="units-row">
+	<article class="unit-100">
+		<noscript>
+			<div class="message message-error">
+				<span class="close"></span>
+				<header><i class="halflings warning-sign"></i> <?php echo JS_UNAVAILABLE?></header>
+				<?php echo JS_UNAVAILABLE_MSG?>
 
-					</div>
-				</noscript>
-		<?php 
-		// message d'erreur (en cas de mauvais mot de passe, membre déjà existant etc...)
-		echo $this->session->msg();
-		echo $this->setTemplate();
-		echo $this->footer();
+			</div>
+		</noscript>
+<?php 
+// message d'erreur (en cas de mauvais mot de passe, membre déjà existant etc...)
+echo \$this->session->msg();
+echo \$this->breadcrumbs();
+if(\$this->haveMP) include(dirname(__FILE__).'/showPrivateMsg.php');
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'header.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'header.php', $string);
+		}
 	}
-	public function content($mode) {
-		if(!$mode) :// MODE LIBRE?>
+	public function content() {
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+if(!\$this->forumMode) :// MODE LIBRE?>
 
 			<nav class="onglets">
 			<ul>
@@ -3382,13 +3602,13 @@ class Template extends Init {
 	        </nav>
 	        <div class="tabContents">
 	            <div class="tabContent" id="tabContenthome">
-				<?php echo $this->welcomeText()?>
+				<?php echo \$this->welcomeText()?>
 				</div>
 				<div class="tabContent" id="tabContenttopics">
-				<?php echo $this->showTopics()?>
+				<?php echo \$this->showTopics()?>
 				</div>
 				<div class="tabContent" id="tabContentsignup">
-				<?php echo $this->registrationForm()?>
+				<?php echo \$this->registrationForm()?>
 				</div>
 			</div>	
 		<?php else :// MODE PRIVÉ?>
@@ -3401,193 +3621,211 @@ class Template extends Init {
 		    </nav>
 		    <div class="tabContents">
 		        <div class="tabContent" id="tabContenthome">
-				<?php echo $this->welcomeText();?>
+				<?php echo \$this->welcomeText();?>
 				</div>
 				<div class="tabContent" id="tabContentsignup">
-				<?php echo $this->registrationForm();?>
+				<?php echo \$this->registrationForm();?>
 				</div>
 			</div>
-		<?php endif;
+		<?php endif;?>
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'content.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'content.php', $string);
+		}
 	}
 	public function footer() {
-		$f = $this->setFooter($this->forum->getStat())?>
+		$string =<<<END
+<?php \$f = \$this->setFooter(\$this->forum->getStat())?>
 
-		<hr />
+	<hr />
 
-		<div class="units-row units-split">
+	<div class="units-row units-split">
 
-			<div class="unit-33"><h4><?php echo STATISTICS?></h4>
-				
-				<p><?php echo WE_HAVE.' '.$f['stats']['messages'].' '.MESSAGE.$f['m'].' '.IN.' '.$f['stats']['topics'].' '.TOPIC.$f['s']?> 
-					<br />
-					<?php echo WELCOME_TO?>, <span class="color-orange"><?php echo $f['stats']['lastMb']?></span>
-					<br />
-					<?php echo TOTAL_MB.$f['mb']['singularPlural'].': '. $f['stats']['members']?>
-
-				</p>
-			</div>
-			<div class="unit-33">
-				<h4><?php echo LEGEND?></h4>
-				<p>
-				<i class="halflings folder-open"></i> <?php echo NO_UNREAD_MSG?><br />
-				<i class="halflings star"></i> <?php echo PINNED?><br />
-				<i class="halflings fire"></i> <?php echo UNREAD_MSG?><br />
-				<i class="halflings file"></i> <?php echo ATTACHMENT?>
-				</p>
-			</div>
-			<div class="unit-33">
-			<h4><?php echo WHO_IS_ONLINE?></h4>
-			<p><?php echo MB_ONLINE?> : <b><?php echo $f['updateVisit']['mbConnected']?></b>
-				<br /><?php echo GUESTS?> : <?php echo $f['updateVisit']['guestsConnected']?>
+		<div class="unit-33"><h4><?php echo STATISTICS?></h4>
+			
+			<p><?php echo WE_HAVE.' '.\$f['stats']['messages'].' '.MESSAGE.\$f['m'].' '.IN.' '.\$f['stats']['topics'].' '.TOPIC.\$f['s']?> 
+				<br />
+				<?php echo WELCOME_TO?>, <span class="color-orange"><?php echo \$f['stats']['lastMb']?></span>
+				<br />
+				<?php echo TOTAL_MB.\$f['mb']['singularPlural'].': '. \$f['stats']['members']?>
 
 			</p>
-			</div>
-		 
 		</div>
-			<footer id="footer">© 2011-<?php echo date('Y').' '.$this->siteName?>.
-				<span><?php echo POWEREDBY.' v.'.VERSION?>&nbsp;&nbsp;
-				&nbsp;&nbsp;<a href="<?php echo Tools::baseURL()?>#top" title="<?php echo TOP?>">
-					<i class="halflings chevron-up"></i>
-					</a>
-				</span>
-			</footer>
-		
-		<!-- Calendrier -->
-		<table class="ds_box" cellpadding="0" cellspacing="0" id="ds_conclass" style="display: none;">
-		<tr><td id="ds_calclass"></td></tr></table>
-		<!-- Le javascript
-		================================================== -->
-		<script src="js/scripts.js"></script>
-		<script type="text/javascript">
-			//<!--
-			<?php if (isset($_SERVER['argv'][0]) && $_SERVER['argv'][0] == 'register=true') {
-				$idTab = 'signup';
-			} else {
-				$idTab = 'home';
-			} ?>
-			var idTab = '<?php echo $idTab;?>';
-			tab(idTab);
-			//-->
-		</script>
-		<?php $MsgId = $this->session->MsgId();
-			if(!empty($MsgId)):?>
+		<div class="unit-33">
+			<h4><?php echo LEGEND?></h4>
+			<p>
+			<i class="halflings folder-open"></i> <?php echo NO_UNREAD_MSG?><br />
+			<i class="halflings star"></i> <?php echo PINNED?><br />
+			<i class="halflings fire"></i> <?php echo UNREAD_MSG?><br />
+			<i class="halflings file"></i> <?php echo ATTACHMENT?>
+			</p>
+		</div>
+		<div class="unit-33">
+		<h4><?php echo WHO_IS_ONLINE?></h4>
+		<p><?php echo MB_ONLINE?> : <b><?php echo \$f['updateVisit']['mbConnected']?></b>
+			<br /><?php echo GUESTS?> : <?php echo \$f['updateVisit']['guestsConnected']?>
 
-		<script src="js/visual.js"></script>
-		<script>fadeOut("<?php echo $MsgId?>");</script>
-		<?php endif;
-			if (DEBUG == 1) {
-				 Debug::getDebugInstance($this->lang)->printBar();
-			}
-		?>
+		</p>
+		</div>
+	 
+	</div>
+		<footer id="footer">© 2011-<?php echo date('Y').' '.\$this->siteName?>.
+			<span><?php echo POWEREDBY.' v.'.VERSION?>&nbsp;&nbsp;
+			&nbsp;&nbsp;<a href="<?php echo Tools::baseURL()?>#top" title="<?php echo TOP?>">
+				<i class="halflings chevron-up"></i>
+				</a>
+			</span>
+		</footer>
+	
+	<!-- Calendrier -->
+	<table class="ds_box" cellpadding="0" cellspacing="0" id="ds_conclass" style="display: none;">
+	<tr><td id="ds_calclass"></td></tr></table>
+	<!-- Le javascript
+	================================================== -->
+	<script src="js/scripts.js"></script>
+	<script type="text/javascript">
+		//<!--
+		<?php if (isset(\$_SERVER['argv'][0]) && \$_SERVER['argv'][0] == 'register=true') {
+			\$idTab = 'signup';
+		} else {
+			\$idTab = 'home';
+		} ?>
+		var idTab = '<?php echo \$idTab;?>';
+		tab(idTab);
+		//-->
+	</script>
+	<?php \$MsgId = \$this->session->MsgId();
+		if(!empty(\$MsgId)):?>
 
-		</body>
-		</html>
-		<?php
+	<script src="js/visual.js"></script>
+	<script>fadeOut("<?php echo \$MsgId?>");</script>
+	<?php endif;
+		if (DEBUG == 1) {
+			 Debug::getDebugInstance(\$this->lang)->printBar();
+		}
+	?>
+
+	</body>
+</html>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'footer.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'footer.php', $string);
+		}
 	}
 	/**
-	*
 	* FORMULAIRE D'INSCRIPTION
 	*/
 	public function registrationForm() {
-		$f = $this->setRegistrationForm();
-		?>
+		$string =<<<END
+<?php \$f = \$this->setRegistrationForm();?>
 
 		<h4 class="forms-section"><?php echo JOIN_COMMUNITY ?></h4>
 		<form action="index.php" method="post" enctype="multipart/form-data" autocomplete="off" class="form forms forms-columnar">
 			<input type="hidden" name="action" value="newuser" />
-			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $this->maxAvatarSize ?>" />
-			<p class="forms-inline"><?php echo $f['userLogin'] ?></p>
-			<p class="forms-inline"><?php echo $f['password'] ?></p>
-			<p class="forms-inline"><?php echo $f['birthday'] ?></p>
-			<p class="forms-inline"><?php echo $f['email'] ?></p>
-			<p class="forms-inline"><?php echo $f['website'] ?></p>
-			<p class="forms-inline"><i class="halflings link"></i>&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $f['signature'] ?></p>
+			<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo \$this->maxAvatarSize ?>" />
+			<p class="forms-inline"><?php echo \$f['userLogin'] ?></p>
+			<p class="forms-inline"><?php echo \$f['password'] ?></p>
+			<p class="forms-inline"><?php echo \$f['birthday'] ?></p>
+			<p class="forms-inline"><?php echo \$f['email'] ?></p>
+			<p class="forms-inline"><?php echo \$f['website'] ?></p>
+			<p class="forms-inline"><i class="halflings link"></i>&nbsp;&nbsp;&nbsp;&nbsp;<?php echo \$f['signature'] ?></p>
 		<p>
-			<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo ($this->maxAvatarSize/1024);?>ko</span></label>
+			<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo (\$this->maxAvatarSize/1024);?>ko</span></label>
 			<i class="halflings picture"></i>&nbsp;&nbsp;&nbsp;
 			<input type="file" id="avatar" name="avatar">
 		</p>
-		<p><label for="qid"><?php echo CAPTCHA;?></label><?php echo $this->captcha->template();?></p>';
+		<p><label for="qid"><?php echo CAPTCHA;?></label><?php echo \$this->captcha->template();?></p>';
 		<p><button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> <?php echo SIGN_UP;?></button></p>
 		<div class="message message-info"><i class="halflings exclamation-sign"></i> <?php echo MENDATORY_FIELDS;?>
 		<?php echo CHAR_NOT_ALLOWED;?>
 		<pre>/ \ &amp; " \' . ! ? :</pre> <?php echo CHAR_NOT_ALLOWED_BIS;?>
 		</div>
 		</form>
-		<?php
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'registrationForm.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'registrationForm.php', $string);
+		}
+		include(MU_THEMES.$this->theme.DS.'registrationForm.php');
 	}
 	/**
-	*
 	* ÉDITION DU PROFIL
 	*/
 	public function editProfilForm() {
-		$f = $this->setEditProfilForm();
-		?>
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+	\$f = \$this->setEditProfilForm();?>
 
 		<!-- Edit profil form -->
-		<h4 class="forms-section"><?php echo $f['title']; ?></h4>
+		<h4 class="forms-section"><?php echo \$f['title']; ?></h4>
 		<div class="units-container">
 			<ul class="blocks-2">
-				<li><figure><?php echo $f['avatar'];?></figure></li>
-				<li><?php echo $this->listFiles();?></li>
+				<li><figure><?php echo \$f['avatar'];?></figure></li>
+				<li><?php echo \$this->listFiles();?></li>
 			</ul>
 			<hr />
 			<div class="units-row well">
 			<form action="index.php" method="post" enctype="multipart/form-data" class=" forms forms-columnar">
 				<input type="hidden" name="action" value="editprofil" />
-				<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $this->maxAvatarSize;?>" />
-				<p class="forms-inline"><?php echo $f['birthday']; ?></p>
-				<p class="forms-inline"><?php echo $f['email']; ?></p>
-				<p class="forms-inline"><?php echo $f['website']; ?></p>
-				<p class="forms-inline"><?php echo $f['signature']; ?></p> 
+				<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo \$this->maxAvatarSize;?>" />
+				<p class="forms-inline"><?php echo \$f['birthday']; ?></p>
+				<p class="forms-inline"><?php echo \$f['email']; ?></p>
+				<p class="forms-inline"><?php echo \$f['website']; ?></p>
+				<p class="forms-inline"><?php echo \$f['signature']; ?></p> 
 				<p>
-				<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo ($this->maxAvatarSize/1024);?>ko</span></label><input type="file" id="avatar" name="avatar">
+				<label for="avatar"><?php echo AVATAR;?> <span class="label label-red">&lt; <?php echo (\$this->maxAvatarSize/1024);?>ko</span></label><input type="file" id="avatar" name="avatar">
 				</p>
 				<p>
 					<button type="submit" class="btn btn-green"><i class="halflings hand-right"></i> <?php echo SAVE_PROFIL;?></button>
 				</p>
 			</form>
-			</div><!-- well -->
-		<?php
+			</div>
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'editProfilForm.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'editProfilForm.php', $string);
+		}
 	}
 	
 	/**
-	*
 	* AFFICHAGE FIL D'ARIANE (Breadcrumbs)
 	*/
 	public function breadcrumbs() {
-		$f = $this->setBreadcrumbs();
-		?>
+		$string =<<<END
+<?php \$f = \$this->setBreadcrumbs();?>
+	<div class="image-right"><?php echo \$f['selectColor'];?></div>
+	<ul class="breadcrumbs">
+		<li><i class="halflings play-circle"></i>&nbsp;<?php echo WELCOME;?> 
+			<span class="<?php echo \$f['textClass']; ?>">
+				<strong><?php echo \$f['login'];?></strong>
+			</span>
+			<?php if(\$this->haveMP) {?>&nbsp;<a  href="javascript:switchLayer('privatebox');" rel="tooltip" title="<?php echo NEW_PRIVATE_MSG;?>" role="button" class="blink" data-toggle="modal"><i class="halflings inbox"></i></a><?php } ?>
 
-		<div class="image-right"><?php echo $f['selectColor'];?></div>
-		<ul class="breadcrumbs">
-			<li><i class="halflings play-circle"></i>&nbsp;<?php echo WELCOME;?> 
-				<span class="<?php echo $f['textClass']; ?>">
-					<strong><?php echo $f['login'];?></strong>
-				</span>
-				<?php if($this->haveMP) {?>&nbsp;<a  href="javascript:switchLayer('privatebox');" rel="tooltip" title="<?php echo NEW_PRIVATE_MSG;?>" role="button" class="blink" data-toggle="modal"><i class="halflings inbox"></i></a><?php } ?>
+		</li>
+		<li><a href="<?php echo MU_BASE_URL;?>"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></a></li>
+		<li>
+	<?php \$this->setBreadcrumbsLinks();?>
 
-			</li>
-			<li><a href="<?php echo MU_BASE_URL;?>"><i class="halflings home"></i>&nbsp;<?php echo HOME;?></a></li>
-			<li>
-		<?php $this->setBreadcrumbsLinks();?>
-
-			</li>
-		</ul>
-		<?php
+		</li>
+	</ul>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'breadcrumbs.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'breadcrumbs.php', $string);
+		}
+		include(MU_THEMES.$this->theme.DS.'breadcrumbs.php');
 	}
 	/**
-	*
 	* AFFICHAGE DU MENU
 	*/
 	public function menu() {
-		$stats=$this->forum->getStat();
+		$string =<<<END
+<?php \$stats=\$this->forum->getStat();
 
-		if($this->isMember) :?>
+		if(\$this->isMember) :?>
 			<li><a href="?logout=1" title="<?php echo QUIT;?>"><i class="halflings off"></i> <?php echo LOGOUT;?></a></li>
 			<li><a href="?editprofil=1" title="<?php echo EDIT_MY_PROFIL;?>"><i class="halflings eye-open"></i> <?php echo PROFIL;?></a></li>
 			<li><a href="?memberlist=1" title="<?php echo LIST_OF_MEMBERS;?>"><i class="halflings user"></i> <?php echo MEMBERS;?></a></li>
-			<?php if(!$this->isAdmin && !$this->isOwner) :?>
+			<?php if(!\$this->isAdmin && !\$this->isOwner) :?>
 			<li><a href="index.php" title="<?php echo HOME;?>"><i class="halflings home"></i> <?php echo FORUMS;?></a></li>
 			<?php endif;?>
 		<?php else :?>
@@ -3598,165 +3836,181 @@ class Template extends Init {
 			<input type="password" name="password" placeholder="<?php echo PASSWORD;?>">
 			<button type="submit" class="btn btn-info"><i class="halflings ok"></i> <?php echo CONNECT;?></button>
 			</form></li>	
-		<?php endif;
-		
+		<?php endif;?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'menu.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'menu.php', $string);
+		}
+		include(MU_THEMES.$this->theme.DS.'menu.php');
 	}
 	/**
-	*
 	* NAVIGATION (Admin seulement!)
 	*/
 	public function menu_admin() {
-		if($this->isAdmin && $this->isOwner) :?>
+		$string =<<<END
+<?php if(\$this->isAdmin && \$this->isOwner) :?>
 			<li><a href="?conf=1" title="<?php echo GENERAL_PARAM;?>"><i class="halflings wrench"></i> <?php echo CONFIG;?></a></li>
 			<li><a href="?backup=1" title="<?php echo SAVE_BACKUP;?>"><i class="halflings hdd"></i> <?php echo SAVE;?></a></li>
 			<li><a href="?restore=1" title="<?php echo RESTORE_FROM_BACKUP;?>"><i class="halflings refresh"></i> <?php echo RESTORE;?></a></li>
 			<li><a href="index.php" title="<?php echo HOME;?>"><i class="halflings home"></i> <?php echo FORUMS;?></a></li>
-		<?php endif;
+<?php endif;?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'menu_admin.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'menu_admin.php', $string);
+		}
+		include(MU_THEMES.$this->theme.DS.'menu_admin.php');
 	}
 	/**
-	*
 	* AFFICHAGE DE LA LISTE DES SUJETS (Forum home)
 	*/
-	public function showTopics() {?>
-
-		<p><?php $this->setTopics('pagination');?></p>
+	public function showTopics() {
+		$string =<<<END
+<?php if (!empty(\$_GET) || \$this->cLogin) include(dirname(__FILE__).'/header.php');?>
+		<p><?php \$this->setTopics('pagination');?></p>
 
 		<table class="table-bordered table-striped">
 		<tr class="info">
 		<td style="width:60%;"><?php echo TITLE_SUBJECT;?></td>
 		<td style="width:5%; text-align:center;"><?php echo MESSAGES;?></td>
 		<td style="width:30%;"><?php echo LAST_MSG;?></td>
-		<?php if($this->isAdmin) :?><td style="width:5%"><?php echo ADMIN;?></td><?php endif; ?>
+		<?php if(\$this->isAdmin) :?><td style="width:5%"><?php echo ADMIN;?></td><?php endif; ?>
 		</tr>
 
- 		<?php foreach($this->setTopics('topicList') as $t) :
+ 		<?php foreach(\$this->setTopics('topicList') as \$t) :
 			?>
 			<tr>
-			<td><?php $this->setTopicList($t['postType'],'<i class="halflings star"></i> ');?>
-				<?php $this->setTopicList($t['attachment'],'<i class="halflings file"></i> ');?>
-				<?php $this->setTopicIcon($t,'<i class="halflings folder-open"></i>','<i class="halflings fire"></i>');?>
+			<td><?php \$this->setTopicList(\$t['postType'],'<i class="halflings star"></i> ');?>
+				<?php \$this->setTopicList(\$t['attachment'],'<i class="halflings file"></i> ');?>
+				<?php \$this->setTopicIcon(\$t,'<i class="halflings folder-open"></i>','<i class="halflings fire"></i>');?>
 
-				<a href="?topic=<?php echo $t['topicID'];?>" title="<?php echo DISPLAY_TOPIC;?>">
-					<?php $this->setTopicTitle($t)?>
+				<a href="?topic=<?php echo \$t['topicID'];?>" title="<?php echo DISPLAY_TOPIC;?>">
+					<?php \$this->setTopicTitle(\$t)?>
 				</a>
 					<br />
-				<span class="image-right"><?php $this->setTopicStartonBy($t);$this->setTopicPrivate($t,'Lien');?></span>
+				<span class="image-right"><?php \$this->setTopicStartonBy(\$t);\$this->setTopicPrivate(\$t,'Lien');?></span>
 			</td>
-			<td class="mess"><?php echo $t['nombrePosts'];?></td>
+			<td class="mess"><?php echo \$t['nombrePosts'];?></td>
 			<td>
 				<i><?php echo L_ON;?> :</i> 
-				<?php $this->setTopicLastMsg($t);?><br />
+				<?php \$this->setTopicLastMsg(\$t);?><br />
 				<i><?php echo BY;?>:</i>
-				<?php $this->setTopicLastMsgBy($t,'Lien');?>
+				<?php \$this->setTopicLastMsgBy(\$t,'Lien');?>
 
 			</td>
-			<?php if($this->isAdmin) :?>
+			<?php if(\$this->isAdmin) :?>
 
-			<td><a href="?topic=<?php echo $t['topicID'];?>&amp;delpost=<?php echo $t['topicID'];?>" onclick="return confirmLink(this,'<?php echo $t['titre'];?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="halflings trash"></i></a></td><?php endif;?>
+			<td><a href="?topic=<?php echo \$t['topicID'];?>&amp;delpost=<?php echo \$t['topicID'];?>" onclick="return confirmLink(this,'<?php echo \$t['titre'];?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="halflings trash"></i></a></td><?php endif;?>
 
 			</tr>
 		<?php endforeach;?>
 		
 		</table>
-		<?php $this->setTopics('pagination');
-		$this->setTopics('reply');
+		<?php \$this->setTopics('pagination');
+	   if (!empty(\$_GET) || \$this->cLogin) {\$this->setTopics('reply'); include(dirname(__FILE__).'/footer.php');} ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showTopics.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showTopics.php', $string);
+		}
+		if (!$this->cLogin) include(MU_THEMES.$this->theme.DS.'showTopics.php');
 	}
 	/**
-	*
 	* AFFICHAGE DE LA DISCUSSION
 	*/
 	public function showPosts() {
-		if($topic = $this->setPost()): ?>
+		$string =<<<END
+<?php
+include(dirname(__FILE__).'/header.php');
+		if(\$topic = \$this->setPost()): ?>
 
-			<p><?php echo $topic->pagination; ?></p>
+			<p><?php echo \$topic->pagination; ?></p>
 			<div class="gradient">
-			<?php if($this->isAdmin):?>
+			<?php if(\$this->isAdmin):?>
 
-				<form action="index.php?topic=<?php $this->topicId()?>" name="sub" method="post" class="forms-inline">
-					<input type="hidden" name="topicID" value="<?php $this->topicId()?>" />
+				<form action="index.php?topic=<?php \$this->topicId()?>" name="sub" method="post" class="forms-inline">
+					<input type="hidden" name="topicID" value="<?php \$this->topicId()?>" />
 					<i class="halflings star" style="color:#111;"></i> 
-					<input style="border:none;" type="checkbox" onclick="window.location='?topic=<?php $this->topicId()?>&amp;postit=<?php $this->pinned($topic);?>"/> 
-					<input type="text" value="<?php $this->postTitle($topic) ?>" size="40" name="ntitle" /> 
+					<input style="border:none;" type="checkbox" onclick="window.location='?topic=<?php \$this->topicId()?>&amp;postit=<?php \$this->pinned(\$topic);?>"/> 
+					<input type="text" value="<?php \$this->postTitle(\$topic) ?>" size="40" name="ntitle" /> 
 					<button type="submit" class="btn btn-blue"><i class="halflings pencil"></i>&nbsp;<?php echo EDIT_TITLE?></button>
 				</form>
-			<?php else: $this->postTitle($topic);endif;?>
+			<?php else: \$this->postTitle(\$topic);endif;?>
 			
 			</div>
 			<?php 
-			$cnt=0;
-			while($reply=$topic->nextReply()) :
-				if($this->forum->isMember($reply->auth)) :
-					$mb=$this->forum->getMember($reply->auth);
+			\$cnt=0;
+			while(\$reply=\$topic->nextReply()) :
+				if(\$this->forum->isMember(\$reply->auth)) :
+					\$mb=\$this->forum->getMember(\$reply->auth);
 					//Tooltip ?>
 					
-					<div class="tooltip" id="<?php echo Tools::cleanUser($reply->auth)?>">
+					<div class="tooltip" id="<?php echo Tools::cleanUser(\$reply->auth)?>">
 						<table style="width: 100%">
-							<tr><th class="formTD"><?php echo PROFIL_OF?> <b><?php echo $reply->auth?></b></th></tr>
-							<tr><td class="formTD"><?php echo REGISTRED_ON?></td><td class="tooltipTD"><?php $this->dateOfAction($mb)?></td></tr>
-							<tr><td class="formTD"><?php echo EMAIL?></td><td class="tooltipTD"><?php $this->email($mb)?></td></tr>
-						<?php if(!empty($mb->url)) ?><tr><td class="formTD"><?php echo WEBSITE?></td><td class="tooltipTD"><?php echo $mb->url?></td></tr>
-						<?php if(!empty($mb->birthday))?><tr><td class="formTD"><?php echo BORN_ON?></td><td class="tooltipTD"><?php echo $mb->birthday?> <span class="badge"><?php echo MuDate::birthday($mb->birthday)?> <?php echo YEARS_OLD?></span></td></tr>
-						<?php if(!empty($mb->quote)) ?><tr><td class="formTD"><?php echo SIGNATURE?></td><td class="tooltipTD"><?php echo $mb->quote?></td></tr>
+							<tr><th class="formTD"><?php echo PROFIL_OF?> <b><?php echo \$reply->auth?></b></th></tr>
+							<tr><td class="formTD"><?php echo REGISTRED_ON?></td><td class="tooltipTD"><?php \$this->dateOfAction(\$mb)?></td></tr>
+							<tr><td class="formTD"><?php echo EMAIL?></td><td class="tooltipTD"><?php \$this->email(\$mb)?></td></tr>
+						<?php if(!empty(\$mb->url)) ?><tr><td class="formTD"><?php echo WEBSITE?></td><td class="tooltipTD"><?php echo \$mb->url?></td></tr>
+						<?php if(!empty(\$mb->birthday))?><tr><td class="formTD"><?php echo BORN_ON?></td><td class="tooltipTD"><?php echo \$mb->birthday?> <span class="badge"><?php echo MuDate::birthday(\$mb->birthday)?> <?php echo YEARS_OLD?></span></td></tr>
+						<?php if(!empty(\$mb->quote)) ?><tr><td class="formTD"><?php echo SIGNATURE?></td><td class="tooltipTD"><?php echo \$mb->quote?></td></tr>
 						</table>
 					</div>
-					<table class="width-100 table-bordered" id="p-<?php echo $reply->time?>">
+					<table class="width-100 table-bordered" id="p-<?php echo \$reply->time?>">
 						<tr>
-					<?php if($this->forum->isMember($reply->auth)) :?>
+					<?php if(\$this->forum->isMember(\$reply->auth)) :?>
 						
 							<td class="avatarTD" rowspan="2">
-								<a onmouseover="showWMTT('<?php echo $reply->auth?>')" onmouseout="hideWMTT()" href="?private=<?php echo $reply->auth?>" title=""><?php echo $this->pic($mb,'avatar')?></a>
-								<div class="datePost"><a class="LienNonLu" href="?private=<?php echo $reply->auth?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $reply->auth?></a></div>
-								<div><span class="label label-<?php echo $this->statut($mb)->class?>"><?php echo $this->statut($mb)->title?></div>
+								<a onmouseover="showWMTT('<?php echo \$reply->auth?>')" onmouseout="hideWMTT()" href="?private=<?php echo \$reply->auth?>" title=""><?php echo \$this->pic(\$mb,'avatar')?></a>
+								<div class="datePost"><a class="LienNonLu" href="?private=<?php echo \$reply->auth?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo \$reply->auth?></a></div>
+								<div><span class="label label-<?php echo \$this->statut(\$mb)->class?>"><?php echo \$this->statut(\$mb)->title?></div>
 					<?php else :?>
 						
-							<td class="avatarTD" rowspan="2"><?php echo $this->pic($mb,'avatar')?>
-								<div class="datePost"><?php echo $reply->auth?></div>
+							<td class="avatarTD" rowspan="2"><?php echo \$this->pic(\$mb,'avatar')?>
+								<div class="datePost"><?php echo \$reply->auth?></div>
 					<?php endif;
-					if(!empty($mb->url)) :?>
+					if(!empty(\$mb->url)) :?>
 
-								<div class="datePost"><i class="halflings share"></i>&nbsp;<a href="<?php echo $mb->url?>" onclick="window.open(this.href);return false;" title="<?php echo $mb->url?>"><?php echo WEBSITE?></a></div>
+								<div class="datePost"><i class="halflings share"></i>&nbsp;<a href="<?php echo \$mb->url?>" onclick="window.open(this.href);return false;" title="<?php echo \$mb->url?>"><?php echo WEBSITE?></a></div>
 					<?php endif; ?>
 
-								<div class="datePost"><?php echo MESSAGE.' : '.$mb->post?></div>
+								<div class="datePost"><?php echo MESSAGE.' : '.\$mb->post?></div>
 							<td>
-								<div class="datePost"><a href="?topic=<?php echo $this->get_topic?>&amp;page=<?php echo $this->page.'#p-'.$reply->time?>"><?php $this->dateOfAction($reply)?></a></div>
+								<div class="datePost"><a href="?topic=<?php echo \$this->get_topic?>&amp;page=<?php echo \$this->page.'#p-'.\$reply->time?>"><?php \$this->dateOfAction(\$reply)?></a></div>
 							</td>
 						</tr>
 						<tr>
 							<td class="messageTD">
-								<div id="td<?php echo $cnt?>"><?php echo BBCHelper::decode($reply->content)?></div>
-					<?php if($this->quoteMode) :?>
+								<div id="td<?php echo \$cnt?>"><?php echo BBCHelper::decode(\$reply->content)?></div>
+					<?php if(\$this->quoteMode) :?>
 
-								<div class="signature"><blockquote><p><?php echo $mb->quote?></p></blockquote></div>
+								<div class="signature"><blockquote><p><?php echo \$mb->quote?></p></blockquote></div>
 					<?php endif; ?>
 
 							</td>
 						</tr>
 						<tr>
 							<td style="text-align: center">
-								<a href="<?php echo $_SERVER['REQUEST_URI']?>#bottom" class="btn btn-small btn-orange" onclick="quote('<?php echo $reply->auth?>',<?php echo $cnt?>)" title="<?php echo QUOTE_MSG_FROM.' '.$reply->auth?>" /><i class='halflings comments'></i> <?php echo QUOTE?></a>
+								<a href="<?php echo \$_SERVER['REQUEST_URI']?>#bottom" class="btn btn-small btn-orange" onclick="quote('<?php echo \$reply->auth?>',<?php echo \$cnt?>)" title="<?php echo QUOTE_MSG_FROM.' '.\$reply->auth?>" /><i class='halflings comments'></i> <?php echo QUOTE?></a>
 							</td>
 							<td>
-					<?php if($this->isAdmin) :?>
+					<?php if(\$this->isAdmin) :?>
 						
-								<a class="btn btn-small" href="?topic=<?php echo $this->get_topic?>&amp;editpost=<?php echo $reply->time?>&amp;page=<?php echo $this->page?>" title="<?php echo EDIT?>">
+								<a class="btn btn-small" href="?topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
 									<i class="halflings pencil"></i> <?php echo EDIT?>
-								</a>&nbsp;<a class="btn btn-small btn-red" href="?topic=<?php echo $this->get_topic?>&amp;delpost=<?php echo $reply->time?>&amp;page=<?php echo $this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php $this->delMsg($cnt,$reply->auth)?>')">
+								</a>&nbsp;<a class="btn btn-small btn-red" href="?topic=<?php echo \$this->get_topic?>&amp;delpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php \$this->delMsg(\$cnt,\$reply->auth)?>')">
 									<i class="halflings trash"></i> <?php echo DEL?>
 								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
 									<i class="halflings share-alt"></i> <?php echo ANSWER?>
 								</a>
 					<?php endif;	
-					if(!empty($reply->attach)) $this->downloadAttach($reply->attach,'image-right')?>
+					if(!empty(\$reply->attach)) \$this->downloadAttach(\$reply->attach,'image-right')?>
 
 							</td>
 						</tr>
 					</table>
-			<?php $cnt++;
+			<?php \$cnt++;
 				endif;
 			endwhile?>
-			<p><?php echo $topic->pagination; ?></p>
-			<?php echo $this->replyForm('newpost');
+			<p><?php echo \$topic->pagination; ?></p>
+			<?php echo \$this->setReplyForm('newpost');
 		else:?>
 			
 			<div class="message">
@@ -3764,15 +4018,21 @@ class Template extends Init {
 				<strong><?php echo TOPIC_UNKNONW?></strong>
 			</div>
 		<?php endif;
+		include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showPosts.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showPosts.php', $string);
+		}
 	}
 	/**
-	*
 	* LISTE DES MEMBRES
 	*/
 	public function showMemberlist() {
-		$ml = $this->setMemberList();?>
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+		\$ml = \$this->setMemberList();?>
 
-		<p><?php echo $ml['pagination'] ?></p>
+		<p><?php echo \$ml['pagination'] ?></p>
 		<form action="index.php?searchMember" method="post" autocomplete="off" class="text-right">
 			<input type="text" name="searchMember" placeholder="<?php echo SEARCH?>">
 			<button type="submit" class="btn btn-info"><i class="halflings search"></i></button>
@@ -3782,51 +4042,51 @@ class Template extends Init {
 				<tr class="colorGrayDark">
 					<td style="width:15%;"><?php echo MEMBER?></td>
 					<td style="width:20%;"><?php echo REGISTRED_ON?></td>
-					<td style="width:<?php echo $ml['wd']?>%;"><?php echo SIGNATURE?></td>
+					<td style="width:<?php echo \$ml['wd']?>%;"><?php echo SIGNATURE?></td>
 					<td style="width:13%;"><?php echo BIRTH?></td>
 					<td style="width:12%;"><?php echo EMAIL_URL?></td>
-		<?php if($this->isAdmin){?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td><?php } ?>
+		<?php if(\$this->isAdmin){?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td><?php } ?>
 				</tr>
 			</thead>
-		<?php foreach($this->forum->listMember($this->nbrMb,$this->page,false) as $m) {
-			$mb = $this->setMbOfList($m);?>
+		<?php foreach(\$this->forum->listMember(\$this->nbrMb,\$this->page,false) as \$m) {
+			\$mb = \$this->setMbOfList(\$m);?>
 
 				<tr>
 					<td>
-						<?php echo $mb->avatar; ?>
-			<?php if($m != $this->cLogin) {?>
+						<?php echo \$mb->avatar; ?>
+			<?php if(\$m != \$this->cLogin) {?>
 
-						<a class="Lien" href="?private=<?php echo $m?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $m?></a>
+						<a class="Lien" href="?private=<?php echo \$m?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo \$m?></a>
 			<?php }else{?>
 
-						<a class="Lien" href="#" onclick="return false;"><?php echo $m?></a>
+						<a class="Lien" href="#" onclick="return false;"><?php echo \$m?></a>
 			<?php } ?>
 					</td>
-					<td><?php $this->dateOfAction($mb)?></td>
-					<td><?php echo $mb->signature?></td>
-					<td><?php echo $mb->birthday?></td>
-					<td style="text-align:center;"><?php echo $mb->mail.'&nbsp;&nbsp;'.$mb->url?></td>
+					<td><?php \$this->dateOfAction(\$mb)?></td>
+					<td><?php echo \$mb->signature?></td>
+					<td><?php echo \$mb->birthday?></td>
+					<td style="text-align:center;"><?php echo \$mb->mail.'&nbsp;&nbsp;'.\$mb->url?></td>
 			<?php 
-			if($this->isAdmin) {
-				if($mb->mod) {
-					if($m==$this->cLogin || $mb->mod==2) {
-						$str=($mb->mod>1)? ADMIN:MODO;?>
+			if(\$this->isAdmin) {
+				if(\$mb->mod) {
+					if(\$m==\$this->cLogin || \$mb->mod==2) {
+						\$str=(\$mb->mod>1)? ADMIN:MODO;?>
 
 					<td>&nbsp;</td>
 					<td>
 						<form>
 							<input style="border:none;" type="checkbox" checked="checked" onclick="this.checked='checked';"/>
-							<?php echo $str?>!
+							<?php echo \$str?>!
 						</form>
 					</td>
 			<?php 	} else {?>
 				
 					<td>
-						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo $m?>" onclick="return confirmLink(this,'<?php echo $m?>')" title="<?php echo DEL_MEMBER?>"><i class="halflings trash"></i></a>
+						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo \$m?>" onclick="return confirmLink(this,'<?php echo \$m?>')" title="<?php echo DEL_MEMBER?>"><i class="halflings trash"></i></a>
 					</td>
 					<td>
 						<form>
-							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $m?>';" /> 
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo \$m?>';" /> 
 							<?php echo MODO?>?
 						</form>
 					</td>
@@ -3834,11 +4094,11 @@ class Template extends Init {
 				} else {?>
 
 					<td>
-						<a href="?memberlist=1&amp;deluser=<?php echo $m?>" onclick="return confirmLink(this,'<?php echo $m?>')" title="<?php echo DEL_THIS_USER?>"><i class="halflings trash"></i></a>
+						<a href="?memberlist=1&amp;deluser=<?php echo \$m?>" onclick="return confirmLink(this,'<?php echo \$m?>')" title="<?php echo DEL_THIS_USER?>"><i class="halflings trash"></i></a>
 					</td>
 					<td>
 						<form>
-							<input style="border:none;" type="checkbox" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $m?>';"/> 
+							<input style="border:none;" type="checkbox" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo \$m?>';"/> 
 							<?php echo MODO?>?
 						</form>
 					</td>
@@ -3850,79 +4110,84 @@ class Template extends Init {
 		}?>
 
 		</table>
-		<p><?php echo $ml['pagination'] ?></p>
-		<?php
+		<p><?php echo \$ml['pagination'] ?></p>
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showMemberlist.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showMemberlist.php', $string);
+		}
 	}
 	/**
-	*
 	* RECHERCHE D'UN MEMBRE
 	*/
 	public function searchMember() {
-		$mb = $this->setSearchMb();
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+		\$mb = \$this->setSearchMb();
 		?>
 		
 		<table class="width-100 table-striped">
 			<thead>
 				<tr class="colorGrayDark">
 					<td style="width:15%;"><?php echo MEMBER?></td>
-					<td style="width:<?php echo $mb->wd?>%;"><?php echo SIGNATURE?></td>
+					<td style="width:<?php echo \$mb->wd?>%;"><?php echo SIGNATURE?></td>
 					<td style="width:13%;"><?php echo BIRTH?></td>
 					<td style="width:12%;"><?php echo EMAIL?></td>
-				<?php if($this->isAdmin) {?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td><?php } ?>
+				<?php if(\$this->isAdmin) {?><td colspan="2" style="width:15%;"><?php echo ADMIN?></td><?php } ?>
 					
 				</tr>
 			</thead>
 				<tr>
 			<?php 
-			if($mb->avatar !== null) {?>
+			if(\$mb->avatar !== null) {?>
 
 					<td>
-						<?php echo $mb->avatar; ?>
-			<?php if($this->searchMember != $this->cLogin){?>
+						<?php echo \$mb->avatar; ?>
+			<?php if(\$this->searchMember != \$this->cLogin){?>
 
-						<a class="Lien" href="?private=<?php echo $this->searchMember?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo $this->searchMember?></a> 
+						<a class="Lien" href="?private=<?php echo \$this->searchMember?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo \$this->searchMember?></a> 
 			<?php }else{?>
 				
-						<a class="Lien" href="#" onclick="return false;"><?php echo $this->searchMember?></a>
+						<a class="Lien" href="#" onclick="return false;"><?php echo \$this->searchMember?></a>
 			<?php } ?>
 
 					</td>
-					<td><?php echo $mb->signature?></td>
-					<td><?php echo $mb->birthday?></td>
-					<td><?php echo $mb->mail.' '.$mb->url?></td>
+					<td><?php echo \$mb->signature?></td>
+					<td><?php echo \$mb->birthday?></td>
+					<td><?php echo \$mb->mail.' '.\$mb->url?></td>
 			<?php
-			if($this->isAdmin) {
-				if($mb->mod) {
-					if($mb==$this->cLogin || $mb->mod==2) {
-						$str=($mb->mod>1)? ADMIN:MODO;?>
+			if(\$this->isAdmin) {
+				if(\$mb->mod) {
+					if(\$mb==\$this->cLogin || \$mb->mod==2) {
+						\$str=(\$mb->mod>1)? ADMIN:MODO;?>
 					
 					<td>&nbsp;</td>
 					<td>
 						<form>
-							<input style="border:none;" type="checkbox" checked="checked" onclick="this.checked='checked'"/><?php echo $str?>!
+							<input style="border:none;" type="checkbox" checked="checked" onclick="this.checked='checked'"/><?php echo \$str?>!
 						</form>
 					</td>
 				<?php } else {?>
 					
 					<td>
-						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo $this->searchMember?>" onclick="return confirmLink(this,'<?php echo $this->searchMember?>')" title="<?php echo DEL_MEMBER?>">
+						<a class="Lien" href="?memberlist=1&amp;deluser=<?php echo \$this->searchMember?>" onclick="return confirmLink(this,'<?php echo \$this->searchMember?>')" title="<?php echo DEL_MEMBER?>">
 							<i class="halflings trash"></i>
 						</a>
 					</td>
 					<td>
 						<form>
-							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $this->searchMember?>;" /> <?php echo MODO?>?</form></td>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo \$this->searchMember?>;" /> <?php echo MODO?>?</form></td>
 				<?php }
 				} else {?>
 
 					<td>
-						<a href="?memberlist=1&amp;deluser=<?php echo $this->searchMember?>" onclick="return confirmLink(this,'<?php echo $this->searchMember?>')" title="<?php echo DEL_THIS_USER?>">
+						<a href="?memberlist=1&amp;deluser=<?php echo \$this->searchMember?>" onclick="return confirmLink(this,'<?php echo \$this->searchMember?>')" title="<?php echo DEL_THIS_USER?>">
 							<i class="halflings trash"></i>
 						</a>
 					</td>
 					<td>
 						<form>
-							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo $this->searchMember?>;'"/> <?php echo MODO?>?</form></td>
+							<input style="border:none;" type="checkbox" checked="checked" onclick="window.location='?memberlist=1&amp;switchuser=<?php echo \$this->searchMember?>;'"/> <?php echo MODO?>?</form></td>
 				<?php }
 			}?>
 				
@@ -3930,139 +4195,176 @@ class Template extends Init {
 		<?php } else {?>
 			
 				<tr>
-					<td colspan="<?php echo (($this->isAdmin) ? '6' : '4')?>">
+					<td colspan="<?php echo ((\$this->isAdmin) ? '6' : '4')?>">
 						<?php echo NO_RESULT.'.&nbsp;'.DID_YOU_MEAN?>
-						<a href="<?php echo MU_BASE_URL?>?searchMember=<?php echo $mb->closest?>"><?php echo $mb->closest?></a> ?
+						<a href="<?php echo MU_BASE_URL?>?searchMember=<?php echo \$mb->closest?>"><?php echo \$mb->closest?></a> ?
 					</td>
 				</tr>
 
 		<?php }?>
 		
 		</table>
-		<?php
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showMemberlist.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showMemberlist.php', $string);
+		}
 	}
 	/**
-	*
 	* AFFICHE LA FENÊTRE DES MESSAGES PRIVÉS
 	*/
-	public function showPrivateMsg() {?>
-
+	public function showPrivateMsg() {
+		$string =<<<END
 		<div class="Box">
 			<a class="toggleLink" href="javascript:switchLayer('privatebox');" title="<?php echo PRIVATE_MSG?>"><?php echo PRIVATE_INBOX?></a>
 			<div class='toggle' id='privatebox'>
-				<?php $this->setPrivateMsg();?>
+				<?php \$this->setPrivateMsg();?>
 				<a href="?delprivate=1" class="btn btn-red"><i class="halflings trash"></i> <?php echo EMPTY_MAILBOX?></a><p/>
 			</div>
 		</div>
-		<?php
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showPrivateMsg.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showPrivateMsg.php', $string);
+		}
 	}
 	/**
-	*
 	* FORMULAIRE DE RÉPONSE
 	*/
-	public function replyForm($type,$mpTo='') {
-		$r = $this->setReplyForm($type,$mpTo);?>
-		
+	public function replyForm() {
+		$string =<<<END
 		<!-- Reply form -->
-		<?php if($r->edit || $r->show) {?>
+		<?php if(\$r->edit || \$r->show) {?>
 			
-			<h4 class="forms-section"><?php echo $r->name?></h4>
+			<h4 class="forms-section"><?php echo \$r->name?></h4>
 			<div class="Box"><div>
 		<?php } else {?>
 			
-			<a class="btn btn-big" href="javascript:switchLayer('form');" title="formulaire"><?php echo $r->name?></a>
+			<a class="btn btn-big" href="javascript:switchLayer('form');" title="formulaire"><?php echo \$r->name?></a>
 			<div class="toggle" id="form">
 		<?php }?>
 			
 				<br />
 				<form id="formulaire" action="index.php#bottom" method="post" enctype="multipart/form-data" class="forms forms-columnar">
-					<input type="hidden" name="action" value="<?php echo $type?>" />
-					<input type="hidden" name="page" value="<?php echo $this->page?>" />
+					<input type="hidden" name="action" value="<?php echo \$type?>" />
+					<input type="hidden" name="page" value="<?php echo \$this->page?>" />
 		<?php // Réponse
-		if($type== 'newpost' || $r->edit) {?><input type="hidden" name="topicID" value="<?php echo $this->get_topic?>" />
+		if(\$type== 'newpost' || \$r->edit) {?><input type="hidden" name="topicID" value="<?php echo \$this->get_topic?>" />
 		<?php // Mesage privé
-		}if($mpTo){?><input type="hidden" name="mpTo" value="<?php echo $mpTo?>" />
+		}if(\$mpTo){?><input type="hidden" name="mpTo" value="<?php echo \$mpTo?>" />
 		<?php // Edition
-		}if($r->edit){?><input type="hidden" name="postID" value="<?php echo $this->get_editpost?>" />
+		}if(\$r->edit){?><input type="hidden" name="postID" value="<?php echo \$this->get_editpost?>" />
 			<div>
 		<?php // Nouveau Sujet
-		}if($type== 'newtopic') {?>
+		}if(\$type== 'newtopic') {?>
 				<p><?php echo  Tools::input(TITLE_SUBJECT, 'titre', '', 'text', '', '','','width-40')?></p>
-				<?php if($this->isAdmin) {?><p><label for="postit"><i class="halflings star"></i> <?php echo PINNED?></label><?php } ?>
+				<?php if(\$this->isAdmin) {?><p><label for="postit"><i class="halflings star"></i> <?php echo PINNED?></label><?php } ?>
 
 				<input type="checkbox" id="postit" name="postit" value="1"></p>
-		<?php } if(!$this->cLogin){?><p><?php echo Tools::input(USER_MENDATORY, 'anonymous', '', 'text', '', '','','width-40')?></p>
-		    <?php }echo BBCHelper::formattingHelp();if($r->edit) {?>
+		<?php } if(!\$this->cLogin){?><p><?php echo Tools::input(USER_MENDATORY, 'anonymous', '', 'text', '', '','','width-40')?></p>
+		    <?php }echo BBCHelper::formattingHelp();if(\$r->edit) {?>
 
-				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', $reply->content, '40', '10', '', '', '', 'width-70')?></p>
+				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', \$reply->content, '40', '10', '', '', '', 'width-70')?></p>
 		<?php } else {?>
 
 				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', '', '40', '10', '', '', '', 'width-70')?></p>
-		<?php } if($join) ?><p><?php echo Tools::input(ATTACH_FILE, 'attachment', '', 'file', '', '','','width-40')?></p>
+		<?php } if(\$r->join) {?><p><?php echo Tools::input(ATTACH_FILE, 'attachment', '', 'file', '', '','','width-40')?></p><?php }?>
 				<p>
 					<button type="submit" class="text-right btn btn-green"><i class="halflings arrow-right"></i> <?php echo SEND?></button>
 				</p>
 			</div>
 		</form>
 		</div>
-		<?php 
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'replyForm.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'replyForm.php', $string);
+		}
 	}
 	/**
-	*
+	* FORMULAIRE DE RESTAURATION DE LA SAUVEGARDE
+	*/
+	public function frestore() {
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');?>
+		<!-- Edit config form -->
+		<div class="Box">
+			<h4 class="forms-section"><?php echo RESTAURATION_FORUM?></h4>
+			<div style="padding-top:10px">
+				<form action="index.php" method="post" enctype="multipart/form-data" class="forms forms-columnar">
+					<input type="hidden" name="restore" value="1" />
+					<input type="hidden" name="action" value="restore" />
+					<p class="forms-inline"><?php echo Tools::input(UPLOAD_BACKUP, 'backup', '', 'file', '', '','','width-40')?></p>
+					<p><button type="submit" class="text-right btn btn-green"><i class="halflings hand-right"></i>&nbsp;<?php echo SEND?></button></p>
+				</form>
+			</div>
+		</div>
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'frestore.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'frestore.php', $string);
+		} 
+	}
+	/**
 	* ÉDITION DE LA CONFIGURATION
 	*/
 	function editConf() {
-		if(!$wtp=@file_get_contents('welcome.txt')) $wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));?>
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+		\$this->searchThemes();
+		if(!\$wtp=@file_get_contents('welcome.txt')) \$wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));?>
 		
 		<!-- Edit config form -->
 		<h4 class="forms-section"><?php echo CONFIG_OPTIONS?></h4>
 		<div style="padding-top:10px;">
-			<?php if (SECURITY_SALT == 'DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ' && $this->isAdmin) {?>
+			<?php if (SECURITY_SALT == 'DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ' && \$this->isAdmin) {?>
 				<p class="text-warning"><?php echo CHANGE_SECURITY_SALT?></p>
 			<?php }
-				if (CAPTCHA == 'captcha' && $this->isAdmin) {?>
+				if (CAPTCHA == 'captcha' && \$this->isAdmin) {?>
 				<p class="text-warning"><?php echo CHANGE_CAPTCHA_DIR_NAME?></p>
 			<?php }?>
 			<form action="index.php" method="post" enctype="multipart/form-data" class="forms forms-columnar">
 				<input type="hidden" name="action" value="editoption" />
 				<p class="forms-inline">
 					<label><?php echo TITLE_LOGO?></label>
-					<input type="text" name="uftitle" maxlength="60" value="<?php echo Tools::clean($this->uforum)?>" class="width-30" />
+					<input type="text" name="uftitle" maxlength="60" value="<?php echo Tools::clean(\$this->uforum)?>" class="width-30" />
 					&nbsp;<input type="file" name="attachment" class="width-40" />
 				</p>
 				<p class="forms-inline">
 					<label><?php echo NAME_AND_URL?></label>
-					<input type="text" name="ufsitename" value="<?php echo Tools::clean($this->siteName)?>" placeholder="µForum" class="width-30" />
-					&nbsp;<input type="url" maxlength="80" name="ufsite" value="<?php echo $this->siteUrl?>" placeholder="http://…" class="width-40" />
+					<input type="text" name="ufsitename" value="<?php echo Tools::clean(\$this->siteName)?>" placeholder="µForum" class="width-30" />
+					&nbsp;<input type="url" maxlength="80" name="ufsite" value="<?php echo \$this->siteUrl?>" placeholder="http://…" class="width-40" />
 				</p>
-			    <p class="forms-inline"><?php echo Tools::textarea(META_DESCRIPTION, 'ufmetadesc', Tools::clean($this->metaDesc), '10', '2', 'Lightweight bulletin board without sql', '150', '', 'width-70')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(INDEX_MAX_MSG, 'nbmess', $this->nbrMsgIndex, 'number', '', '2', '', 'width-10')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(TOPIC_MAX_MSG, 'nbmessTopic', $this->nbMsgTopic, 'number', '', '2', '', 'width-10')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(MEM_MAX_DISP, 'nbmb', $this->nbrMb, 'number', '', '2', '', 'width-10')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(LANGUAGE, 'uflang', $this->lang, 'text', '', '2', '', 'width-10')?></p>
-			    <p class="forms-inline"><?php echo Tools::input(MAX_AVATAR_WEIGHT, 'maxav', ($this->maxAvatarSize/1024), 'number', '', '10', '', 'width-10', 'resize-small')?></p>
-			     <p class="forms-inline"><?php echo Tools::input(ALLOWED_EXT, 'exts', Tools::clean($this->extStr), 'text', '', '50', '', 'width-40')?></p>
+			    <p class="forms-inline"><?php echo Tools::textarea(META_DESCRIPTION, 'ufmetadesc', Tools::clean(\$this->metaDesc), '10', '2', 'Lightweight bulletin board without sql', '150', '', 'width-70')?></p>
+			    <p class="forms-inline"><?php echo Tools::select(THEME, 'theme', \$this->aThemes, \$this->theme, false, '', true)?></p>
+			    <p class="forms-inline"><?php echo Tools::select(CONFIG_GZIP, 'gzip', array('1'=>L_YES,'0'=>L_NO), \$this->gzip, false, '', true)?></p>
+			    <p class="forms-inline"><?php echo Tools::input(INDEX_MAX_MSG, 'nbmess', \$this->nbrMsgIndex, 'number', '', '2', '', 'width-10')?></p>
+			    <p class="forms-inline"><?php echo Tools::input(TOPIC_MAX_MSG, 'nbmessTopic', \$this->nbMsgTopic, 'number', '', '2', '', 'width-10')?></p>
+			    <p class="forms-inline"><?php echo Tools::input(MEM_MAX_DISP, 'nbmb', \$this->nbrMb, 'number', '', '2', '', 'width-10')?></p>
+			    <p class="forms-inline"><?php echo Tools::input(LANGUAGE, 'uflang', \$this->lang, 'text', '', '2', '', 'width-10')?></p>
+			    <p class="forms-inline"><?php echo Tools::input(MAX_AVATAR_WEIGHT, 'maxav', (\$this->maxAvatarSize/1024), 'number', '', '10', '', 'width-10', 'resize-small')?></p>
+			     <p class="forms-inline"><?php echo Tools::input(ALLOWED_EXT, 'exts', Tools::clean(\$this->extStr), 'text', '', '50', '', 'width-40')?></p>
 				<p>
 					<label><?php echo PRIVATE_MODE?></label>
-					<input name="fmode" type="checkbox" <?php echo $this->forumMode?'checked="checked" ':''?>/>
+					<input name="fmode" type="checkbox" <?php echo \$this->forumMode?'checked="checked" ':''?>/>
 				</p>
 				<p>
 					<label><?php echo SHOW_SIGNATURES?></label>
-				<input name="qmode" type="checkbox" <?php echo $this->quoteMode?'checked="checked" ':''?>/>
+				<input name="qmode" type="checkbox" <?php echo \$this->quoteMode?'checked="checked" ':''?>/>
 				</p>
 					<?php echo BBCHelper::formattingHelp()?>
-				<p class="forms-inline"><?php echo Tools::textarea(WELCOME_MSG, 'message', $wtp, '40', '20', '', '', '', 'width-70')?></p>
+				<p class="forms-inline"><?php echo Tools::textarea(WELCOME_MSG, 'message', \$wtp, '40', '20', '', '', '', 'width-70')?></p>
 				<p class="text-right">
 					<button type="submit" class="btn btn-green"><i class="halflings hand-right"></i>&nbsp;<?php echo REC?></button>
 				</p>
 			</form>
 		</div>
-		<?php 
+<?php include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'editConf.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'editConf.php', $string);
+		}
 	}
 }
-
 /**
-*
 * INITIALISATION
 */
 header('Content-Type: text/html; charset=utf-8');
