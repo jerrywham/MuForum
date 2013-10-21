@@ -3641,7 +3641,8 @@ END;
 	}
 	public function footer() {
 		$string =<<<END
-<?php \$f = \$this->setFooter(\$this->forum->getStat())?>
+<?php \$f = \$this->setFooter(\$this->forum->getStat());
+echo \$this->breadcrumbs();?>
 
 	<hr />
 
