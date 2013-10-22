@@ -2295,6 +2295,7 @@ class Init {
 
 		if(!is_file('version') || file_get_contents('version')!=VERSION) {
 			file_put_contents('version', VERSION);
+			$this->mkDefaultTheme();
 			if(!$this->mkressources()) {
 				if (is_file('config.php')){include('config.php');}
 				$config="<?php\n";
@@ -2322,8 +2323,6 @@ class Init {
 			if(@copy('index.php','index.bak')) {
 				unlink('index.php');
 				rename('index.bak','index.php');
-				header('location: index.php');
-				exit();
 			}
 		} else {
 			$this->forum = new Forum();
@@ -2721,7 +2720,7 @@ class Init {
 			file_put_contents('config.php', utf8_encode($config));
 
 			$errors='';
-			$errors.= ($this->mkDefaultTheme())? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
+			$errors.= (is_dir(MU_THEMES))? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
 			$errors.= (@mkdir(MU_THEMES.$this->theme.DS.MU_CSS))? sprintf("&#10004;&nbsp;".MKCSS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKCSS." .\n");
 	        $errors.= (is_file(MU_LANG.LANG.'.php'))? sprintf("&#10004;&nbsp;".MKLANG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKLANG.".\n");
 	        $errors.= (@mkdir(MU_BACK))? sprintf("&#10004;&nbsp;".MKBAK.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKBAK.".\n");
@@ -2984,45 +2983,72 @@ class Template extends Init {
 	private $aThemes=array();
 	private $aLang=array();
 	private $template=array();
+	private $install=false;
 
 	public function __construct() {
-		parent::__construct();
-		$this->template = $this->setTemplate();
-		# On démarre la bufferisation
-		ob_start();
-		ob_implicit_flush(0);
+			parent::__construct();
+			if (!is_file(MU_THEMES.$this->theme.DS.'showPrivateMsg.php')) {
+				$this->install=true;
+				ob_start();
+				$this->header();
+				$this->menu();
+				$this->menu_admin();
+				$this->breadcrumbs();
+				$this->content();
+				$this->registrationForm();
+				$this->replyForm();
+				$this->showTopics();
+				$this->showPosts();
+				$this->showPrivateMsg();
+				$this->showMemberlist();
+				$this->searchMember();
+				$this->editProfilForm();
+				$this->editConf();
+				$this->frestore();
+				$this->footer();
+				ob_get_clean();
+				$this->install=false;
+				header('location: index.php');
+				exit();
+			}
+			$this->template = $this->setTemplate();
+			# On démarre la bufferisation
+			ob_start();
+			ob_implicit_flush(0);
 
-		# Traitements du thème
-		if(MU_THEMES == '' or !is_dir(MU_THEMES)) {
-			header('Content-Type: text/plain');
-			echo ERROR_THEME_NOTFOUND.' ('.MU_THEMES.$this->theme.'.php) !';
-		} elseif(file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
-			# On impose le charset
-			header('Content-Type: text/html; charset='.CHARSET);
-			$this->showTemplate($this->template);
-			# Insertion du template
-			include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
-		} else {
-			$this->showTemplate($this->template);
-			if (!file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
+			# Traitements du thème
+			if(MU_THEMES == '' or !is_dir(MU_THEMES)) {
 				header('Content-Type: text/plain');
-				echo ERROR_FILE_NOTFOUND.' ('.MU_THEMES.$this->theme.DS.$this->template['template'].'.php) !';
-			} else {
+				echo ERROR_THEME_NOTFOUND.' ('.MU_THEMES.$this->theme.'.php) !';
+			} elseif(file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
+				# On impose le charset
+				header('Content-Type: text/html; charset='.CHARSET);
+				$this->showTemplate($this->template);
 				# Insertion du template
 				include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
+			} else {
+				$this->showTemplate($this->template);
+				if (!file_exists(MU_THEMES.$this->theme.DS.$this->template['template'].'.php')) {
+					header('Content-Type: text/plain');
+					echo ERROR_FILE_NOTFOUND.' ('.MU_THEMES.$this->theme.DS.$this->template['template'].'.php) !';
+				} else {
+					# Insertion du template
+					include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
+				}
 			}
-		}
 
-		# Récuperation de la bufférisation
-		$output = ob_get_clean();
+			# Récuperation de la bufférisation
+			$output = ob_get_clean();
 
-		# On applique la compression gzip si nécessaire et disponible
-		if($this->gzip) {
-			if($encoding=Tools::httpEncoding()) {
-				header('Content-Encoding: '.$encoding);
-				$output = gzencode($output,-1,FORCE_GZIP);
-		    }
-		}
+			# On applique la compression gzip si nécessaire et disponible
+			if($this->gzip) {
+				if($encoding=Tools::httpEncoding()) {
+					header('Content-Encoding: '.$encoding);
+					$output = gzencode($output,-1,FORCE_GZIP);
+			    }
+			}
+			# Restitution écran
+			echo $output;
 
 	// A FAIRE
 	// 
@@ -3077,8 +3103,7 @@ class Template extends Init {
 	// 		return $buffer;
 	// }
 
-		# Restitution écran
-		echo $output;
+		
 	}
 	/**
 	* TEXTE D'ACCUEIL
@@ -3641,8 +3666,7 @@ END;
 	}
 	public function footer() {
 		$string =<<<END
-<?php \$f = \$this->setFooter(\$this->forum->getStat());
-echo \$this->breadcrumbs();?>
+<?php \$f = \$this->setFooter(\$this->forum->getStat())?>
 
 	<hr />
 
@@ -3752,7 +3776,9 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'registrationForm.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'registrationForm.php', $string);
 		}
-		include(MU_THEMES.$this->theme.DS.'registrationForm.php');
+		if (!$this->install) {
+			include(MU_THEMES.$this->theme.DS.'registrationForm.php');
+		}
 	}
 	/**
 	* ÉDITION DU PROFIL
@@ -3818,7 +3844,9 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'breadcrumbs.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'breadcrumbs.php', $string);
 		}
-		include(MU_THEMES.$this->theme.DS.'breadcrumbs.php');
+		if (!$this->install) {
+			include(MU_THEMES.$this->theme.DS.'breadcrumbs.php');
+		}
 	}
 	/**
 	* AFFICHAGE DU MENU
@@ -3847,7 +3875,9 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'menu.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'menu.php', $string);
 		}
-		include(MU_THEMES.$this->theme.DS.'menu.php');
+		if (!$this->install) {
+			include(MU_THEMES.$this->theme.DS.'menu.php');
+		}
 	}
 	/**
 	* NAVIGATION (Admin seulement!)
@@ -3864,7 +3894,9 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'menu_admin.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'menu_admin.php', $string);
 		}
-		include(MU_THEMES.$this->theme.DS.'menu_admin.php');
+		if (!$this->install) {
+			include(MU_THEMES.$this->theme.DS.'menu_admin.php');
+		}
 	}
 	/**
 	* AFFICHAGE DE LA LISTE DES SUJETS (Forum home)
@@ -3917,7 +3949,7 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'showTopics.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'showTopics.php', $string);
 		}
-		if (!$this->cLogin) include(MU_THEMES.$this->theme.DS.'showTopics.php');
+		if (!$this->cLogin && !$this->install) include(MU_THEMES.$this->theme.DS.'showTopics.php');
 	}
 	/**
 	* AFFICHAGE DE LA DISCUSSION
@@ -4374,6 +4406,6 @@ END;
 /**
 * INITIALISATION
 */
-header('Content-Type: text/html; charset=utf-8');
+header('Content-Type: text/html; charset='.CHARSET);
 new Template();
 ?>
