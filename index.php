@@ -2951,10 +2951,10 @@ class Init {
 		}
 		$avatar='';
 		if(is_uploaded_file($_FILES[$name]['tmp_name'])) {
-			if(preg_match($match,$_FILES[$name]['name'])) {
+			if(preg_match($match,$_FILES[$name]['name'],$match)) {
 				if(($_FILES[$name]['size']<$size) || !$type){
-					if (move_uploaded_file($_FILES[$name]['tmp_name'],$dir.DS.Tools::title2filename($_FILES[$name]['name']))) { 
-						$avatar=$dir.DS.str_replace("+","",urlencode($_FILES[$name]['name']));
+					$avatar=$dir.DS.Tools::title2filename($_FILES[$name]['name']).$match[0];
+					if (move_uploaded_file($_FILES[$name]['tmp_name'],$avatar)) { 
 						if($type) { 
 							$old=$this->forum->getMember($login);
 							if($old != false && $old->pic!='') unlink($old->pic);
