@@ -3162,11 +3162,11 @@ class Template extends Init {
 	* LISTE LES FICHIERS ENVOYÉS DANS LE PROFIL DE L'UTILISATEUR
 	*/
 	private function listFiles() {
-			$dir=MU_UPLOAD.md5(SECURITY_SALT.$this->cLogin).'/';
-			$a=$this->forum->getMember($this->cLogin);
-			$list='<div class="files">';
-			$list.='<b>'.MY_PERSONAL_FILES.'</b><br /><hr />';
-			$h=dir($dir);
+		$dir=MU_UPLOAD.md5(SECURITY_SALT.$this->cLogin).'/';
+		$a=$this->forum->getMember($this->cLogin);
+		$list='<div class="files">';
+		$list.='<b>'.MY_PERSONAL_FILES.'</b><br /><hr />';
+		if($h=@dir($dir)) {
 			$id=1;
 			while (false !== ($f=$h->read())) {
 				if (($f!='.') && ($f!='..') && ($f!=$this->cLogin.'.mp') && $f != 'index.html') {
@@ -3182,8 +3182,9 @@ class Template extends Init {
 				}
 			}
 			$h->close();
-			$list .= '</div>';
-			return $list;
+		}
+		$list .= '</div>';
+		return $list;
 	}
 	private function setHeader() {
 		$header = new stdClass;
