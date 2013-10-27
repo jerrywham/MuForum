@@ -37,6 +37,11 @@ Nouveautés
 * Utilisation des sessions pour la propagation de messages et éviter de soumettre plusieurs fois le même formulaire
 * Ajout d'un fil d'ariane
 * Recherche d'un membre dans la liste des membres
+* Système de bannissement afin d'éviter le craquage des mots de passe par brute force (Merci SebSauvage)
+* Erreur 404 si recherche d'une page autre que l'accueil ou les topics si l'on n'est pas connecté
+* Nouveau thème et allègement du css
+* Possibilité d'en créer de nouveaux facilement
+* Variables dans le css (de la forme +MAVARIABLE+) permettant de changer rapidement certaines valeurs (couleur, bordure, fond...)
 * Plusieurs autres corrections mineures que je vous laisse découvrir
 
 Je me suis basé sur le code de µForum 0.9.6. J'ai repris l'essentiel des fonctions natives que j'ai réorganisées et corrigées.
@@ -57,8 +62,9 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [x] ~~liens vers nouveaux messages~~,
 - [x] ~~vers les différentes pages d'une conversation~~,
 - [ ] flux rss,
-- [ ] Revoir le css pour l'alléger encore,
+- [X] ~~Revoir le css pour l'alléger encore,~~
 - [ ] voir les messages d'un membre
+- [X] ~~correction des messages lus/membres~~
 - [ ] renouvellement mot de passe si oubli
 - [ ] sous-rubriques
 - [ ] gestion mots de passe à vérifier
@@ -66,6 +72,7 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [ ] interdire de poster à moins d'une minute d'intervalle (modif oui, new non)
 - [x] ~~création de templates~~
 - [ ] liste déroulante vers les différentes catégories
+- [ ] liste des fichiers présents pour gestion admin
 - [x] ~~En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)~~
 
 Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
