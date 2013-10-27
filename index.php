@@ -9,7 +9,8 @@
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
-# @link       http://uforum.byethost5.com   µForum
+# @licence    http://www.cecill.info/licences/Licence_CeCILL_V2.1-fr.txt CONTRAT DE LICENCE DE LOGICIEL LIBRE CeCILL version 2.1
+# @link       http://uforum.ecsyeo.net   µForum
 # @version    Release: @package_version@
 #
 # ------------------- END LICENSE BLOCK -------------------
@@ -74,7 +75,8 @@ $trademarkBlock = '
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
 # @license    http://www.gnu.org/licenses/lgpl-3.0.txt GNU LESSER GENERAL PUBLIC LICENSE (LGPL) version 3
-# @link       http://uforum.byethost5.com  µForum
+# @licence    http://www.cecill.info/licences/Licence_CeCILL_V2.1-fr.txt CONTRAT DE LICENCE DE LOGICIEL LIBRE CeCILL version 2.1
+# @link       http://uforum.ecsyeo.net   µForum
 # @version    Release: @package_version@
 #
 # ------------------- END LICENSE BLOCK -------------------
