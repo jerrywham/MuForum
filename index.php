@@ -3070,12 +3070,6 @@ class Template extends Init {
 	public function __construct() {
 			parent::__construct();
 
-		// $this->cVals['green']=array('ebede8','c5d0b1','a5b091','f90','eee','999');
-		// $this->cVals['cyan']=array('e8edeb','b1d0c5','91b0a5','f90','eee','999');
-		// $this->cVals['purple']=array('ede8eb','d0b1c5','b091a5','f90','eee','999');
-		// $this->cVals['clean']=array('f9f9f6','f9f9f6','999','f90','333','fff');
-
-		
 		$this->cVals['Defaut'] = array(
 			'COLORMENU'=>'#e85c40',
 			'BGCOLOR'=>'#e6e6e6',
@@ -3295,21 +3289,23 @@ class Template extends Init {
 	/**
 	 * Script from Kevin Rocher
 	 * http://darklg.me/2010/02/compresser-ranger-css-php/
+	 * Modifications Cyril MAGUIRE.
 	 */
 	private function _compress($buffer) {
 		// A décommenter pour utiliser des variables dans le css
 		// Les variables seront du type : +MAVARIABLE+
 		// Pour les rechercher dans la css, rechercher un +
-		$variables_css = $this->cVals[$this->cStyle];
-		// On remplace les variables par leur valeur
-		foreach($variables_css as $code_variable => $valeur)
-			$buffer = str_replace('+'.$code_variable.'+', $valeur, $buffer);
-		 
-			// Suppression des commentaires
-			$buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
-		 
-			// Suppression des tabulations, espaces multiples, retours à la ligne, etc.
-			$buffer = str_replace(array("\r\n", "\r", "\n", "\t", '  ', '	 ', '	 '), '', $buffer);
+		if (isset($this->cVals) && isset($this->cVals[$this->cStyle])) {
+			$variables_css = $this->cVals[$this->cStyle];
+			// On remplace les variables par leur valeur
+			foreach($variables_css as $code_variable => $valeur)
+				$buffer = str_replace('+'.$code_variable.'+', $valeur, $buffer);
+		}
+		// Suppression des commentaires
+		$buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
+	 
+		// Suppression des tabulations, espaces multiples, retours à la ligne, etc.
+		$buffer = str_replace(array("\r\n", "\r", "\n", "\t", '  ', '	 ', '	 '), '', $buffer);
 		 
 		// Suppression des derniers espaces inutiles
 			$buffer = str_replace(array(' { ',' {','{ '), '{', $buffer);
