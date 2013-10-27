@@ -2,7 +2,7 @@
 
 # ------------------ BEGIN LICENSE BLOCK ------------------
 #
-# This file is part of µForum project: http://uforum.byethost5.com
+# This file is part of µForum project: http://uforum.ecyseo.net
 #
 # @update     2013-10-21
 # @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
