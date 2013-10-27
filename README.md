@@ -42,6 +42,7 @@ Nouveautés
 * Nouveau thème et allègement du css
 * Possibilité d'en créer de nouveaux facilement
 * Variables dans le css (de la forme +MAVARIABLE+) permettant de changer rapidement certaines valeurs (couleur, bordure, fond...)
+* Compression du css à l'affichage
 * Plusieurs autres corrections mineures que je vous laisse découvrir
 
 Je me suis basé sur le code de µForum 0.9.6. J'ai repris l'essentiel des fonctions natives que j'ai réorganisées et corrigées.
