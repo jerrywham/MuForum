@@ -3584,7 +3584,7 @@ class Template extends Init {
 		if (isset($t) && $t!='') echo $format;
 	}
 	private function setTopicIcon($t,$ifTrue,$ifFalse) {
-		 echo (isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""])) ? $ifTrue : $ifFalse;
+		 echo (isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""]) && $this->cLogin) ? $ifTrue : ($this->cLogin ? $ifFalse : '');
 	}
 	private function setTopicTitle($t,$ifTrue='', $ifFalse='') {
 		$nbPages = $t['nombrePosts']/$this->nbMsgTopic;
@@ -3596,7 +3596,7 @@ class Template extends Init {
 			if (!empty($linksToPages)) $linksToPages = '[&nbsp;'.$linksToPages.']';
 		}
 		
-		echo '<a href="?topic='.$t['topicID'].'" title="'.DISPLAY_TOPIC.'" '.(isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""]) ? (!empty($ifTrue)? 'class="'.$ifTrue.'"':'') : (!empty($ifFalse)? 'class="'.$ifFalse.'"':'')).'>'.stripslashes($t['titre']).'</a>&nbsp;'.$linksToPages;
+		echo '<a href="?topic='.$t['topicID'].'" title="'.DISPLAY_TOPIC.'" '.((isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""]) && $this->cLogin) ? (!empty($ifTrue)? 'class="'.$ifTrue.'"':'') : ($this->cLogin ? (!empty($ifFalse)? 'class="'.$ifFalse.'"':'') : '')).'>'.stripslashes($t['titre']).'</a>&nbsp;'.$linksToPages;
 	}
 	private function setTopicStartonBy($t) {
 		echo STARTED_ON.' '.date('d M Y', $t['topicID']).', '.BY.' ';
