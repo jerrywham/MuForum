@@ -25,10 +25,10 @@ define('LANG','fr');
 define('STYLE_COLOR','default');
 define('PROJECT','µForum');
 //A changer à l'installation pour plus de sécurité puis ne plus y toucher
-define('SECURITY_SALT','DSdfsgregfg5467vsvqs87sQRer980ZOIDQ');
+define('SECURITY_SALT','DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ');
 //A changer pour plus de sécurité
 //Pensez à changer également le nom du dossier s'il existe
-define('CAPTCHA','capouere');
+define('CAPTCHA','captcha');
 # ---------------- FIN CONFIGURATION ----------------------
 # ---------------- DEFINITIONS ----------------------------
 # Définition des constantes d'adressage
@@ -2175,7 +2175,7 @@ class BanYourAss {
 			if (!defined('MSG_MIN_OR_NOT')) {define('MSG_MIN_OR_NOT','minutes ou pas...');}
 			if (!defined('MSG_IF_NOT_SPAMMER')) {define('MSG_IF_NOT_SPAMMER','Si vous n\'êtes pas un robot');}
 			if (!defined('CLICK_HERE')) {define('CLICK_HERE','cliquez ici');}
-			if (!defined('SECURITY_SALT')) {define('SECURITY_SALT','hdk67jhfIUF9EkdjfYDO435USHFsjhdiuHDSDJZhduS08U8U');}
+			if (!defined('SECURITY_SALT')) {define('SECURITY_SALT','DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ');}
 			$this->DATABANDIR = 'ban'; // Data subdirectory
 		} else {
 			if (defined('MU_DATA') && is_dir(substr(MU_DATA,0,-1))) {
