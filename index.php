@@ -97,6 +97,7 @@ Tools::mklang();
 * Vérification de la version de php
 */
 if (version_compare(PHP_VERSION, '5.3', '<')) {
+	Tools::loadlang('fr');
     exit(PHP_VERIF);
 }
 
