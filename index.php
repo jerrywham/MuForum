@@ -15,7 +15,7 @@
 #
 # ------------------- END LICENSE BLOCK -------------------
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
-define('DEBUG',0); // 0 = pas de débugage, 1 = débugage activé
+define('DEBUG',1); // 0 = pas de débugage, 1 = débugage activé
 
 # ---------------- CONFIGURATION ----------------------------
 /**
@@ -448,6 +448,7 @@ class Tools {
 			'NO_UNREAD_MSG' => 'Ne contient pas de message non lu',
 			'UNREAD_MSG' => 'Contient des messages non lus',
 			'ATTACHMENT' => 'Pièce jointe',
+			'WROTE' => ' a écrit :',
 			 
 			# BBCODE
 			'FORMATING' => 'Formatage',
@@ -474,7 +475,10 @@ class Tools {
 			'MAIL' => 'mail',
 			'CLIP' => 'clip',
 			'WINDOW' => 'Fenêtre',
-
+			'AUTHOR' => 'Auteur',
+			'TXT_REPLACEMENT' => 'Texte de remplacement',
+			'URL' => 'URL',
+			'SRC' => 'Source',
 
 			# Navigation
 			'LOGOUT' => 'Déconnexion',
@@ -778,6 +782,11 @@ class Tools {
 * BBCode
 */
 class BBCHelper {
+
+	private static $searchopentags = '%(\[(([\*a-zA-Z0-9-]*))(=.*?)?\])%m';
+	private static $searchclosetags = '%(\[((\/[\*a-zA-Z0-9-]*))\])%m';
+	private static $searchoptions = '%(\[(([\*a-zA-Z0-9-]*))\])(.+)(\[((\/[\*a-zA-Z0-9-]*))\])%U';
+
 	/**
 	*
 	* AIDE FORMATTAGE BBCODE (Éditeur)
@@ -800,49 +809,8 @@ class BBCHelper {
 	*
 	* PARSER BBcode 
 	*/
-	public static function bbCode($text, $summary = true) {
-		//the pattern to be matched
-		//the replacement
-		
-		$pattern[] = '%\[c\]([^\a]+?)\[/c\]%U';
-		$replace[] = $summary? '\'[...]\'' : '\'<pre class="prettyprint linenums">\'.str_replace(\'<br />\', \'\', \'$1\').\'</pre>\'';
+	public static function bbCode($text, $summary = false) {
 
-		$pattern[] = '%\[b\]([^\n]+?)\[/b\]%';
-		$replace[] = '<b>$1</b>';
-
-		$pattern[] = '%\[i\]([^\n]+?)\[/i\]%';
-		$replace[] = '<i>$1</i>';
-
-		$pattern[] = '%\[u\]([^\n]+?)\[/u\]%';
-		$replace[] = '<ins>$1</ins>';
-
-		$pattern[] = '%\[s\]([^\n]+?)\[/s\]%';
-		$replace[] = '<del>$1</del>';
-
-		$pattern[] = '%\[img\]([^\n\[]+?)\[/img\]%';
-		$replace[] = '<img class="thumbnail" src="$1" alt=""/>';
-		
-		$pattern[] = '%\[url=([^\n\[]+?)\]([^\n]+?)\[/url\]%';
-		$replace[] = '<a href="$1" onclick="window.open(this.href);return false;">$2</a>';
-		
-		$pattern[] = '%\[url\]([^\n]+?)\[/url\]%';
-		$replace[] = '<a href="$1" onclick="window.open(this.href);return false;">$1</a>';	
-
-		$pattern[] = '%\[youtube\]([-\w]{11})\[/youtube\]%';
-		$replace[] = '<iframe class="thumbnail" width="560" height="315" src="http://www.youtube.com/embed/$1?rel=0" frameborder="0"></iframe>';
-
-		$pattern[] = '%\[q\]([^\n]+?)\[/q\]%';
-		$replace[] = '<blockquote>$1</blockquote>';
-		
-		$pattern[] = '%\[quote\]([^\n]+?)\[/quote\]%U';
-		$replace[] = '<blockquote>$1</blockquote>';
-		
-		$pattern[] = '%\[q=(.*)\](.*)\[/q\]%U';
-		$replace[] = '<fieldset><legend>'.BLOCKQUOTE.' : $1</legend>$2</fieldset>';
-
-		$pattern[] = '%\[e\]([^\n]+?)\[/e\]%';
-		$replace[] = '<p class="editby">'.EDIT_BY.' : $1</p>';
-		
 	    /* smiley */
 	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
 	    $pattern[] = '%;\)%';    $replace[] = Tools::img('wink','',false,true);
@@ -852,7 +820,7 @@ class BBCHelper {
 	    $pattern[] = '%8\(%';    $replace[] = Tools::img('wry','',false,true); 
 	    $pattern[] = '%:p%';     $replace[] = Tools::img('tongue','',false,true);
 	    $pattern[] = '%:\$%';    $replace[] = Tools::img('sorry','',false,true);
-	    $pattern[] = '%-&gt;%';  $replace[] = Tools::img('arrow','',false,true);
+	    $pattern[] = '% -&gt; %';  $replace[] = Tools::img('arrow','',false,true);
 
 	    $pattern[] = '%\[sm=smile\]%';          $replace[] = Tools::img('smile','',false,true);
 	    $pattern[] = '%\[sm=wink\]%';           $replace[] = Tools::img('wink','',false,true);
@@ -864,8 +832,119 @@ class BBCHelper {
 	    $pattern[] = '%\[sm=sorry\]%';          $replace[] = Tools::img('sorry','',false,true);
 	    $pattern[] = '%\[sm=arrow\]%';          $replace[] = Tools::img('arrow','',false,true);
 	    	
-		return preg_replace($pattern, $replace, $text);
+		$text = preg_replace($pattern, $replace, $text);
+
+		preg_match_all(self::$searchopentags, $text, $matchesopentags);
+		preg_match_all(self::$searchclosetags, $text, $matchesclosetags);
+		preg_match_all(self::$searchoptions, $text, $matchesoptions);
+	
+		$opentags = $matchesopentags[3];
+		$opentagskeys = array_flip($opentags);
+
+		$closetags = $matchesclosetags[3];
+		$options = array();
+		foreach ($matchesoptions[3] as $k => $v) {
+			$options[$v] = $matchesoptions[4][$k];
+		}
+
+		array_walk($matchesopentags[4], create_function('&$v,$k', '$v = str_replace("=", "", $v);'));
+		$paramsopentags = $matchesopentags[4];
+		
+		$replaceOpentags = array();
+		foreach ($opentags as $k => $v) {
+			switch ($v) {
+				case 'q':
+					$replaceOpentags[] = '<blockquote><strong>'.$paramsopentags[$k].WROTE.'</strong><p class="text-quote">';
+					break;
+				case 'quote':
+					$replaceOpentags[] = '<blockquote><strong>'.$paramsopentags[$k].WROTE.'</strong><p class="text-quote">';
+					break;
+				case 'img':
+					$replaceOpentags[] = '<img class="thumbnail" src="'.$paramsopentags[$k].'" alt="';
+					break;
+				case 'url':
+					$replaceOpentags[] = '<a href="'.$paramsopentags[$k].'" onclick="window.open(this.href);return false;">';
+					break;
+				case 'b':
+					$replaceOpentags[] = '<strong>';
+					break;
+				case 'c':
+					$replaceOpentags[] = '<pre><code>'.(isset($options['c']) ? $options['c'] : '');
+					break;
+				case 'u':
+					$replaceOpentags[] = '<span style="text-decoration:underline">';
+					break;
+				case 'i':
+					$replaceOpentags[] = '<span style="font-style:italic;">';
+					break;
+				case 's':
+					$replaceOpentags[] = '<del>';
+					break;
+				case 'e':
+					$replaceOpentags[] = '<p class="editby">'.EDIT_BY.' : ';
+					break;
+				default:
+					$replaceOpentags[] = '';
+			}
+		}
+		$replaceClosetags = array(
+			'/q' => '</p></blockquote>',
+			'/quote' => '</p></blockquote>',
+			'/img' => '"/>',
+			'/url' => '</a>',
+			'/youtube' => '',
+			'/b' => '</strong>',
+			'/c' => '</code></pre>',
+			'/u' => '</span>',
+			'/i' => '</span>',
+			'/s' => '</del>',
+			'/e' => '</p>',
+		);
+
+		if (count($opentags) != count($closetags)) {
+			return $text;
+		} else {
+			foreach ($paramsopentags as $k => $v) {
+				if ($v != '') {
+					$text = str_replace('='.$v, '%'.$k.'%', $text);
+				} else {
+					$text = str_replace('['.$opentags[$k].']', $replaceOpentags[$k], $text);
+				}
+			}
+			foreach ($opentags as $k => $v) {
+				$text = str_replace('['.$v.'%'.$k.'%]', $replaceOpentags[$k], $text);
+			}
+			foreach ($closetags as $k => $v) {
+				$text = isset($replaceClosetags[$v]) ? str_replace('['.$v.']', $replaceClosetags[$v], $text) : $text;
+			}
+		}
+
+		return $text;
+		
 	}
+
+	public static function verif($text,$origin,$session) {
+
+		preg_match_all(self::$searchopentags, $text, $matchesopentags);
+		preg_match_all(self::$searchclosetags, $text, $matchesclosetags);
+	
+		$opentags = $matchesopentags[3];
+		$closetags = $matchesclosetags[3];
+
+		if (count($opentags) != count($closetags)) {
+			$r = array_diff($opentags, $closetags);
+			$li = '<ul>';
+			foreach ($r as $k => $v) {
+				$li .= '<li>'.$v.' ?</li>';
+			}
+			$li .= '</ul>';
+			$session->setMsg('<div class="text-warning">Il semble que des balises soient mal fermées '.$li.'</div>','error',false);
+			header('location:index.php?'.$origin.'#id_stop');
+			exit();
+		}
+		return true;
+	}
+
 	/**
 	* tronquer_texte
 	* Coupe une chaine sans couper les mots
@@ -883,22 +962,12 @@ class BBCHelper {
 	* DÉCODE LES FICHIERS
 	*/
 	public static function decode($txt) {
-
-		$txt=str_replace ("\t", "     ", $txt);
-		$txt=str_replace ("\r\n", " <br />", $txt);
-		$res=preg_split("|\[c\].*\[/c\]|U", $txt);
-		preg_match_all("|\[c\](.*)\[/c\](.*)|U",$txt,$code,PREG_SET_ORDER);
-		$txt=self::bbCode($res[0]);
-		for($i=0;$i<count($code);$i++) {
-			$txt.=self::colorSyntax($code[$i][1]);
-			//$txt.=self::bbCode($res[$i+1]);
-		}
-		return $txt;
+		return self::bbCode($txt);
 	}
 
 	public function parse($msg) {
 	
-		return str_replace(array('<b>','<i>','<ins>','<pre>','</b>','</i>','</ins>','</pre>','<br />','&nbsp;','</div>'), array('[b]','[i]','[u]','[c]','[/b]','[/i]','[/u]','[/c]',"\n",' ',''), stripslashes($msg));
+		return str_replace(array('<b>','<i>','<ins>','<pre>','<code>','</b>','</i>','</ins>','</pre>','</code>','<br />','&nbsp;','</div>','<blockquote>',WROTE,'</blockquote>'), array('[b]','[i]','[u]','[c]','[/b]','[/i]','[/u]','[/c]',"\n",' ','','[q=',']','[/q]'), stripslashes($msg));
 	}
 }
 /**
@@ -1681,13 +1750,12 @@ class Captcha {
 class SaveObj {
 	public $name= '';
 	public function __construct() {
-		if (!empty($this->name)) {
-			file_put_contents($this->name, serialize($this),LOCK_EX);
-		}
+
 	}
 
 	public function SaveObj($obj) {
 		if (!empty($this->name)) {
+			file_put_contents($this->name, '',LOCK_EX);
 			file_put_contents($this->name, serialize($obj),LOCK_EX);
 		}
 	}
@@ -1704,35 +1772,29 @@ class SaveObj {
 	}
 }
 /**
-*
-* CLASSE GLOBALE DE GESTION DU FORUM
-*/
-class Forum extends SaveObj {
-	public $name;
-	public $topics=array();
+ *
+ * Gestion des membres 
+ */
+class Members extends SaveObj {
+
 	public $members=array();
 
 	public function __construct() {
 		parent::__construct();
-		$this->name= MU_MEMBER.'members.dat';
-		if (is_file($this->name)){
+		$this->name = MU_MEMBER.'members.dat';
+		if (is_file(MU_MEMBER.'members.dat')){
 			$mb = unserialize(file_get_contents(MU_MEMBER.'members.dat'));
 			if ($mb->members !== null){
-				$this->members= $mb->members;
+				$this->members = $mb->members;
+				
 			}else{
 				$this->members = array();
-			}
-		}
-		$msg = scandir(MU_THREAD);
-		foreach ($msg as $m) {
-			if (substr($m, -4) == '.dat') {
-				$this->topics[substr($m,0, -4)] = unserialize(file_get_contents(MU_THREAD.$m));
 			}
 		}
 	}
 	public function addMember($name,$password,$mail,$quote='',$url='',$birthday,$pic='',$mod=0) {
 		if(!count($this->members)) $mod=2;
-		$this->members[$name] = new stdClass;
+		if (!isset($this->members[$name])) {$this->members[$name] = new Members();}
 		$this->members[$name]->password = md5($password);//0
 		$this->members[$name]->time = time();//1
 		$this->members[$name]->mail = $mail;//2
@@ -1748,7 +1810,7 @@ class Forum extends SaveObj {
 		$this->saveObj($this);
 	}
 	public function removeMember($name) {
-		unset($this->members[$name]);
+		if (isset($this->members[$name])) {unset($this->members[$name]);}
 		ksort($this->members);
 		$this->saveObj($this);
 	}
@@ -1769,44 +1831,17 @@ class Forum extends SaveObj {
 		$this->members[$name]->extension = substr($shortpic,strpos($shortpic,'.')+1);
 		$this->saveObj($this);
 	}
-	public function setPost($name) { 
+	public function setForumPost($name) { 
+		if (!isset($this->members[$name])) {$this->members[$name] = new stdClass;}
 		$this->members[$name]->post++;
 		$this->saveObj($this);
 	}
-	public function getPosts($topic,$showAll=false,$nbrMax=15,$fromPage=1) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
-			$obj = unserialize($s);
-		}
-		$obj->nbPosts = count($obj->reply);
-		if ($showAll) {
-			return $obj;
-		} else {
-			$nbPages = ceil($obj->nbPosts/$nbrMax);
-			if ($nbPages == 0) $nbPages = 1;
-			if ($fromPage>$nbPages) $fromPage = $nbPages;
-			$to = $fromPage*$nbrMax;
-			if ($to>$obj->nbPosts) $to = $obj->nbPosts;
-			$from = ($fromPage*$nbrMax)-$nbrMax;
-			for ($i=$from; $i < $to; $i++) { 
-				$return[] = $obj->reply[$i];
-			}
-			$obj->reply = $return;
-			return $obj;
-		}
-	}
-	public function getPostsTitle($topic) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
-			$obj = unserialize($s);
-		}
-		return $obj->title;
-	}
-	public function getPostAuth($topic) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
-			$obj = unserialize($s);
-		}
-		return $obj->auth;
+	public function addTopic($auth) {	
+		if(isset($this->members[$auth])) $this->members[$auth]->post++;
+		$this->saveObj($this);
 	}
 	public function setMod($name) {
+		if (!isset($this->members[$name])) {$this->members[$name] = new stdClass;}
 		$this->members[$name]->mod=$this->members[$name]->mod?0:1;
 		$this->saveObj($this);
 	}
@@ -1832,63 +1867,112 @@ class Forum extends SaveObj {
 	public function checkMember($name,$pass) {
 		$login=(isset($this->members[$name]));
 		if($login) {
+			if (!is_object($this->members[$name])) {$this->members[$name] = new stdClass;}
 			$pass=($this->members[$name]->password!=$pass)?false:true;
 			$mod=$this->members[$name]->mod;
 			return array($login,$pass,$mod);
 		}
 		return array(0,0,0);
 	}
-	public function addTopic($title,$auth,$time,$attach,$type=false) {
-		$this->topics[$time] = new stdClass;
-		$this->topics[$time]->title = $title;
-		$this->topics[$time]->auth = $auth;
-		$this->topics[$time]->time = $time;
-		$this->topics[$time]->attach = $attach;
-		$this->topics[$time]->type = $type;
-		$this->lastSort();
-		if(isset($this->members[$auth])) $this->members[$auth]->post++;
-		$this->saveObj($this);
+}
+/**
+*
+* CLASSE GLOBALE DE GESTION DU FORUM
+*/
+class Forum extends SaveObj {
+	public $name;
+	public $topics=array();
+	public $members=array();
+
+	public function __construct() {
+		parent::__construct();
+		$this->name = MU_MEMBER.'members.dat';
+		if (is_file(MU_MEMBER.'members.dat')){
+			$mb = unserialize(file_get_contents(MU_MEMBER.'members.dat'));
+			if ($mb->members !== null){
+				$this->members = $mb->members;
+				
+			}else{
+				$this->members = array();
+			}
+		}
+		$msg = scandir(MU_THREAD);
+		foreach ($msg as $m) {
+			$id = substr($m, -4);
+			if ($id == '.dat') {
+				$t = unserialize(file_get_contents(MU_THREAD.$m));
+				$this->topics[$t->time] = $t;
+			}
+		}
 	}
-	public function updateTopic($time,$title,$auth,$post,$last,$ltime,$attach,$type) {
-		$this->topics[$time]->title = $title;
-		$this->topics[$time]->auth = $auth;
-		$this->topics[$time]->time = $ltime;
-		$this->topics[$time]->attach = $attach;
-		$this->topics[$time]->type = $type;
-		$this->topics[$time]->post = $post;
-		$this->topics[$time]->last = $last;
-		$this->topics[$time]->attach = $attach;
-		$this->lastSort();
-		$this->saveObj($this);
+	
+	public function getPosts($topic,$showAll=false,$nbrMax=15,$fromPage=1) {
+		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+			$obj = unserialize($s);
+		}
+		$obj->nbPosts = count($obj->reply);
+		if ($showAll) {
+			return $obj;
+		} else {
+			// Retourne uniquement le nombre de posts nécessaires par page
+			$nbPages = ceil($obj->nbPosts/$nbrMax);
+			if ($nbPages == 0) $nbPages = 1;
+			if ($fromPage>$nbPages) $fromPage = $nbPages;
+			$to = $fromPage*$nbrMax;
+			if ($to>$obj->nbPosts) $to = $obj->nbPosts;
+			$from = ($fromPage*$nbrMax)-$nbrMax;
+			for ($i=$from; $i < $to; $i++) { 
+				$return[] = $obj->reply[$i];
+			}
+			$obj->reply = $return;
+			return $obj;
+		}
+	}
+	public function getPostsTitle($topic) {
+		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+			$obj = unserialize($s);
+		}
+		return $obj->title;
+	}
+	public function getPostAuth($topic) {
+		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+			$obj = unserialize($s);
+		}
+		return $obj->auth;
 	}
 	public function delTopic($id) {
-		unset($this->topics[$id]);
-		$this->saveObj($this);
+		$t = $this->openTopic($id);
+		$t->removeTopic();
+		if (isset($this->topics[$id])) {unset($this->topics[$id]);return true;}
+		
 	}
 	public function setType($topic,$type) {
+		$this->name = MU_THREAD.$topic.'.dat';
 		$this->topics[$topic]->type = $type;
 		$t = $this->openTopic($topic);
-		$t->setType($type);
+		$t->setTopicType($type);
 		unset($t);
-		$this->lastSort();
-		$this->saveObj($this);
+		//$this->saveObj($this);
 	}
 	public function setTitle($topic,$title) {
+		$this->name = MU_THREAD.$topic.'.dat';
 		$this->topics[$topic]->title=$title;
 		$t = $this->openTopic($topic);
-		$t->setTitle($title);
+		$t->setTopicTitle($title);
 		unset($t);
-		$this->lastSort();
-		$this->saveObj($this);
+		// $this->lastSort();
+		// $this->saveObj($this);
 	}
 	public function getallTopic($showAll=false,$nbrMax=15,$fromPage=1) {
 		$tmp=array();
 		$return=array();
+		$this->lastSort();
 		foreach($this->topics as $k=>$v) {
 			if (isset($v->reply) && $v->reply !== null){
 				if (is_object($v)) $v = get_object_vars($v);
 				krsort($v['reply']);
 				$current = current($v['reply']);
+				if(!is_object($current)) {$current = new stdClass;} 
 				$tmp[$v['type']][$v['time']] = array(
 					'titre' => $v['title'],
 					'auteur' => $v['auth'],
@@ -1900,7 +1984,8 @@ class Forum extends SaveObj {
 					'topicID' => $v['time'],
 				);
 			} else {
-				$tmp[$v->type][$v->time] = array(
+				if (isset($v->type)) {
+					$tmp[$v->type][$v->time] = array(
 					'titre' => $v->title,
 					'auteur' => $v->auth,
 					'nombrePosts' => 1,
@@ -1910,6 +1995,7 @@ class Forum extends SaveObj {
 					'postType' => $v->type,
 					'topicID' => $v->time,
 				);
+				} 
 			}
 		}
 		$pin = array();
@@ -1945,14 +2031,13 @@ class Forum extends SaveObj {
 			}
 			return $return;
 		}
-		
 	}
 	public function getStat() {
 		$tmp=0;
 		$arr=array(0,"");
 		foreach($this->getallTopic(true) as $v) $tmp += $v['nombrePosts'];//$tmp+=$v[2];
-		foreach($this->members as $k=>$v) $arr=($v->time>$arr[0])?array($v->time,$k):$arr;
-		return array('members'=>count($this->members),'lastMb'=>$arr[1],'topics'=>count($this->topics),'messages'=>$tmp);
+		foreach($this->members->members as $k=>$v) $arr=($v->time>$arr[0])?array($v->time,$k):$arr;
+		return array('members'=>count($this->members->members),'lastMb'=>$arr[1],'topics'=>count($this->topics),'messages'=>$tmp);
 	}
 	public function openTopic($topic) {
 		if($s = @file_get_contents(MU_THREAD.$topic.'.dat')) return unserialize($s);
@@ -1983,26 +2068,37 @@ class Topic extends SaveObj {
 
 	public function __construct($auth,$title,$content,$attach='',$type=false) {
 		parent::__construct();
-		$this->addReply($auth,$content,$attach);
-		$this->title=Tools::clean($title);
 		$this->time=time();
+		$this->name=MU_THREAD.$this->time.'.dat';
+		$this->addReply($auth,$content,$this->time,$attach);
+		$this->title=Tools::clean($title);
 		$this->type=$type;
 		$this->auth=$auth;
-		$this->name=MU_THREAD.time().'.dat';
 		$this->saveObj($this);
 	}
 	public function removeTopic() {
-		$this->verifName($this,MU_THREAD);
 		unlink($this->name);
+
 	}
-	public function addReply($auth,$content,$attach='') {
-		$this->verifName($this,MU_THREAD);
-		$t = time();
+	public function updateTopic($time,$title,$auth,$post,$last,$ltime,$attach,$type) {
+		$this->name = MU_THREAD.$time.'.dat';
+		if (!isset($this->topics[$time])) {$this->topics[$time] = new stdClass;}
+		$this->topics[$time]->title = $title;
+		$this->topics[$time]->auth = $auth;
+		$this->topics[$time]->time = $ltime;
+		$this->topics[$time]->attach = $attach;
+		$this->topics[$time]->type = $type;
+		$this->topics[$time]->post = $post;
+		$this->topics[$time]->last = $last;
+		$this->topics[$time]->attach = $attach;
+		$this->saveObj($this);
+	}
+	public function addReply($auth,$content,$time,$attach='') {
 		$id = count($this->reply);
-		if ($id == -1) $id = 0;
-		$this->reply[$id] = new stdClass;
+		if ($id == -1) {$id = 0;}
+		if (!isset($this->reply[$id])) {$this->reply[$id] = new stdClass;}
 		$this->reply[$id]->auth =$auth;
-		$this->reply[$id]->time =$t;
+		$this->reply[$id]->time =$time;
 		$this->reply[$id]->content = $content;
 		$this->reply[$id]->attach =$attach;
 		$this->saveObj($this);
@@ -2036,12 +2132,12 @@ class Topic extends SaveObj {
 		if($this->pos<count($this->reply)){return $this->reply[$this->pos++];}
 		else {$this->pos=0; return false;}
 	}
-	public function setType($type) {
+	public function setTopicType($type) {
 		$this->verifName($this,MU_THREAD);
 		$this->type=$type;
 		$this->saveObj($this);
 	}
-	public function setTitle($title) {
+	public function setTopicTitle($title) {
 		$this->verifName($this,MU_THREAD);
 		$this->title=$title;
 		$this->saveObj($this);
@@ -2059,7 +2155,7 @@ class Topic extends SaveObj {
 		}
 		if($type) return array(count($auths),$auths);
 		else {
-			$this->infos = new stdClass;
+			if (!isset($this->infos)) {$this->infos = new stdClass;}
 			$this->infos->time = $this->time;
 			$this->infos->title = $this->title;
 			$this->infos->auth = $auths[0];
@@ -2118,7 +2214,7 @@ class Messages extends saveObj {
 	}
 	public function addMessage($from,$content,$mpTo) {
 		$id = count($this->mess);
-		$this->mess[$id] = new stdClass;
+		if (!isset($this->mess[$id])) {$this->mess[$id] = new stdClass;}
 		$this->mess[$id]->time = time();
 		$this->mess[$id]->from = $from;
 		$this->mess[$id]->content = $content;
@@ -2287,7 +2383,7 @@ class Init {
 	public $extensionsAutorises='gif,bmp,png,jpg,mp3,zip,rar,txt';
 	public $extStr;
 	public $maxAvatarSize=30720;
-	public $forumMode=1;
+	public $forumMode=0;
 	public $quoteMode=1;
 	public $siteUrl=MU_BASE_URL;
 	public $siteName='&micro;Forum';
@@ -2302,6 +2398,8 @@ class Init {
 	public $haveMP; //Messages privés
 	public $topicObj;
 	public $topic;
+	public $quote=null;
+	public $showform=false;
 
 	public $pages=1; //Nombre de pages totales de Topics 
 	public $pagesMb=1; //Nombre de pages totales de Membres
@@ -2319,9 +2417,8 @@ class Init {
 	
 	protected function __construct() {
 
-		if (is_null($this->session)){
-			$this->session = new Session();
-		}
+		if (is_null($this->session)){ $this->session = new Session(); }
+
 		if (is_file('config.php')) {
 			require 'config.php';
 			$this->uforum = $uforum;
@@ -2376,15 +2473,17 @@ class Init {
 				unlink('index.php');
 				rename('index.bak','index.php');
 			}
-		} else {
-			$this->forum = new Forum();
-			$this->captcha = new Captcha(LANG,$this->session);
-			$this->conn = new Visit();
-			$s = @file_get_contents(MU_MEMBER.'members.dat');
-			$this->forum = unserialize($s);
-			$s = @file_get_contents(MU_MEMBER.'connected.dat');
-			$this->conn = unserialize($s);
 		}
+		if (!is_file(MU_MEMBER.'members.dat')) {
+			$this->mkressources();
+		}
+		$this->members = new Members();
+		$this->forum = new Forum();
+		$this->captcha = new Captcha(LANG,$this->session);
+		$this->conn = new Visit();
+		$this->forum->members = $this->members;
+		$s = file_get_contents(MU_MEMBER.'connected.dat');
+		$this->conn = unserialize($s);
 
 		$Ban = new BanYourAss();
 
@@ -2392,7 +2491,7 @@ class Init {
 		*
 		* GET & POST
 		*/
-		$gets=array('topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','topicID','postID','deluser','delfile','switchuser','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam');
+		$gets=array('topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','topicID','postID','deluser','delfile','switchuser','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost');
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
 			if(!$$o) $$o=(isset($_POST[$o]) && is_string($_POST[$o]))?$_POST[$o]:'';
@@ -2432,7 +2531,9 @@ class Init {
 			$this->session->setMsg(base64_decode($rc),'error');
 			header('location: index.php');
 			exit();
-		}if($wco) {
+		}
+		//Première connexion et premier utilisateur validés
+		if($wco) {
 			header('location: index.php');
 			exit();
 		}
@@ -2447,7 +2548,7 @@ class Init {
 		* TEST DU MOT DE PASSE
 		*/
 		if (!empty($this->cLogin) && !empty($this->cPass)) {
-			list($this->isMember,$goodpass,$this->isAdmin)=$this->forum->checkMember($this->cLogin,$this->cPass);
+			list($this->isMember,$goodpass,$this->isAdmin)=$this->members->checkMember($this->cLogin,$this->cPass);
 			$this->haveMP=@file_exists(MU_MEMBER.md5($this->cLogin.SECURITY_SALT).'/'.$this->cLogin.'.mp');
 			if (!$Ban->ban_canLogin()) { 
 				$Ban->ban_loginFailed(); 
@@ -2503,6 +2604,16 @@ class Init {
 			header('Location: index.php');
 			exit();
 		}
+		if ($replypost) {
+			if($topic && is_file(MU_THREAD.$topic.'.dat')) {
+				if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+					$this->topicObj = unserialize($s);
+					$m = $this->topicObj->getReply($replypost);
+					$this->quote = '[q='.$m->auth.']'.$m->content.'[/q]';
+					$this->showform = true;
+				}
+			}
+		}
 		/**
 		*
 		* DIFFÉRENTES ACTIONS
@@ -2522,7 +2633,7 @@ class Init {
 				$login = str_replace(array(" ", '"', "'", "/", "&", ".", "!", "?", ":"), array("", '', "", "", "", "", "", "", ""), $login);
 				$login = Tools::clean($login);
 				$avatar='';
-				if(in_array($login,$this->forum->listMember())) $this->errors .= ERROR_USER_ALREADY_EXISTS;
+				if(in_array($login,$this->members->listMember())) $this->errors .= ERROR_USER_ALREADY_EXISTS;
 				else if($login != '' && $password != '' && $email != '' && $birthday != ''){
 					if((preg_match('/(^[0-9a-zA-Z_\.-]{1,}@[0-9a-zA-Z_\-]{1,}\.[0-9a-zA-Z_\-]{2,}$)/', $email)) && (strlen($login)<13)) {
 						$memberDirUp = MU_UPLOAD.md5(SECURITY_SALT.$login);
@@ -2532,7 +2643,7 @@ class Init {
 						file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX);
 						file_put_contents($memberDir.DS.'index.html', GOTO_INDEX);
 						$avatar=$this->checkUpload($memberDirUp,1,$login);
-						$this->forum->addMember($login,$password,$email,$signature,$site,$birthday,$avatar);
+						$this->members->addMember($login,$password,$email,$signature,$site,$birthday,$avatar);
 						setCookie('CookiePassword', md5($password), time() + (3600 * 24 * 30));
 						setCookie('CookieLogin', base64_encode($login), time() + (3600 * 24 * 30));
 						header('Location: index.php?wco=true');
@@ -2562,7 +2673,7 @@ class Init {
 						exit();
 					} else if(!$avatar) $avatar = "";
 					$signature=Tools::clean($signature);
-					$this->forum->setMember($this->cLogin,$email,$signature,$site,$birthday,$avatar);
+					$this->members->setMember($this->cLogin,$email,$signature,$site,$birthday,$avatar);
 				} else { header('Location: index.php?editprofil=1'); exit(); }
 				break;
 				if (empty($this->errors)) {
@@ -2575,21 +2686,24 @@ class Init {
 					$anonymous=$anonymous?str_replace(array(" ", "\"", "'", "/", "&", "."), array("", "", "", "", "", ""), $anonymous):0;
 					if(!$this->isMember && (!$anonymous || $anonymous=='')) {
 						$this->errors .= ERROR_INVALID_PSEUDO;
-					} else if ($this->forum->isMember($anonymous)) {
+					} else if ($this->members->isMember($anonymous)) {
 					    $this->errors .= ERROR_PSEUDO_ALREADY_USED;
 					} else {
 						if($s = implode('', file(MU_THREAD.$topicID.'.dat'))) {
 							$this->tLogin=$this->cLogin?$this->cLogin:$anonymous;
 							$this->topicObj = unserialize($s);
 							$message = Tools::clean($message);
-							$this->topicObj->addReply($this->tLogin,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0));
+							$time = time();
+							$this->topicObj->addReply($this->tLogin,$message,$time,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0));
 							//list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=
 							$this->topicObj->getInfo(0);
-							$this->forum->updateTopic($this->topicObj->infos->time,$ntitle,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
-							if($this->isMember) $this->forum->setPost($this->cLogin);
+							$this->topicObj->updateTopic($this->topicObj->infos->time,$ntitle,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
+							if($this->isMember) $this->members->setForumPost($this->cLogin);
 							$this->page = ceil($this->topicObj->infos->posts/$this->nbMsgTopic);
-							header('Location: index.php?topic='.$topicID.'&page='.$this->page);
-							exit();
+							if(BBCHelper::verif($message,'topic='.$topicID.'&editpost='.$time.'&page='.$this->page,$this->session)){
+								header('Location: index.php?topic='.$topicID.'&page='.$this->page);
+								exit();
+							}
 						} else $this->errors .= ERROR_INVALID_TOPIC;
 					}
 				}
@@ -2603,7 +2717,7 @@ class Init {
 				if($titre!='' && $message!='' && ($this->isMember || !$this->forumMode)){
 					if(!$this->isMember && !$anonymous) {
 						$this->errors .= ERROR_EMPTY_PSEUDO;
-					} else if ($this->forum->isMember($anonymous)) {
+					} else if ($this->members->isMember($anonymous)) {
 					    $this->errors .= ERROR_PSEUDO_ALREADY_USED;
 					} else {
 						$this->tLogin=$this->cLogin?$this->cLogin:$anonymous;
@@ -2612,7 +2726,7 @@ class Init {
 						$this->topicObj = new Topic($this->tLogin,$titre,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0),$postType);
 						//list($time,$title,$auth,$posts,$lastAuth,$tlastTime,$attach,$type)=
 						$this->topicObj->getInfo(0);
-						$this->forum->addTopic($this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->time,$this->topicObj->infos->attach,$this->topicObj->infos->type);
+						$this->members->addTopic($this->topicObj->infos->auth);
 						$this->topic=$this->topicObj->infos->time;
 						setCookie('uFread'.$this->topic.$this->loginForCookie,1,time()+2592000);
 					}
@@ -2715,40 +2829,41 @@ class Init {
 			}
 		}
 		if($this->isAdmin) {
-			if($deluser) { $this->forum->removeMember($deluser); }
-			else if($switchuser) { $this->forum->setMod($switchuser); }
+			if($deluser) { $this->members->removeMember($deluser); }
+			else if($switchuser) { $this->members->setMod($switchuser); }
 			else if($topic && $postit && !$action) { $type=$postit=="on"?1:0; $this->forum->setType($topic,$type); }
 			else if($topic && $ntitle) { $this->forum->setTitle($topic,$ntitle); }
-			else if($topicID && $action=='editpost' && $postID && $message!='') {
+			else if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$topicID.'.dat')) {
 				if($s = implode('', file(MU_THREAD.$topicID.'.dat'))) {
 					$message = Tools::clean($message);
 					$message = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$message);
-					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/y \à H:i',time()).'[/e]';
+					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/Y \à H:i',time()).'[/e]';
 					$this->topicObj = unserialize($s);
 					$this->topicObj->setReply($postID,'',$message);
 					$this->topicObj->getInfo(0);
 					$topic=$topicID;
-					header('Location: ?topic='.$topic.'&page='.$this->page.'#p-'.$postID);
-					exit();
+					if(BBCHelper::verif($message,'topic='.$topicID.'&editpost='.$postID.'&page='.$this->page,$this->session)){
+						header('Location: ?topic='.$topic.'&page='.$this->page.'#p-'.$postID);
+						exit();
+					}
 				}
 			}
 			else if($topic && $delpost) {
 				if($topic==$delpost) {
-					if(@unlink(MU_THREAD.$topic.'.dat')) {
-						$this->forum->delTopic($topic);
+					if($this->forum->delTopic($topic)) {
 						$this->session->setMsg(MSG_DATA_DEL);
 						header('Location: index.php');
 						exit();
 					}
 				} else {
-					if($s=implode('', file(MU_THREAD.$topic.'.dat'))) {
+					if(is_file(MU_THREAD.$topicID.'.dat') && $s=implode('', file(MU_THREAD.$topic.'.dat'))) {
 						$this->topicObj = unserialize($s);
 						$r=$this->topicObj->getReply($delpost);
 						@unlink($r->attach);
 						$this->topicObj->removeReply($delpost);
 						//list($time,$title,$auth,$post,$last,$tlast,$attach,$postType)=
 						$this->topicObj->getInfo(0);
-						$this->forum->updateTopic($this->topicObj->infos->time,$this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
+						//$this->forum->updateTopic($this->topicObj->infos->time,$this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
 						if(ceil($this->topicObj->infos->posts/$this->nbMsgTopic) == 1 ) $this->page = 1;
 						$this->session->setMsg(MSG_DATA_DEL);
 						header('Location: ?topic='.$topic.'&page='.$this->page);
@@ -2775,8 +2890,12 @@ class Init {
 		$this->get_private    = $private	;
 		$this->get_restore    = $restore;
 
-		$stats = $this->pagesMsg = $this->forum->getStat();
-
+		if (is_object($this->forum)) {
+			$stats = $this->pagesMsg = $this->forum->getStat();
+		} else {
+			$stats = $this->pagesMsg = 0;
+		}
+		
 		$this->pages = $stats['topics'];
 		$this->pagesMb = $stats['members'];
 	}
@@ -2811,6 +2930,11 @@ class Init {
 			$config.="\$gzip='0';\n";
 			$config.="\$siteBase='".MU_BASE_URL."'\n;?>";
 			file_put_contents('config.php', utf8_encode($config));
+
+			if (!file_exists(MU_MEMBER.'members.dat')) {
+				$this->members = array();
+				file_put_contents(MU_MEMBER.'members.dat', serialize($this->members),LOCK_EX);
+			}
 
 			$errors='';
 			$errors.= (is_dir(MU_THEMES))? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
@@ -2883,7 +3007,7 @@ class Init {
 	private function mkjs() {
 		if(!file_exists(MU_JS.'scripts.js')) {
 			$js = '//<![CDATA[
-			var activeSub=0;var SubNum=0;var timerID=null;var timerOn=false;var timecount=300;var what=null;var newbrowser=true;var check=false;var layerRef="";var tm="";var confirmMsg="Confirmez la suppression de ";var msie=navigator.userAgent.toLowerCase().indexOf("msie")+1;wmtt=null;document.onmousemove=updateWMTT;function init(){if(document.layers){layerRef="document.layers";styleSwitch="";visibleVar="show";what="ns4"}else{if(document.all){layerRef="document.all";styleSwitch=".style";visibleVar="visible";what="ie"}else{if(document.getElementById){layerRef="document.getElementByID";styleSwitch=".style";visibleVar="visible";what="moz"}else{what="none";newbrowser=false}}}check=true}function switchLayer(a){if(check){if(what=="none"){return}else{if(what=="moz"){if(document.getElementById(a).style.visibility=="visible"){document.getElementById(a).style.visibility="hidden";document.getElementById(a).style.display="none"}else{document.getElementById(a).style.visibility="visible";document.getElementById(a).style.display="block"}}else{if(document.all[a].style.visibility=="visible"){document.all[a].style.visibility="hidden";document.all[a].style.display="none"}else{document.all[a].style.visibility="visible";document.all[a].style.display="block"}}}scrollTo(\'form\');}else{scrollTo(\'form\');return}}function countInstances(c,b){var a=document.formulaire.message.value.split(c);var d=document.formulaire.message.value.split(b);return a.length+d.length-2}function insert(e,c){var b=document.getElementById("message");if(document.selection){var g=document.selection.createRange().text;document.formulaire.message.focus();var d=document.selection.createRange();if(c!=""){if(g==""){var f=countInstances(e,c);if(f%2!=0){d.text=d.text+c}else{d.text=d.text+e}}else{d.text=e+d.text+c}}else{d.text=d.text+e}}else{if(b.selectionStart|b.selectionStart==0){if(b.selectionEnd>b.value.length){b.selectionEnd=b.value.length}var h=b.selectionStart;var a=b.selectionEnd+e.length;b.value=b.value.slice(0,h)+e+b.value.slice(h);b.value=b.value.slice(0,a)+c+b.value.slice(a);b.selectionStart=h+e.length;b.selectionEnd=a;b.focus()}else{var d=document.formulaire.message;var f=countInstances(e,c);if(f%2!=0&&c!=""){d.value=d.value+c}else{d.value=d.value+e}}}}function updateWMTT(a){if(document.documentElement.scrollTop&&msie){x=window.event.x+document.documentElement.scrollLeft+10;y=window.event.y+document.documentElement.scrollTop+10}else{x=(document.all)?window.event.x+document.body.scrollLeft+10:(a.pageX+10)+"px";y=(document.all)?window.event.y+document.body.scrollTop+10:(a.pageY+10)+"px"}if(wmtt!=null){wmtt.style.left=x;wmtt.style.top=y}}function showWMTT(a){wmtt=document.getElementById(a);wmtt.style.display="block"}function hideWMTT(){wmtt.style.display="none";wmtt=null}function quote(c,f){var a=document.getElementById("td"+f).innerHTML;var b=new Array("<fieldset.*?>.*?</fieldset>","<br>|<br />","<small>.*?</small>|<pre>|</pre>|<font.*?>|</font>|&nbsp;","<b>","</b>","<i>","</i>","<u>","</u>","&amp;lt;|&lt;","&amp;gt;|&gt;","<hr>",\'<img(.*?)rel="(.*?)"(.*?)>\');var e=new Array("","\n","","[b]","[/b]","[i]","[/i]","[u]","[/u]","<",">","[hr]","[sm=$2]");var d=0;for(i in b){regex=new RegExp(b[i],"gi");a=a.replace(regex,e[d++])}if(document.getElementById("form").style.visibility!="visible"){switchLayer("form")}document.getElementById("message").value+="[q="+c+"]"+a+"[/q]\n"}function blnk(b,a){document.getElementById(b).style.textDecoration=(a)?"none":"underline";a=a?0:1;tm=setTimeout(\'blnk("\'+b+\'",\'+a+")",1000)}function confirmLink(b,c){var a=confirm(confirmMsg+" :\n"+c);if(a){b.href+="&do=1"}return a};function scrollTo(hash) {location.hash = "#" + hash;}
+			var activeSub=0;var SubNum=0;var timerID=null;var timerOn=false;var timecount=300;var what=null;var newbrowser=true;var check=false;var layerRef="";var tm="";var confirmMsg="Confirmez la suppression de ";var msie=navigator.userAgent.toLowerCase().indexOf("msie")+1;wmtt=null;document.onmousemove=updateWMTT;function init(){if(document.layers){layerRef="document.layers";styleSwitch="";visibleVar="show";what="ns4"}else{if(document.all){layerRef="document.all";styleSwitch=".style";visibleVar="visible";what="ie"}else{if(document.getElementById){layerRef="document.getElementByID";styleSwitch=".style";visibleVar="visible";what="moz"}else{what="none";newbrowser=false}}}check=true}function switchLayer(a){if(check){if(what=="none"){return}else{if(what=="moz"){if(document.getElementById(a).style.visibility=="visible"){document.getElementById(a).style.visibility="hidden";document.getElementById(a).style.display="none"}else{document.getElementById(a).style.visibility="visible";document.getElementById(a).style.display="block"}}else{if(document.all[a].style.visibility=="visible"){document.all[a].style.visibility="hidden";document.all[a].style.display="none"}else{document.all[a].style.visibility="visible";document.all[a].style.display="block"}}}scrollTo(\'form\');}else{scrollTo(\'form\');return}}function countInstances(c,b){var a=document.formulaire.message.value.split(c);var d=document.formulaire.message.value.split(b);return a.length+d.length-2}function insert(e,c){var b=document.getElementById("message");if(document.selection){var g=document.selection.createRange().text;document.formulaire.message.focus();var d=document.selection.createRange();if(c!=""){if(g==""){var f=countInstances(e,c);if(f%2!=0){d.text=d.text+c}else{d.text=d.text+e}}else{d.text=e+d.text+c}}else{d.text=d.text+e}}else{if(b.selectionStart|b.selectionStart==0){if(b.selectionEnd>b.value.length){b.selectionEnd=b.value.length}var h=b.selectionStart;var a=b.selectionEnd+e.length;b.value=b.value.slice(0,h)+e+b.value.slice(h);b.value=b.value.slice(0,a)+c+b.value.slice(a);b.selectionStart=h+e.length;b.selectionEnd=a;b.focus()}else{var d=document.formulaire.message;var f=countInstances(e,c);if(f%2!=0&&c!=""){d.value=d.value+c}else{d.value=d.value+e}}}}function updateWMTT(a){if(document.documentElement.scrollTop&&msie){x=window.event.x+document.documentElement.scrollLeft+10;y=window.event.y+document.documentElement.scrollTop+10}else{x=(document.all)?window.event.x+document.body.scrollLeft+10:(a.pageX+10)+"px";y=(document.all)?window.event.y+document.body.scrollTop+10:(a.pageY+10)+"px"}if(wmtt!=null){wmtt.style.left=x;wmtt.style.top=y}}function showWMTT(a){wmtt=document.getElementById(a);wmtt.style.display="block"}function hideWMTT(){wmtt.style.display="none";wmtt=null}function quote(c,f){var a=document.getElementById("td"+f).innerHTML;var b=new Array("<fieldset.*?>.*?</fieldset>","<br>|<br />","<small>.*?</small>|<pre>|</pre>|<font.*?>|</font>|&nbsp;","<code>","</code>","<b>","</b>","<i>","</i>","<u>","</u>","&amp;lt;|&lt;","&amp;gt;|&gt;","<hr>",\'<img(.*?)rel="(.*?)"(.*?)>\');var e=new Array("","\n","","[c]","[/c]","[b]","[/b]","[i]","[/i]","[u]","[/u]","<",">","[hr]","[sm=$2]");var d=0;for(i in b){regex=new RegExp(b[i],"gi");a=a.replace(regex,e[d++])}if(document.getElementById("form").style.visibility!="visible"){switchLayer("form")}document.getElementById("message").value+="[q="+c+"]"+a+"[/q]\n"}function blnk(b,a){document.getElementById(b).style.textDecoration=(a)?"none":"underline";a=a?0:1;tm=setTimeout(\'blnk("\'+b+\'",\'+a+")",1000)}function confirmLink(b,c){var a=confirm(confirmMsg+" :\n"+c);if(a){b.href+="&do=1"}return a};function scrollTo(hash) {location.hash = "#" + hash;}
 			/*ONGLETS form http://www.supportduweb.com/*/
 			function tab(name){if(document.getElementById(\'tab\'+ idTab) !==null) {document.getElementById(\'tab\'+ idTab).className = \'tabA tab\';document.getElementById(\'tab\'+ name).className = \'tabB tab\';document.getElementById(\'tabContent\'+ idTab).style.display = \'none\';document.getElementById(\'tabContent\'+ name).style.display = \'block\';
 				idTab = name;}}
@@ -2903,7 +3027,7 @@ class Init {
 	*/
 	private function mkcss() {
 
-		$main = '*{margin:0;padding:0;border:0;text-decoration:none;font-weight:normal;font-style:normal;font-size:12px;font-family:Helvetica,Arial,sans-serif}span,p,ul,ol,table,td,th,hr,blockquote,input,textarea{margin-bottom:15px;line-height:1.3em}table{border-collapse:collapse}h1{margin-bottom:15px;font-size:1.8em;line-height:1.1}h2{margin-bottom:10px;font-size:1.4em;line-height:1.3}h3{margin-bottom:10px;font-size:1.1em;line-height:1.3}h4,h5,h6{margin-bottom:15px}strong,b{font-weight:bold}em,i{font-style:italic}u{text-decoration:underline}del,s,strike{text-decoration:line-through}code,pre,samp{overflow:auto;margin:5px 0 5px 0;padding:8px 13px;border:1px solid +BORDER+;background-color:#efefef;font-size:0.8em;font-family:"Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace}li{margin-left:25px;line-height:30px}img{max-width:100%;height:auto}header,nav,section,article,aside,footer,details,figcaption,figure,audio,video,canvas{display:block;overflow:hidden}@font-face{font-family:\'fontello\';src:url(\'fonts/fontello.eot?36244670\');src:url(\'fonts/fontello.eot?36244670#iefix\')format(\'embedded-opentype\'),url(\'fonts/fontello.woff?36244670\')format(\'woff\'),url(\'fonts/fontello.ttf?36244670\')format(\'truetype\'),url(\'fonts/fontello.svg?36244670#fontello\')format(\'svg\');font-weight:normal;font-style:normal}[class^="icon-"]:before,[class*=" icon-"]:before{font-family:"fontello";font-style:normal;font-weight:normal;speak:none;display:inline-block;text-decoration:inherit;width:1em;margin-right:.2em;text-align:center;font-variant:normal;text-transform:none}.icon-mail:before{content:\'\65\'}.icon-smile:before{content:\'\e811\'}.icon-video:before{content:\'\e814\'}.icon-picture:before{content:\'\e813\'}.icon-info:before{content:\'\e828\'}.icon-home:before{content:\'\e80b\'}.icon-link:before{content:\'\e812\'}.icon-attach:before{content:\'\74\'}.icon-lock:before{content:\'\e825\'}.icon-pin:before{content:\'\e803\'}.icon-eye:before{content:\'\e800\'}.icon-code:before{content:\'\e815\'}.icon-pencil:before{content:\'\e801\'}.icon-edit:before{content:\'\e826\'}.icon-comment-empty:before{content:\'\e80c\'}.icon-chat-empty:before{content:\'\e81b\'}.icon-bell:before{content:\'\e821\'}.icon-attention:before{content:\'\e807\'}.icon-trash:before{content:\'\e808\'}.icon-folder-open-empty:before{content:\'\e80a\'}.icon-cog:before{content:\'\e818\'}.icon-user:before{content:\'\e81d\'}.icon-wrench:before{content:\'\e806\'}.icon-calendar:before{content:\'\e809\'}.icon-angle-up:before{content:\'\e80d\'}.icon-right-hand:before{content:\'\e824\'}.icon-ccw:before{content:\'\e81c\'}.icon-play-circled2:before{content:\'\e810\'}.icon-desktop:before{content:\'\e820\'}.icon-globe:before{content:\'\e822\'}.icon-leaf:before{content:\'\70\'}.icon-bold:before{content:\'\e816\'}.icon-italic:before{content:\'\e817\'}.icon-list:before{content:\'\e823\'}.icon-strike:before{content:\'\e81a\'}.icon-underline:before{content:\'\e819\'}.icon-paste:before{content:\'\e80f\'}.icon-off:before{content:\'\e81f\'}.icon-floppy:before{content:\'\e81e\'}.icon-megaphone:before{content:\'\e80e\'}.icon-key:before{content:\'\e827\'}.icon-cog-alt:before{content:\'\e805\'}body{background-color:+BGCOLOR+;color:+COLOR+;font-family:Helvetica,Arial,sans-serif}.wrapper{margin:40px auto;padding:30px 5% 50px 5%;min-width:310px;max-width:1425px;width:80%;background-color:+WRAPBGCOLOR+;box-shadow:0 2px 6px rgba(100,100,100,0.3);color:+WRAPCOLOR+;line-height:1.5em}a{outline:none;color:+COLORLINKS+}a:hover{color:+COLORLINKSHOVER+;text-decoration:none}.center{text-align:center}.underline{text-decoration:underline}.gradient{background:+BGGRADIENT+; border:1px solid +BORDERGRADIENT+; color:+COLORGRADIENT+; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left; font-weight:bold}header[role=banner]{overflow:hidden;padding:10px 0 10px 0;text-transform:uppercase}header[role=banner] h1{letter-spacing:12px;font-size:2em;line-height:1.3em}header[role=banner] p{font-weight:normal;font-size:13px;line-height:1.846153846}.maintitle{font-size:35px}nav[role=navigation]{margin-bottom:15px;padding:10px 0;border-bottom:1px solid +NAVBORDER+}#menu li{float:right;list-style-type:none}.breadcrumbs li{float:left;list-style-type:none;margin-right:-20px}.breadcrumbs li+li:before{content:" > ";color:+COLOR>+;font-size:12px;margin:0 3px;position:relative;top:-1px}.selectColor{position:relative;display:inline-block;border-radius:3px;width:16px;height:16px;line-height:18px;cursor:pointer}.image-right{float:right}.left{float:left}.Box{background:+BGBOX+;border:1px solid +BORDERBOX+;vertical-align:middle;margin-bottom:3px;text-align:left;margin-top:50px;border-radius:5px;padding:10px;}.privMsg{margin:20px;border-left:2px solid +BORDER+;padding-left:10px;}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid +BORDER+;cursor:pointer;-moz-border-radius-topright:5px;-webkit-border-top-right-radius:5px;border-top-right-radius:5px;-moz-border-radius-topleft:5px;-webkit-border-top-left-radius:5px;border-top-left-radius:5px;font-size:1.2em}.tab i{font-size:1.2em}.tabA{background:+BGTABA+;border-bottom:0px solid +BORDERTABA+;padding-bottom:6px}.tabB{background:+BGTABB+;border-bottom:1px solid +BORDERTABB+}.tabContent{background-color:+BGTABB+;border:1px solid +BORDERTABA+;margin-top:-16px;padding:15px;display:none;-moz-border-radius-topright:5px;-webkit-border-top-right-radius:5px;border-top-right-radius:5px;-moz-border-radius-topleft:5px;-webkit-border-top-left-radius:5px;border-top-left-radius:5px;z-index:35000;}#menu li form.text-right input{width:170px;height:10px;border:none;border-bottom:1px solid +BORDER+;margin-right:10px}#registration span,#registration i{font-size:1.5em}#registration textarea{height:50px;width:70%;margin:-20px 0 30px 25px}#registration input{padding:2px}#captcha-question{margin-right:20px}#captcha-question:after{content:\'\';display:block;margin-bottom:20px}#captcha-input{width:120px;margin-left:25px}#registration input.input-success,#registration textarea.input-success,#registration select.input-success,#registration .input-success{background:none;border-color:#18a011;height:10px;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2)inset}#registration input.input-gray,#registration textarea.input-gray,#registration select.input-gray,#registration .input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2)inset}#registration input:focus,#registration textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2)inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}#registration .message-info{width:50%;margin:30px auto 10px 170px;background-color:#ebcd00;padding:10px}#registration pre{font-size:1.3em;background-color:#ebcd00;border:none;color:#111;}.lead pre, .lead pre code{background:none;color:#111;padding:10px;text-align:left;overflow-y:hidden;overflow-x:hidden;}section[role=main]{clear:both;margin-bottom:35px;padding:10px 0 15px 0;width:100%;text-align:left}section ul{list-style:none}img.icone{display:inline-block;padding:0;margin:-5px 0}.content{overflow:hidden}article{margin-bottom:40px;padding-bottom:20px;border-bottom:1px solid #efefef}article h1,article h1 a{margin-bottom:10px;color:#555;font-weight:bold}article h2,article h3{padding-top:10px}article header p,article footer p{margin:0;color:#666;font-size:0.85em}article header p a,article footer p a{color:#666}article section{margin:20px 0 20px 0;color:#000}.home article footer{margin-left:63px}article img{margin:0 5px}ul a img,ol a img{display:inline-block;margin-bottom:-10px;border:none}.block ul li{font-size:18px}.more{margin-top:15px}.rss{padding:0 0 0 20px;background:url(img/rss.png)0px 3px no-repeat}article footer .tags a{padding:0 4px 0 4px}article img{padding:5px;border:1px solid +BORDER+}.art-chapo{margin-bottom:15px}table{width:100%;border-radius:5px;}td,th{margin:0;padding:2px;border:1px solid +BORDER+;font-size:12px;border-collapse:collapse;}th{padding:10px;font-weight:bold;text-align:left}.noresult{padding:10px;}.profil > i{font-size:2em;display:inline-block;margin-left:100px;}#form-title .icon-pin{vertical-align:top;color:#111;display:inline-block;margin-top:5px}#form-title input[type=text]{background:none;border:none;padding:0;box-shadow:none;font-size:1.8em;}.Lien:link, .Lien:visited{color:+COLOR.Lien+; text-decoration:none}.Lien:hover{color:+COLOR.Lien+; text-decoration:underline}.LienNonLu:link, .LienNonLu:visited{color:+COLOR.LienNonLu+; text-decoration:none}.LienNonLu:hover{color:+COLOR.LienNonLu+; text-decoration:underline}.avatar{width:80px; height:80px}.avatarTD{vertical-align:top;text-align:left;padding-left:10px;width:18%; font-size:12px; font-family:Courrier,Monaco,monospaced; padding-bottom:10px}.tooltipTD{padding-left:5px; vertical-align:middle; font-size:9px; font-family:Courrier,Monaco,monospaced}.datePost{text-align:right;color:#9a9a9a; font-size:12px; font-family:Courrier,Monaco,monospaced;padding-top:5px; padding-right:3px}.mb-name{padding:10px 10px 20px 10px;border-bottom:1px solid +BORDER+;margin-bottom:20px}.mb-name a{font-size:1.8em}.mb-infos{color:#a1a1a1}#topics p,#topics span{margin:20px 10px}#topics p a{font-size:1.2em;}#topics p a.read{color:#555;}#topics p a.unread{color:#e85c40;font-weight:bold}#topics .icon-pin{color:#e85c40}#topics .mess{font-size:16px; text-align:center; vertical-align:middle}#topics .lastmsg{padding-left:10px;}.messageTD{padding:10px; font-size:14px}.admin{text-align:center}.admin a i{font-size:1.5em}.toggle{padding-top:10px; margin:0px; display:none; visibility:hidden}.toggleLink{text-decoration:none; display:block; padding:3px 3px 3px 6px; margin:2px}.toggleLink:link, .toggleLink:visited{color:#666; background:#e8ebed}.toggleLink:hover{background:#b1c5d0; color:#fff}.tooltip{position:absolute; border:1px solid #999; text-align:left; display:none; background-color:rgba(255,255,255,0.9); padding:6px; color:#666; font-size:11px; z-index:999; width:400px}@keyframes blink{0%{color:red;}100%{color:black;}}@-webkit-keyframes blink{0%{color:red;}100%{color:black;}}.blink{-webkit-animation:blink 0.5s linear infinite; -moz-animation:blink 0.5s linear infinite; -ms-animation:blink 0.5s linear infinite; -o-animation:blink 0.5s linear infinite; animation:blink 0.5s linear infinite;}.tr-bottom{height:35px}.signature{margin-top:40px;border-top:1px solid +BORDER+}.signature blockquote{margin:-1px auto 0 50px;padding-top:40px;background:none;border:none;border-left:1px solid +BORDER+}#listfiles{float:right;margin-right:150px}.ds_box{background-color:#FFF;position:absolute;z-index:32767;border:none;}.ds_tbl{background-color:#FFF}.ds_head{background-color:rgb(223,240,250);color:rgb(18,77,114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18,77,114);color:rgb(223,240,250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;max-width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:none;}#ds_conclass{width:300px;border:none;}.cal{border:1px solid rgb(179,219,243);border-radius:5px;}.right{float:right}p.right{display:inline-block;font-size:2em;padding:0 7px 0 0;line-height:30px;margin-bottom:0}.clear{clear:both}.pagination{margin:10px;border:1px solid +BORDER+;max-width:300px}.p_page,.p_prev a,.p_first a,.p_last a,.p_next a,.p_current{display:inline-block;margin:0 5px 0 0;padding:0 7px 0 7px;border:1px solid #efefef;text-align:center}.p_current{color:#555}.p_page:first-letter,.p_prev a:first-letter,.p_first a:first-letter,.p_last a:first-letter,.p_next a:first-letter{text-transform:uppercase}ul.smileys{width:170px}.smileys li{float:left}.forms-inline-list li{display:inline-block;float:left}.forms-inline-list li:after{content:\'\';display:block;clear:both}form,fieldset{border:none}form p{margin-bottom:5px;text-align:left}label{display:block;width:250px;min-width:150px;font-weight:bold}input,select{margin-bottom:25px!important;padding:0 6px;height:30px!important;outline:none;border:1px solid #bbb;cursor:pointer}input[type=text]{max-width:480px;width:90%}select{padding:5px 6px}.searchform input[type=text]{width:50%}input[type=submit],input[type=reset]{margin-bottom:0!important;padding:0 6px;width:auto;height:34px!important;border:1px solid #bbb;background-color:#ef4423;-moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px}input[type=submit]:hover,input[type=reset]:hover{border:1px solid #bbb;background-color:#bbb;text-decoration:none}textarea{display:block;margin:20px auto;padding:3px 6px;width:98%;height:300px;outline:none;border:1px solid #bbb;font-family:Arial,Helvetica,sans-serif;cursor:auto}textarea.meta-desc{height:50px}input:hover,select:hover{background-color:#efefef}input:focus,select:focus,textarea:focus{border:1px solid #77bace}.capcha-letter{font-weight:bold}.capcha-word{font-weight:bold}#id_rep{display:block;margin-top:5px}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1)inset;-webkit-transition:border ease.5s;-moz-transition:border ease.5s;-o-transition:border ease.5s;transition:border ease.5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em.6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0-1px 0 rgba(0,0,0,0.24)}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-group{margin-left:170px}.btn-group li{float:left;margin-left:1px}footer[role=contentinfo]{clear:both;padding:20px 0 40px 0;font-size:0.9em}footer[role=contentinfo] p{margin-bottom:5px;color:#444}footer[role=contentinfo] a{color:#ef4423}#toogle-list{list-style:square}footer div,footer ul,footer li{margin:0;padding:0;list-style-type:none}footer ul li{float:left;width:30%;margin-right:3%;border-right:1px solid #cfcfcf;height:150px}#last{border:none}footer ul{border-top:1px solid #aaa;padding-top:20px}footer h4{font-size:1.5em}footer p{line-height:20px}#footer{clear:both;padding-top:1.5em;margin:1.5em 0;font-size:.85em}#footer span{float:right}@media screen and (min-width:768px){.content{width:50%}aside[role=complementary]{width:45%}.nosidebar{width:100%}}@media screen and (max-width:768px){header[role=banner]{text-align:center}.content,.nosidebar,aside[role=complementary]{width:100%}}.video{position:relative;overflow:hidden;padding-bottom:56.25%;height:0}.video iframe,.video object,.video embed{position:absolute;top:0;left:0;width:100%;height:100%}.table-container{border-collapse:collapse;overflow-y:auto;margin:0 0 1em;width:100%;_overflow:auto}.table-container::-webkit-scrollbar{width:14px;height:14px;-webkit-appearance:none}.table-container::-webkit-scrollbar-thumb{border:3px solid #fff;border-radius:8px;background-color:rgba(0,0,0,.3)}@media screen and (max-width:768px){#social{margin:0;text-align:center}}.rememberme input{width:0}.date{float:left;text-align:center;margin:0 15px 0 0;display:block;padding:0}blockquote{background-color:#F5F6CE;padding:15px;margin:15px 0 15px 0;border:1px solid #FFCC00;font-size:0.9em}.msgFlash{position:absolute;width:20%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;top:10px;right:50px;text-align:left;}header[role=banner]h1 a,article section a,nav a,.active{color:+COLORMENU+}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#ffffff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}.error-input{border-color:#ef4423}.error-form-label{padding:8px 25px 7px 25px;background-color:#ffc0cb;color:#ef4423}.close-right{float:right;margin-top:-35px;cursor:pointer}.close{display:none}.warning{padding:5px;background-color:#e2e468;border:1px solid red}.editby{margin-top:10px;font-style:italic;color:#a1a1a1}.error li:hover{background-color:transparent}span.color{padding:5px}.color-orange{color:#ff8e1f}#menu li a, .breadcrumbs li a, footer a{color:+COLORMENU+;}.label,.label-badge{border-radius:2em;border:1px solid +BORDER+;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}hr{border:1px solid +BORDER+}.closed{display:none;}pre{white-space:pre; white-space:pre-wrap; white-space:pre-line; white-space:-pre-wrap; white-space:-o-pre-wrap; white-space:-moz-pre-wrap; white-space:-hp-pre-wrap; word-wrap:break-word;background-color:#111;color:#ffdf3d;font-size:1.2em;max-width:800px;overflow-y:hidden;overflow-x:hidden;overflow:auto;}code{background:none;border:none;color:#ffdf3d;overflow-y:hidden;overflow-x:hidden;overflow:auto;}';
+		$main = '*{margin:0;padding:0;border:0;text-decoration:none;font-weight:normal;font-style:normal;font-size:12px;font-family:Helvetica,Arial,sans-serif}span,p,ul,ol,table,td,th,hr,blockquote,input,textarea{margin-bottom:15px;line-height:1.3em}table{border-collapse:collapse}h1{margin-bottom:15px;font-size:1.8em;line-height:1.1}h2{margin-bottom:10px;font-size:1.4em;line-height:1.3}h3{margin-bottom:10px;font-size:1.1em;line-height:1.3}h4,h5,h6{margin-bottom:15px}strong,b{font-weight:bold}em,i{font-style:italic}u{text-decoration:underline}del,s,strike{text-decoration:line-through}code,pre,samp{overflow:auto;margin:5px 0 5px 0;padding:8px 13px;border:1px solid +BORDER+;background-color:#efefef;font-size:0.8em;font-family:"Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace}li{margin-left:25px;line-height:30px}img{max-width:100%;height:auto}header,nav,section,article,aside,footer,details,figcaption,figure,audio,video,canvas{display:block;overflow:hidden}@font-face{font-family:\'fontello\';src:url(\'fonts/fontello.eot?36244670\');src:url(\'fonts/fontello.eot?36244670#iefix\')format(\'embedded-opentype\'),url(\'fonts/fontello.woff?36244670\')format(\'woff\'),url(\'fonts/fontello.ttf?36244670\')format(\'truetype\'),url(\'fonts/fontello.svg?36244670#fontello\')format(\'svg\');font-weight:normal;font-style:normal}[class^="icon-"]:before,[class*=" icon-"]:before{font-family:"fontello";font-style:normal;font-weight:normal;speak:none;display:inline-block;text-decoration:inherit;width:1em;margin-right:.2em;text-align:center;font-variant:normal;text-transform:none}.icon-mail:before{content:\'\65\'}.icon-smile:before{content:\'\e811\'}.icon-video:before{content:\'\e814\'}.icon-picture:before{content:\'\e813\'}.icon-info:before{content:\'\e828\'}.icon-home:before{content:\'\e80b\'}.icon-link:before{content:\'\e812\'}.icon-attach:before{content:\'\74\'}.icon-lock:before{content:\'\e825\'}.icon-pin:before{content:\'\e803\'}.icon-eye:before{content:\'\e800\'}.icon-code:before{content:\'\e815\'}.icon-pencil:before{content:\'\e801\'}.icon-edit:before{content:\'\e826\'}.icon-comment-empty:before{content:\'\e80c\'}.icon-chat-empty:before{content:\'\e81b\'}.icon-bell:before{content:\'\e821\'}.icon-attention:before{content:\'\e807\'}.icon-trash:before{content:\'\e808\'}.icon-folder-open-empty:before{content:\'\e80a\'}.icon-cog:before{content:\'\e818\'}.icon-user:before{content:\'\e81d\'}.icon-wrench:before{content:\'\e806\'}.icon-calendar:before{content:\'\e809\'}.icon-angle-up:before{content:\'\e80d\'}.icon-right-hand:before{content:\'\e824\'}.icon-ccw:before{content:\'\e81c\'}.icon-play-circled2:before{content:\'\e810\'}.icon-desktop:before{content:\'\e820\'}.icon-globe:before{content:\'\e822\'}.icon-leaf:before{content:\'\70\'}.icon-bold:before{content:\'\e816\'}.icon-italic:before{content:\'\e817\'}.icon-list:before{content:\'\e823\'}.icon-strike:before{content:\'\e81a\'}.icon-underline:before{content:\'\e819\'}.icon-paste:before{content:\'\e80f\'}.icon-off:before{content:\'\e81f\'}.icon-floppy:before{content:\'\e81e\'}.icon-megaphone:before{content:\'\e80e\'}.icon-key:before{content:\'\e827\'}.icon-cog-alt:before{content:\'\e805\'}body{background-color:+BGCOLOR+;color:+COLOR+;font-family:Helvetica,Arial,sans-serif}.wrapper{margin:40px auto;padding:30px 5% 50px 5%;min-width:310px;max-width:1425px;width:80%;background-color:+WRAPBGCOLOR+;box-shadow:0 2px 6px rgba(100,100,100,0.3);color:+WRAPCOLOR+;line-height:1.5em}a{outline:none;color:+COLORLINKS+}a:hover{color:+COLORLINKSHOVER+;text-decoration:none}.center{text-align:center}.underline{text-decoration:underline}.gradient{background:+BGGRADIENT+; border:1px solid +BORDERGRADIENT+; color:+COLORGRADIENT+; vertical-align:middle; padding:6px; margin-bottom:3px; text-align:left; font-weight:bold}header[role=banner]{overflow:hidden;padding:10px 0 10px 0;text-transform:uppercase}header[role=banner] h1{letter-spacing:12px;font-size:2em;line-height:1.3em}header[role=banner] p{font-weight:normal;font-size:13px;line-height:1.846153846}.maintitle{font-size:35px}nav[role=navigation]{margin-bottom:15px;padding:10px 0;border-bottom:1px solid +NAVBORDER+}#menu li{float:right;list-style-type:none}.breadcrumbs li{float:left;list-style-type:none;margin-right:-20px}.breadcrumbs li+li:before{content:" > ";color:+COLOR>+;font-size:12px;margin:0 3px;position:relative;top:-1px}.selectColor{position:relative;display:inline-block;border-radius:3px;width:16px;height:16px;line-height:18px;cursor:pointer}.image-right{float:right}.left{float:left}.Box{background:+BGBOX+;border:1px solid +BORDERBOX+;vertical-align:middle;margin-bottom:3px;text-align:left;margin-top:50px;border-radius:5px;padding:10px;}.privMsg{margin:20px;border-left:2px solid +BORDER+;padding-left:10px;}.tab{display:inline-block;margin:0 0 0 20px;padding:15px 15px 5px 15px;border:1px solid +BORDER+;cursor:pointer;-moz-border-radius-topright:5px;-webkit-border-top-right-radius:5px;border-top-right-radius:5px;-moz-border-radius-topleft:5px;-webkit-border-top-left-radius:5px;border-top-left-radius:5px;font-size:1.2em}.tab i{font-size:1.2em}.tabA{background:+BGTABA+;border-bottom:0px solid +BORDERTABA+;padding-bottom:6px}.tabB{background:+BGTABB+;border-bottom:1px solid +BORDERTABB+}.tabContent{background-color:+BGTABB+;border:1px solid +BORDERTABA+;margin-top:-16px;padding:15px;display:none;-moz-border-radius-topright:5px;-webkit-border-top-right-radius:5px;border-top-right-radius:5px;-moz-border-radius-topleft:5px;-webkit-border-top-left-radius:5px;border-top-left-radius:5px;z-index:35000;}#menu li form.text-right input{width:170px;height:10px;border:none;border-bottom:1px solid +BORDER+;margin-right:10px}#registration span,#registration i{font-size:1.5em}#registration textarea{height:50px;width:70%;margin:-20px 0 30px 25px}#registration input{padding:2px}#captcha-question{margin-right:20px}#captcha-question:after{content:\'\';display:block;margin-bottom:20px}#captcha-input{width:120px;margin-left:25px}#registration input.input-success,#registration textarea.input-success,#registration select.input-success,#registration .input-success{background:none;border-color:#18a011;height:10px;box-shadow:0 0 0 2px rgba(24,160,17,0.3),0 1px 2px rgba(0,0,0,0.2)inset}#registration input.input-gray,#registration textarea.input-gray,#registration select.input-gray,#registration .input-gray{border-color:#ccc;box-shadow:0 0 0 2px rgba(204,204,204,0.3),0 1px 2px rgba(0,0,0,0.2)inset}#registration input:focus,#registration textarea:focus{outline:0;border-color:#5ca9e4;box-shadow:0 0 0 2px rgba(70,161,231,0.3),0 1px 2px rgba(0,0,0,0.2)inset}input.input-search,input[type="search"]{padding-right:10px;padding-left:10px;margin-bottom:0;border-radius:15px}#registration .message-info{width:50%;margin:30px auto 10px 170px;background-color:#ebcd00;padding:10px}#registration pre{font-size:1.3em;background-color:#ebcd00;border:none;color:#111;}.lead pre, .lead pre code{background:none;color:#111;padding:10px;text-align:left;overflow-y:hidden;overflow-x:hidden;}section[role=main]{clear:both;margin-bottom:35px;padding:10px 0 15px 0;width:100%;text-align:left}section ul{list-style:none}img.icone{display:inline-block;padding:0;margin:-5px 0}.content{overflow:hidden}article{margin-bottom:40px;padding-bottom:20px;border-bottom:1px solid #efefef}article h1,article h1 a{margin-bottom:10px;color:#555;font-weight:bold}article h2,article h3{padding-top:10px}article header p,article footer p{margin:0;color:#666;font-size:0.85em}article header p a,article footer p a{color:#666}article section{margin:20px 0 20px 0;color:#000}.home article footer{margin-left:63px}article img{margin:0 5px}ul a img,ol a img{display:inline-block;margin-bottom:-10px;border:none}.block ul li{font-size:18px}.more{margin-top:15px}.rss{padding:0 0 0 20px;background:url(img/rss.png)0px 3px no-repeat}article footer .tags a{padding:0 4px 0 4px}article img{padding:5px;border:1px solid +BORDER+}.art-chapo{margin-bottom:15px}table{width:100%;border-radius:5px;}td,th{margin:0;padding:2px;border:1px solid +BORDER+;font-size:12px;border-collapse:collapse;}th{padding:10px;font-weight:bold;text-align:left}.noresult{padding:10px;}.profil > i{font-size:2em;display:inline-block;margin-left:100px;}#form-title .icon-pin{vertical-align:top;color:#111;display:inline-block;margin-top:5px}#form-title input[type=text]{background:none;border:none;padding:0;box-shadow:none;font-size:1.8em;}.Lien:link, .Lien:visited{color:+COLOR.Lien+; text-decoration:none}.Lien:hover{color:+COLOR.Lien+; text-decoration:underline}.LienNonLu:link, .LienNonLu:visited{color:+COLOR.LienNonLu+; text-decoration:none}.LienNonLu:hover{color:+COLOR.LienNonLu+; text-decoration:underline}.avatar{width:80px; height:80px}.avatarTD{vertical-align:top;text-align:left;padding-left:10px;width:18%; font-size:12px; font-family:Courrier,Monaco,monospaced; padding-bottom:10px}.tooltipTD{padding-left:5px; vertical-align:middle; font-size:9px; font-family:Courrier,Monaco,monospaced}.datePost{text-align:right;color:#9a9a9a; font-size:12px; font-family:Courrier,Monaco,monospaced;padding-top:5px; padding-right:3px}.mb-name{padding:10px 10px 20px 10px;border-bottom:1px solid +BORDER+;margin-bottom:20px}.mb-name a{font-size:1.8em}.mb-infos{color:#a1a1a1}#topics p,#topics span{margin:20px 10px}#topics p a{font-size:1.2em;}#topics p a.read{color:#555;}#topics p a.unread{color:#e85c40;font-weight:bold}#topics .icon-pin{color:#e85c40}#topics .mess{font-size:16px; text-align:center; vertical-align:middle}#topics .lastmsg{padding-left:10px;}.messageTD{padding:10px; font-size:14px}.messageTD div a {color:+COLORMENU+;}.admin{text-align:center}.admin a i{font-size:1.5em}.toggle{padding-top:10px; margin:0px; display:none; visibility:hidden}.toggleLink{text-decoration:none; display:block; padding:3px 3px 3px 6px; margin:2px}.toggleLink:link, .toggleLink:visited{color:#666; background:#e8ebed}.toggleLink:hover{background:#b1c5d0; color:#fff}.tooltip{position:absolute; border:1px solid #999; text-align:left; display:none; background-color:rgba(255,255,255,0.9); padding:6px; color:#666; font-size:11px; z-index:999; width:400px}@keyframes blink{0%{color:red;}100%{color:black;}}@-webkit-keyframes blink{0%{color:red;}100%{color:black;}}.blink{-webkit-animation:blink 0.5s linear infinite; -moz-animation:blink 0.5s linear infinite; -ms-animation:blink 0.5s linear infinite; -o-animation:blink 0.5s linear infinite; animation:blink 0.5s linear infinite;}.tr-bottom{height:35px}.signature{margin-top:40px;border-top:1px solid +BORDER+}.signature blockquote{margin:-1px auto 0 50px;padding-top:40px;background:none;border:none;border-left:1px solid +BORDER+}.text-quote {margin:10px auto auto 30px;border-left: 2px solid #a1a1a1;padding-left:10px;}#listfiles{float:right;margin-right:150px}.ds_box{background-color:#FFF;position:absolute;z-index:32767;border:none;}.ds_tbl{background-color:#FFF}.ds_head{background-color:rgb(223,240,250);color:rgb(18,77,114);font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;text-align:center;letter-spacing:2px}.ds_subhead{background-color:rgb(18,77,114);color:rgb(223,240,250);font-size:12px;font-weight:bold;text-align:center;font-family:Arial,Helvetica,sans-serif;max-width:32px}.ds_cell{background-color:#EEE;color:#000;font-size:13px;text-align:center;font-family:Arial,Helvetica,sans-serif;padding:2px;cursor:pointer}.ds_cell:hover{background-color:#F3F3F3}#ds_calclass{border:none;}#ds_conclass{width:300px;border:none;}.cal{border:1px solid rgb(179,219,243);border-radius:5px;}.right{float:right}p.right{display:inline-block;font-size:2em;padding:0 7px 0 0;line-height:30px;margin-bottom:0}.clear{clear:both}.pagination{margin:10px;border:1px solid +BORDER+;max-width:300px}.p_page,.p_prev a,.p_first a,.p_last a,.p_next a,.p_current{display:inline-block;margin:0 5px 0 0;padding:0 7px 0 7px;border:1px solid #efefef;text-align:center}.p_current{color:#555}.p_page:first-letter,.p_prev a:first-letter,.p_first a:first-letter,.p_last a:first-letter,.p_next a:first-letter{text-transform:uppercase}ul.smileys{width:170px}.smileys li{float:left}.forms-inline-list li{display:inline-block;float:left}.forms-inline-list li:after{content:\'\';display:block;clear:both}form,fieldset{border:none}form p{margin-bottom:5px;text-align:left}label{display:block;width:250px;min-width:150px;font-weight:bold}input,select{margin-bottom:25px!important;padding:0 6px;height:30px!important;outline:none;border:1px solid #bbb;}input[type=text]{max-width:480px;width:90%}select{padding:5px 6px}.searchform input[type=text]{width:50%}input[type=submit],input[type=reset]{margin-bottom:0!important;padding:0 6px;width:auto;height:34px!important;border:1px solid #bbb;background-color:#ef4423;-moz-border-radius:5px;-webkit-border-radius:5px;border-radius:5px}input[type=submit]:hover,input[type=reset]:hover{border:1px solid #bbb;background-color:#bbb;text-decoration:none}textarea{display:block;margin:20px auto;padding:3px 6px;width:98%;height:300px;outline:none;border:1px solid #bbb;font-family:Arial,Helvetica,sans-serif;cursor:auto}textarea.meta-desc{height:50px}input:hover,select:hover{background-color:#efefef}input:focus,select:focus,textarea:focus{border:1px solid #77bace}.capcha-letter{font-weight:bold}.capcha-word{font-weight:bold}#id_rep{display:block;margin-top:5px}.forms-columnar:after{content:".";display:block;height:0;clear:both;visibility:hidden}.forms-columnar input[type="range"],.forms-columnar input[type="file"],.forms-columnar select[multiple="multiple"]{display:inline-block}.forms-columnar p{position:relative;padding-left:170px}.forms-columnar label{float:left;width:150px;text-align:right;top:0;left:0;position:absolute}.forms-columnar .forms-list,.forms-columnar .forms-inline-list{margin-left:170px}.forms-columnar .forms-list label,.forms-columnar .forms-inline-list label{position:static;0}.forms-columnar .forms-inline-list label{margin-right:1.65em}.forms-push{position:relative;padding-left:170px}.forms-section{font-weight:bold;border-bottom:1px solid #eee;padding:0 0 10px 0;margin-bottom:1em;line-height:1}.forms-columnar .forms-section{padding-left:170px}input[type="radio"],input[type="checkbox"]{position:relative;top:-1px}input[type="text"],input[type="password"],input[type="email"],input[type="url"],input[type="phone"],input[type="tel"],input[type="number"],input[type="datetime"],input[type="date"],input[type="search"],input[type="datetime-local"],textarea,select[multiple="multiple"]{position:relative;z-index:2;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;margin:0;padding:3px 2px;background-color:white;color:#333;font-size:1em;line-height:1;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,0.1)inset;-webkit-transition:border ease.5s;-moz-transition:border ease.5s;-o-transition:border ease.5s;transition:border ease.5s}input[type="range"]{position:relative;top:3px}textarea{line-height:1.4em}select{margin-bottom:0!important}.btn{text-decoration:none;color:#000;border-radius:2px;font-family:\'PT Sans\',Arial,"Helvetica Neue",Helvetica,Tahoma,sans-serif;border:1px solid #ccc;border-bottom-color:#b3b3b3;line-height:1;padding:.7em 1.1em.6em 1.1em;font-weight:500;font-size:.85em;background-color:#f1f1f1;background-image:-moz-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-ms-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-webkit-gradient(linear,0 0,0 100%,from(#fcfcfc),to(#e0e0e0));background-image:-webkit-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:-o-linear-gradient(top,#fcfcfc,#e0e0e0);background-image:linear-gradient(top,#fcfcfc,#e0e0e0);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#fcfcfc\',endColorstr=\'#e0e0e0\',GradientType=0);text-shadow:0 1px 0 #fff;box-shadow:none}.btn:hover{color:#000;background:#e0e0e0}.btn-red{border-color:#c01415;border-bottom-color:#910f10;background-color:#e54546;background-image:-moz-linear-gradient(top,#ef6465,#d71618);background-image:-ms-linear-gradient(top,#ef6465,#d71618);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ef6465),to(#d71618));background-image:-webkit-linear-gradient(top,#ef6465,#d71618);background-image:-o-linear-gradient(top,#ef6465,#d71618);background-image:linear-gradient(top,#ef6465,#d71618);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ef6465\',endColorstr=\'#d71618\',GradientType=0)}.btn-orange{border-color:#cd640b;border-bottom-color:#9c4c08;background-color:#ee7f22;background-image:-moz-linear-gradient(top,#f48a30,#e5700c);background-image:-ms-linear-gradient(top,#f48a30,#e5700c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f48a30),to(#e5700c));background-image:-webkit-linear-gradient(top,#f48a30,#e5700c);background-image:-o-linear-gradient(top,#f48a30,#e5700c);background-image:linear-gradient(top,#f48a30,#e5700c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f48a30\',endColorstr=\'#e5700c\',GradientType=0)}.btn-green{border-color:#5a6d2b;border-bottom-color:#3c491d;background-color:#7e993c;background-image:-moz-linear-gradient(top,#90af45,#63782f);background-image:-ms-linear-gradient(top,#90af45,#63782f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#90af45),to(#63782f));background-image:-webkit-linear-gradient(top,#90af45,#63782f);background-image:-o-linear-gradient(top,#90af45,#63782f);background-image:linear-gradient(top,#90af45,#63782f);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#90af45\',endColorstr=\'#63782f\',GradientType=0)}.btn-blue{border-color:#104769;border-bottom-color:#09293d;background-color:#196ea2;background-image:-moz-linear-gradient(top,#1c7ab4,#155c88);background-image:-ms-linear-gradient(top,#1c7ab4,#155c88);background-image:-webkit-gradient(linear,0 0,0 100%,from(#1c7ab4),to(#155c88));background-image:-webkit-linear-gradient(top,#1c7ab4,#155c88);background-image:-o-linear-gradient(top,#1c7ab4,#155c88);background-image:linear-gradient(top,#1c7ab4,#155c88);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#1c7ab4\',endColorstr=\'#155c88\',GradientType=0)}.btn-yellow{border-color:#b7900b;border-bottom-color:#876a08;background-color:#e5b925;background-image:-moz-linear-gradient(top,#f3c835,#cfa30c);background-image:-ms-linear-gradient(top,#f3c835,#cfa30c);background-image:-webkit-gradient(linear,0 0,0 100%,from(#f3c835),to(#cfa30c));background-image:-webkit-linear-gradient(top,#f3c835,#cfa30c);background-image:-o-linear-gradient(top,#f3c835,#cfa30c);background-image:linear-gradient(top,#f3c835,#cfa30c);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#f3c835\',endColorstr=\'#cfa30c\',GradientType=0)}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{text-shadow:0-1px 0 rgba(0,0,0,0.24)}.btn-red,.btn-orange,.btn-green,.btn-blue,.btn-yellow{color:#fff}.btn-red:hover,.btn-orange:hover,.btn-green:hover,.btn-blue:hover,.btn-yellow:hover{color:rgba(255,255,255,0.8)}.btn-red:hover{background:#d71618}.btn-orange:hover{background:#e5700c}.btn-green:hover{background:#63782f}.btn-blue:hover{background:#155c88}.btn-yellow:hover{background:#cfa30c}.btn-small{font-size:.7em}.btn-big{font-size:1.2em;line-height:1.65em;padding-left:1.5em;padding-right:1.5em}.btn-group{margin-left:170px}.btn-group li{float:left;margin-left:1px}footer[role=contentinfo]{clear:both;padding:20px 0 40px 0;font-size:0.9em}footer[role=contentinfo] p{margin-bottom:5px;color:#444}footer[role=contentinfo] a{color:#ef4423}#toogle-list{list-style:square}footer div,footer ul,footer li{margin:0;padding:0;list-style-type:none}footer ul li{float:left;width:30%;margin-right:3%;border-right:1px solid #cfcfcf;height:150px}#last{border:none}footer ul{border-top:1px solid #aaa;padding-top:20px}footer h4{font-size:1.5em}footer p{line-height:20px}#footer{clear:both;padding-top:1.5em;margin:1.5em 0;font-size:.85em}#footer span{float:right}@media screen and (min-width:768px){.content{width:50%}aside[role=complementary]{width:45%}.nosidebar{width:100%}}@media screen and (max-width:768px){header[role=banner]{text-align:center}.content,.nosidebar,aside[role=complementary]{width:100%}}.video{position:relative;overflow:hidden;padding-bottom:56.25%;height:0}.video iframe,.video object,.video embed{position:absolute;top:0;left:0;width:100%;height:100%}.table-container{border-collapse:collapse;overflow-y:auto;margin:0 0 1em;width:100%;_overflow:auto}.table-container::-webkit-scrollbar{width:14px;height:14px;-webkit-appearance:none}.table-container::-webkit-scrollbar-thumb{border:3px solid #fff;border-radius:8px;background-color:rgba(0,0,0,.3)}@media screen and (max-width:768px){#social{margin:0;text-align:center}}.rememberme input{width:0}.date{float:left;text-align:center;margin:0 15px 0 0;display:block;padding:0}blockquote{background-color:#F5F6CE;padding:15px;margin:15px 0 15px 0;border:1px solid #FFCC00;font-size:0.9em}.msgFlash{position:absolute;width:20%;margin-bottom:10px;padding:15px 10px 5px 10px;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;top:10px;right:50px;text-align:left;}header[role=banner]h1 a,article section a,nav a,.active{color:+COLORMENU+}.success-msg{border-color:#51a351#51a351#387038;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#5bb75b;background-image:-moz-linear-gradient(top,#62c462,#51a351);background-image:-webkit-gradient(linear,0 0,0 100%,from(#62c462),to(#51a351));background-image:-webkit-linear-gradient(top,#62c462,#51a351);background-image:-o-linear-gradient(top,#62c462,#51a351);background-image:linear-gradient(to bottom,#62c462,#51a351);background-repeat:repeat-x;color:#fff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ff62c462\',endColorstr=\'#ff51a351\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#51a351}.error{border-color:#bd362f#bd362f#802420;border-color:rgba(0,0,0,0.1)rgba(0,0,0,0.1)rgba(0,0,0,0.25);background-color:#da4f49;background-image:-moz-linear-gradient(top,#ee5f5b,#bd362f);background-image:-webkit-gradient(linear,0 0,0 100%,from(#ee5f5b),to(#bd362f));background-image:-webkit-linear-gradient(top,#ee5f5b,#bd362f);background-image:-o-linear-gradient(top,#ee5f5b,#bd362f);background-image:linear-gradient(to bottom,#ee5f5b,#bd362f);background-repeat:repeat-x;color:#ffffff;text-shadow:0-1px 0 rgba(0,0,0,0.25);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=\'#ffee5f5b\',endColorstr=\'#ffbd362f\',GradientType=0);filter:progid:DXImageTransform.Microsoft.gradient(enabled=false);background-color:#bd362f}.error-input{border-color:#ef4423}.error-form-label{padding:8px 25px 7px 25px;background-color:#ffc0cb;color:#ef4423}.close-right{float:right;margin-top:-35px;cursor:pointer}.close{display:none}.warning{padding:5px;background-color:#e2e468;border:1px solid red}.editby{margin-top:10px;font-style:italic;color:#a1a1a1}.error li:hover{background-color:transparent}span.color{padding:5px}.color-orange{color:#ff8e1f}#menu li a, .breadcrumbs li a, footer a{color:+COLORMENU+;}.label,.label-badge{border-radius:2em;border:1px solid +BORDER+;font-size:.7em;display:inline-block;position:relative;top:-1px;line-height:1;padding:3px 8px;color:#000;background-color:#fff;text-decoration:none}.label-badge{top:-4px;left:-1px}.label-data{color:#999;background:0;border:0;padding:0}a.label:hover{color:#000;filter:alpha(opacity=60);-moz-opacity:.6;opacity:.6}.label-black{background-color:#000}.label-red{background-color:#ef6465}.label-orange{background-color:#f48a30}.label-green{background-color:#90af45}.label-blue{background-color:#1c7ab4}.label-yellow{background-color:#f3c835}.label-black,.label-red,.label-orange,.label-green,.label-blue,.label-yellow{border:0;color:#fff;padding:4px 8px}a.label-black:hover,a.label-red:hover,a.label-orange:hover,a.label-green:hover,a.label-blue:hover,a.label-yellow:hover{color:#fff}.label-small{font-size:.6em;padding:3px 5px}hr{border:1px solid +BORDER+}.closed{display:none;}pre{white-space:pre; white-space:pre-wrap; white-space:pre-line; white-space:-pre-wrap; white-space:-o-pre-wrap; white-space:-moz-pre-wrap; white-space:-hp-pre-wrap; word-wrap:break-word;background-color:#111;color:#ffdf3d;font-size:1.2em;max-width:800px;overflow-y:hidden;overflow-x:hidden;overflow:auto;}code{background:none;border:none;color:#ffdf3d;overflow-y:hidden;overflow-x:hidden;overflow:auto;}';
 		
 		$print = 'html{border:none;background:none}body{font-size:0.7em}#raccourcis,#icone,#menu,#footer,.col2,.noprint,#num_page,p.audio,p.video,header,nav,textarea,input,fieldset,legend,footer{display:none}header.print{display:block}header.print h1{text-align:center;font-size:5em;border:1px dotted black;padding:10px}.colmask{position:absolute;clear:both;left:0;width:96%;height:100%;overflow:visible}.col1{position:relative;left:0px;right:10px;padding:0 10px 1px 10px;overflow:visible;width:100%}.ttttpetit{font-size:50%}.tttpetit{font-size:60%}.ttpetit{font-size:70%}.tpetit{font-size:80%}.petit{font-size:90%}.grand{font-size:110%}.tgrand{font-size:120%}.ttgrand{font-size:130%}.tttgrand{font-size:140%}.ttttgrand{font-size:150%}.gros{font-size:160%}.tgros{font-size:170%}.ttgros{font-size:180%}.tttgros{font-size:190%}.ttttgros{font-size:200%}.arial{font-family:arial}.verdana{font-family:verdana}.times{font-family:times}.courrier{font-family:courrier}.impact{font-family:impact}.geneva{font-family:geneva}.optima{font-family:optima}.sans-serif{font-family:sans-serif}.rouge{color:#FF0001}.rose{color:#FF00FF}.violet{color:#6B35BB}.bleu{color:blue}.bleuclair,.bleuclair a{color:#54A2FF}.vert{color:green}.jaune{color:#F4C464}.orange{color:#FF8600}.marron{color:#6B3503}.gris{color:#777}a img{border:none}.centrer{text-align:center}.gauche{float:left}.droite{float:right}.droite img{margin:10px}.gauche img{margin:10px}.souligner{text-decoration:underline}.video{display:block;margin:auto}table,thead,tbody{border-collapse:collapse;border:1px solid#dedede}table{margin:auto;width:100%;font-size:0.56em;page-break-before:always}thead{background-color:#ECECEC}th,td{margin:0;padding:2px;border:1px solid#dedede;font-size:0.7em;font-family:"Courier new"}tr.pair{background:#fefefe;color:#1B1B1B}tr.impair{background:#C0C0C0;color:#777}#resa-head{border:1px solid#bbb;background-color:#dedede;padding:10px}.cal-title{font-weight:bold;font-size:1.3em;text-align:center}.resa-cal{border-collapse:collapse}.resa-cal tbody tr td{position:relative;height:10px}.resa-motif{text-align:center;border:3px solid#dedede;padding:0}.hours{min-width:30px;width:3%;text-align:center}.vide{min-width:20px;width:1%;border-top:none;border-right:none;border-bottom:none}.hour{min-width:10px;width:3%;border-bottom:none;text-align:center;font-weight:bold;font-size:1em}.desc{width:94%;text-align:center}.granularite{min-width:10px;width:1%;border-top:1px solid#dedede;border-left:none;border-bottom:none;text-align:right}.last{border-bottom:1px solid#dedede}.last-cell-motif{border-bottom:1px solid#000}.titreMotif{font-weight:bolder;font-size:1.5em}.timeExceeded{border-bottom:5px solid red}.mTimeExceeded{padding:10px;border:1px solid red;font-weight:bolder;background-color:#ffb40a}.linkTitle{color:#000}.imgDel{display:none}li{line-height:1.5em}.date{border-top:1px solid black;page-break-after:avoid;margin-top:2cm}.titre_rubrique{padding:2px;padding-left:15px}.cache-courriel a{color:#FF8600}.clefs{float:right;margin-right:50%;margin-top:50px}#note{color:red;font-style:italic;font-size:80%}';
 
@@ -3046,7 +3170,7 @@ class Init {
 					$avatar=$dir.DS.Tools::title2filename($_FILES[$name]['name']).$match[0];
 					if (move_uploaded_file($_FILES[$name]['tmp_name'],$avatar)) { 
 						if($type) { 
-							$old=$this->forum->getMember($login);
+							$old=$this->members->getMember($login);
 							if($old != false && $old->pic!='') unlink($old->pic);
 						}
 					} else $error=$type?ERROR_AVATAR_CREATION:ERROR_ATTACHMENT_NOT_REC;
@@ -3383,7 +3507,7 @@ class Template extends Init {
 	*/
 	private function listFiles() {
 			$dir=MU_UPLOAD.md5(SECURITY_SALT.$this->cLogin).'/';
-			$a=$this->forum->getMember($this->cLogin);
+			$a=$this->members->getMember($this->cLogin);
 			$list='<div class="files">';
 			$list.='<h3>'.MY_PERSONAL_FILES.'</h3>';
 			if($h=@dir($dir)) {
@@ -3530,7 +3654,7 @@ class Template extends Init {
 	 * INITIALISATION DES VARIABLES DU FORMULAIRE D'EDITION DU PROFIL
 	 */
 	private function setEditProfilForm($form=array()) {
-		$mb=$this->forum->getMember($this->cLogin);
+		$mb=$this->members->getMember($this->cLogin);
 		$form['avatar'] = ($mb->pic!='')? '<img src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="'.AVATAR.'"/>':Tools::img('avatar','img-polaroid');
 		$form['title'] = EDIT_PROFIL.' ~ '.$this->cLogin;
 		//input($label,$name,$value,$type,$placeholder,$maxlength,$readonly,$class,$icon,$require,$onclick)
@@ -3603,19 +3727,20 @@ class Template extends Init {
 		echo STARTED_ON.' '.date('d M Y', $t['topicID']).', '.BY.' ';
 	}
 	private function setTopicPrivate($t,$class='') {
-		echo $this->forum->isMember($t['auteur'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a>':$t['auteur'];
+		echo $this->members->isMember($t['auteur'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a>':$t['auteur'];
 	}
 	private function setTopicLastMsg($t,$class='') {
 		echo '<a href="?topic='.$t['topicID'].'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$t['dernierLe']).'</a>';
 	}
 	private function setTopicLastMsgBy($t,$class='') {
-		echo $this->forum->isMember($t['dernierPar'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a>':$t['dernierPar'];
+		echo $this->members->isMember($t['dernierPar'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a>':$t['dernierPar'];
 	}
 	private function setPostPagination($topicObj) {
 		if(ceil($topicObj->nbPosts/$this->nbMsgTopic) == 1 ) $this->page = 1;
 		return $topicObj->pagination = $this->pagination($this->nbMsgTopic, $this->page, $topicObj->nbPosts);
 	}
 	private function setPost() {
+		if (!is_file(MU_THREAD.$this->get_topic.'.dat')) {return false;}
 		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
 			$this->topicObj->getInfo(0);
 			list($this->topicObj->num,$this->topicObj->auths)=$this->topicObj->getInfo(1);
@@ -3675,7 +3800,7 @@ class Template extends Init {
 		return $m;
 	}
 	private function setMbOfList($m, $class='img-circle') {
-		$mb=$this->forum->getMember($m);
+		$mb=$this->members->getMember($m);
 		$mb->mail= Tools::protect_email($mb->mail);
 		$mb->signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
 		if($mb->url!='') {
@@ -3694,8 +3819,10 @@ class Template extends Init {
 		// avec les pseudos enregistrés
 		// Aucune distance de trouvée pour le moment
 		$shortest = -1;
+		$find = array();
+		$i=-1;
 		// Boucle sur les des mots pour trouver le plus près
-		foreach ($this->forum->listMember() as $membre) {
+		foreach ($this->members->listMember() as $membre) {
 		    // Calcule la distance avec le mot mis en entrée,
 		    // et le mot courant
 		    $lev = levenshtein($this->searchMember, $membre);
@@ -3704,6 +3831,8 @@ class Template extends Init {
 		        // Le mot le plus près est celui-ci (correspondance exacte)
 		        $closest = $membre;
 		        $shortest = 0;
+		        $find = array();
+		        $find = $closest;
 		        // On sort de la boucle ; nous avons trouvé une correspondance exacte
 		        break;
 		    }
@@ -3713,10 +3842,14 @@ class Template extends Init {
 		        // Définition du mot le plus près ainsi que la distance
 		        $closest  = $membre;
 		        $shortest = $lev;
+		        $i++;
+		        if ($i < 10) {
+		        	$find[] = $closest;
+		       	}
 		    }
 		}
 		if ($shortest == 0) {
-				$mb = $this->forum->getMember($this->searchMember);
+				$mb = $this->members->getMember($this->searchMember);
 				$mb->mail= Tools::protect_email($mb->mail);
 				$mb->signature=($mb->quote!="")?BBCHelper::tronquer_texte($mb->quote, 50):"&nbsp;";
 			if($mb->url!='') {
@@ -3729,10 +3862,17 @@ class Template extends Init {
 			} else $mb->birthday = '&nbsp;';
 			$mb->avatar=($mb->pic != '')?'<img width="40" height="40" src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="Avatar" />':Tools::img('avatar','img-circle',false,false,40);
 		} else {
-			$mb->avatar = null;
+			foreach ($find as $key => $m) {
+				$mb = $m = $this->members->getMember($m);
+				$m->name = $find[$key];
+				$m->avatar=($m->pic != '')?'<img width="40" height="40" src="'.Tools::base64_encode_image($m->pic,$m->extension).'" alt="Avatar" />':Tools::img('avatar','img-circle',false,false,40);
+				$find[$key] = $m;
+			}
+			// $mb = new Members();
+			// $mb->avatar = null;
 		}
 		$mb->wd = $this->isAdmin?25:40;
-		$mb->closest = $closest;
+		$mb->closest = $find;
 		return $mb;
 	}
 	private function setPrivateMsg() {
@@ -3740,7 +3880,7 @@ class Template extends Init {
 		$mp = unserialize($s);
 		$mess = $mp->getMessage();
 		foreach($mess as $m) {
-			if($this->forum->isMember($m->from)) echo '<a class="Lien" href="?private='.$m->from.'" title="'.PRIVATE_MSG.'">'.$m->from.'</a> '.strtolower(L_ON).' '.date('d/m/Y @ H:i',$m->time).' <br />';
+			if($this->members->isMember($m->from)) echo '<a class="Lien" href="?private='.$m->from.'" title="'.PRIVATE_MSG.'">'.$m->from.'</a> '.strtolower(L_ON).' '.date('d/m/Y @ H:i',$m->time).' <br />';
 			else {
 				$m->from=preg_replace("/(([0-9]{1,3}\.[0-9]{1,3})\.([0-9]{1,3}\.[0-9]{1,3}))/i","\\2.x.x",$m->from);
 				echo $m->from.' '.strtolower(L_ON).' '.date('d/m/Y @ H:i',$m->time).' <br />';
@@ -3835,11 +3975,11 @@ END;
 		   <li><a class="btn" href="javascript:insert('[i]','[/i]')" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
 		   <li><a class="btn" href="javascript:insert('[u]','[/u]')" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
 		   <li><a class="btn" href="javascript:insert('[s]','[/s]')" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[quote]','[/quote]')" rel="tooltip" title="<?php echo QUOTE?>"><i class="icon-chat-empty"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[quote=]','[/quote]')" rel="tooltip" title="<?php echo QUOTE?> ([q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q])"><i class="icon-chat-empty"></i></a></li>
 		   <li><a class="btn" href="javascript:insert('[c]','[/c]')" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[url]','[/url]')" rel="tooltip" title="<?php echo LINK?>"><i class="icon-link"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[img]','[/img]')" rel="tooltip" title="<?php echo PICTURE?>"><i class="icon-picture"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[youtube]','[/youtube]')" rel="tooltip" title="<?php echo VIDEO?>"><i class="icon-video"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[url=]','[/url]')" rel="tooltip" title="<?php echo LINK?> ([url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url])"><i class="icon-link"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[img=]','[/img]')" rel="tooltip" title="<?php echo PICTURE?> ([img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img])"><i class="icon-picture"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[youtube=]','[/youtube]')" rel="tooltip" title="<?php echo VIDEO?> ([youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/yoube])"><i class="icon-video"></i></a></li>
 		</ul><!-- /btn-group --> 
 		<p class="clear">&nbsp;</p>
 END;
@@ -4144,7 +4284,7 @@ END;
 
 		</li>
 		<li><a href="<?php echo MU_BASE_URL;?>"><i class="icon-home"></i>&nbsp;<?php echo HOME;?></a></li>
-		<?php \$this->setBreadcrumbsLinks();?>
+		<?php echo \$this->setBreadcrumbsLinks();?>
 
 	</ul>
 END;
@@ -4272,8 +4412,8 @@ END;
 	*/
 	public function showPosts() {
 		$string =<<<END
-<?php include(dirname(__FILE__).'/header.php');
-		if(\$topic = \$this->setPost()): ?>
+<?php if(\$topic = \$this->setPost()):
+	include(dirname(__FILE__).'/header.php');?>
 
 			<p><?php echo \$topic->pagination; ?></p>
 			<div class="gradient">
@@ -4296,8 +4436,8 @@ END;
 			<?php 
 			\$cnt=0;
 			while(\$reply=\$topic->nextReply()) :
-				if(\$this->forum->isMember(\$reply->auth)) :
-					\$mb=\$this->forum->getMember(\$reply->auth);
+				if(\$this->members->isMember(\$reply->auth)) :
+					\$mb=\$this->members->getMember(\$reply->auth);
 					//Tooltip ?>
 					
 					<div class="tooltip" id="<?php echo Tools::cleanUser(\$reply->auth)?>">
@@ -4312,7 +4452,7 @@ END;
 					</div>
 					<table class="width-100 table-bordered" id="p-<?php echo \$reply->time?>">
 						<tr>
-					<?php if(\$this->forum->isMember(\$reply->auth)) :?>
+					<?php if(\$this->members->isMember(\$reply->auth)) :?>
 						
 							<td class="avatarTD" rowspan="2">
 								<div class="mb-infos mb-name"><a class="LienNonLu" href="?private=<?php echo \$reply->auth?>" title="<?php echo SEND_PRIVATE_MSG?>"><?php echo \$reply->auth?></a></div>
@@ -4347,17 +4487,29 @@ END;
 						<tr class="tr-bottom">
 							<td>
 								<?php if(!empty(\$this->cLogin) && !\$this->forumMode): ?>
-								<a href="<?php echo \$_SERVER['REQUEST_URI']?>#bottom" class="btn btn-small btn-orange" onclick="quote('<?php echo \$reply->auth?>',<?php echo \$cnt?>)" title="<?php echo QUOTE_MSG_FROM.' '.\$reply->auth?>" /><i class="icon-chat-empty"></i> <?php echo QUOTE?></a>
+								<a href="?topic=<?php echo \$this->get_topic?>&amp;replypost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>#form" class="btn btn-small btn-orange" title="<?php echo QUOTE_MSG_FROM.' '.\$reply->auth?>" /><i class="icon-chat-empty"></i> <?php echo QUOTE?></a>
 								<?php endif; ?>
 
 							</td>
 							<td>
-					<?php if(\$this->isAdmin) :?>
+					<?php if(\$this->isAdmin || (\$this->cLogin == \$reply->auth && \$cnt== 0)) :?>
 						
 								<a class="btn btn-small" href="?topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
 									<i class="icon-pencil"></i> <?php echo EDIT?>
 								</a>&nbsp;<a class="btn btn-small btn-red" href="?topic=<?php echo \$this->get_topic?>&amp;delpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php \$this->delMsg(\$cnt,\$reply->auth)?>')">
 									<i class="icon-trash"></i> <?php echo DEL?>
+								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
+									<i class="icon-megaphone"></i> <?php echo ANSWER?>
+								</a>
+					<?php endif;
+					if(\$this->cLogin && \$this->cLogin == \$reply->auth && !\$this->isAdmin) :?>
+						
+								<a class="btn btn-small" href="?topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
+									<i class="icon-pencil"></i> <?php echo EDIT?>
+								</a>
+					<?php endif;	
+					if(\$this->cLogin && \$this->cLogin != \$reply->auth && !\$this->isAdmin) :?>
+						
 								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
 									<i class="icon-megaphone"></i> <?php echo ANSWER?>
 								</a>
@@ -4372,7 +4524,9 @@ END;
 			endwhile?>
 			<p><?php echo \$topic->pagination; ?></p>
 			<?php if(!empty(\$this->cLogin)) : echo \$this->setReplyForm('newpost');endif;
-		else:?>
+		else:
+		header("HTTP/1.0 404 Not Found");
+		include(dirname(__FILE__).'/header.php');?>
 			
 			<div class="message">
 				<span class="close"></span>
@@ -4491,6 +4645,10 @@ END;
 		\$mb = \$this->setSearchMb();
 		?>
 		
+		<form action="index.php?searchMember" method="post" autocomplete="off" class="text-right">
+			<input type="text" name="searchMember" placeholder="<?php echo SEARCH?>">
+			<button type="submit" class="btn btn-blue"><i class="icon-right-hand"></i></button>
+		</form>
 		<table id="topics">
 			<thead>
 				<tr class="info gradient">
@@ -4505,7 +4663,7 @@ END;
 			</thead>
 				<tr>
 			<?php 
-			if(\$mb->avatar !== null) {?>
+			if(count(\$mb->closest) == 1) {?>
 
 					<td class="center">
 						<?php echo \$mb->avatar; ?>
@@ -4563,8 +4721,14 @@ END;
 			
 				<tr>
 					<td colspan="<?php echo ((\$this->isAdmin) ? '7' : '5')?>" class="noresult">
-						<?php echo NO_RESULT.'.&nbsp;'.DID_YOU_MEAN?>
-						<a href="<?php echo MU_BASE_URL?>?searchMember=<?php echo \$mb->closest?>"><?php echo \$mb->closest?></a> ?
+						<?php echo NO_RESULT.'.&nbsp;'.DID_YOU_MEAN;?>
+						<ul>
+						<?php foreach (\$mb->closest as \$key => \$membre) {?>
+
+							<li><?php echo \$membre->avatar; ?>&nbsp;<a href="<?php echo MU_BASE_URL?>?searchMember=<?php echo \$membre->name?>"><?php echo \$membre->name?></a> ?</li>
+						<?php }?>
+
+						</ul>
 					</td>
 				</tr>
 
@@ -4600,7 +4764,7 @@ END;
 	*/
 	public function replyForm() {
 		$string =<<<END
-				<!-- Reply form -->
+		<!-- Reply form -->
 		<?php if(\$r->edit || \$r->show) {?>
 			
 			<h4 class="forms-section"><?php echo \$r->name?></h4>
@@ -4608,7 +4772,7 @@ END;
 		<?php } else {?>
 			
 			<p><a class="btn btn-big" href="javascript:switchLayer('form');" title="formulaire"><?php echo \$r->name?></a></p>
-			<div class="toggle" id="form">
+			<div class="toggle" id="form"<?php if(\$this->showform) {echo ' style="display:block;visibility:visible;"';} ?>>
 		<?php }?>
 			
 				<br />
@@ -4633,7 +4797,7 @@ END;
 				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', \$reply->content, '40', '10', '', '', '', 'width-70')?></p>
 		<?php } else {?>
 
-				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', '', '40', '10', '', '', '', 'width-70')?></p>
+				<p class="forms-inline"><?php echo Tools::textarea(MESSAGE, 'message', (\$this->quote != null ? \$this->quote : ''), '40', '10', '', '', '', 'width-70')?></p>
 		<?php } if(\$r->join) {?><p><?php echo Tools::input(ATTACH_FILE, 'attachment', '', 'file', '', '','','btn')?></p><?php }?>
 		
 				<p>
