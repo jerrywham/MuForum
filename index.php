@@ -15,7 +15,7 @@
 #
 # ------------------- END LICENSE BLOCK -------------------
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
-define('DEBUG',1); // 0 = pas de débugage, 1 = débugage activé
+define('DEBUG',0); // 0 = pas de débugage, 1 = débugage activé
 
 # ---------------- CONFIGURATION ----------------------------
 /**
