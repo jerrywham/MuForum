@@ -63,7 +63,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','1.0');
+define('VERSION','1.1');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
