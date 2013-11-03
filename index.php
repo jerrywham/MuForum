@@ -967,7 +967,7 @@ class BBCHelper {
 
 	public function parse($msg) {
 	
-		return str_replace(array('<b>','<i>','<ins>','<pre>','<code>','</b>','</i>','</ins>','</pre>','</code>','<br />','&nbsp;','</div>','<blockquote>',WROTE,'</blockquote>'), array('[b]','[i]','[u]','[c]','[/b]','[/i]','[/u]','[/c]',"\n",' ','','[q=',']','[/q]'), stripslashes($msg));
+		return str_replace(array('<b>','<i>','<ins>','<pre>','<code>','</b>','</i>','</ins>','</pre>','</code>','<br />','&nbsp;','</div>','<blockquote>',WROTE,'</blockquote>'), array('[b]','[i]','[u]','[c]','','[/b]','[/i]','[/u]','[/c]','',"\n",' ','','[q=',']','[/q]'), stripslashes($msg));
 	}
 }
 /**
