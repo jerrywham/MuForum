@@ -1749,9 +1749,7 @@ class Captcha {
 */
 class SaveObj {
 	public $name= '';
-	public function __construct() {
-
-	}
+	public function __construct() {}
 
 	public function SaveObj($obj) {
 		if (!empty($this->name)) {
@@ -1761,14 +1759,21 @@ class SaveObj {
 	}
 
 	public function verifName($obj,$PATH) {
-		$path = str_replace($obj->time.'.dat', '', $obj->name);
-		if ($path != $PATH) { $obj->name = $PATH.$obj->time.'.dat';}
+		$path = str_replace($this->whichDir($obj->time).'.dat', '', $obj->name);
+		if ($path != $PATH) { $obj->name = $PATH.$this->whichDir($obj->time).'.dat';}
 	}
 
 	public function SaveMsgObj($obj) {
 		foreach ($obj->mess as $key => $value) {
 			file_put_contents(MU_MEMBER.md5($value->to.SECURITY_SALT).DS.$value->to.'.mp', serialize($obj),LOCK_EX);
 		}
+	}
+	public function mkdirThread($time) {
+		$dir = date('Ym', $time);
+		if (!is_dir(MU_THREAD.$dir)) {mkdir(MU_THREAD.$dir);}
+	}
+	public function whichDir($time) {
+		return date('Ym', $time).DS.$time;
 	}
 }
 /**
@@ -1898,16 +1903,27 @@ class Forum extends SaveObj {
 		}
 		$msg = scandir(MU_THREAD);
 		foreach ($msg as $m) {
-			$id = substr($m, -4);
-			if ($id == '.dat') {
-				$t = unserialize(file_get_contents(MU_THREAD.$m));
-				$this->topics[$t->time] = $t;
+			if($m[0] != '.' && is_dir(MU_THREAD.$m)) {
+				$mes = scandir(MU_THREAD.$m);
+				foreach ($mes as $file) {
+					$id = substr($file, -4);
+					if ($id == '.dat') {
+						$t = unserialize(file_get_contents(MU_THREAD.$m.DS.$file));
+						$this->topics[$t->time] = $t;
+					}
+				}
+			} else {
+				$id = substr($m, -4);
+				if ($id == '.dat') {
+					$t = unserialize(file_get_contents(MU_THREAD.$m));
+					$this->topics[$t->time] = $t;
+				}
 			}
 		}
 	}
 	
 	public function getPosts($topic,$showAll=false,$nbrMax=15,$fromPage=1) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+		if($s = implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 			$obj = unserialize($s);
 		}
 		$obj->nbPosts = count($obj->reply);
@@ -1929,13 +1945,13 @@ class Forum extends SaveObj {
 		}
 	}
 	public function getPostsTitle($topic) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+		if($s = implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 			$obj = unserialize($s);
 		}
 		return $obj->title;
 	}
 	public function getPostAuth($topic) {
-		if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+		if($s = implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 			$obj = unserialize($s);
 		}
 		return $obj->auth;
@@ -1947,7 +1963,7 @@ class Forum extends SaveObj {
 		
 	}
 	public function setType($topic,$type) {
-		$this->name = MU_THREAD.$topic.'.dat';
+		$this->name = MU_THREAD.$this->whichDir($topic).'.dat';
 		$this->topics[$topic]->type = $type;
 		$t = $this->openTopic($topic);
 		$t->setTopicType($type);
@@ -1955,7 +1971,7 @@ class Forum extends SaveObj {
 		//$this->saveObj($this);
 	}
 	public function setTitle($topic,$title) {
-		$this->name = MU_THREAD.$topic.'.dat';
+		$this->name = MU_THREAD.$this->whichDir($topic).'.dat';
 		$this->topics[$topic]->title=$title;
 		$t = $this->openTopic($topic);
 		$t->setTopicTitle($title);
@@ -2040,10 +2056,11 @@ class Forum extends SaveObj {
 		return array('members'=>count($this->members->members),'lastMb'=>$arr[1],'topics'=>count($this->topics),'messages'=>$tmp);
 	}
 	public function openTopic($topic) {
-		if($s = @file_get_contents(MU_THREAD.$topic.'.dat')) return unserialize($s);
+		if($s = @file_get_contents(MU_THREAD.$this->whichDir($topic).'.dat')) return unserialize($s);
 		else return false;
 	}
 	public function lastSort() {
+		$tmp = array();
 		$keys = array_keys($this->topics);
 		rsort($keys);
 		foreach ($keys as $k => $v) {
@@ -2069,7 +2086,8 @@ class Topic extends SaveObj {
 	public function __construct($auth,$title,$content,$attach='',$type=false) {
 		parent::__construct();
 		$this->time=time();
-		$this->name=MU_THREAD.$this->time.'.dat';
+		$this->mkdirThread($this->time);
+		$this->name=MU_THREAD.$this->whichDir($this->time).'.dat';
 		$this->addReply($auth,$content,$this->time,$attach);
 		$this->title=Tools::clean($title);
 		$this->type=$type;
@@ -2078,10 +2096,9 @@ class Topic extends SaveObj {
 	}
 	public function removeTopic() {
 		unlink($this->name);
-
 	}
 	public function updateTopic($time,$title,$auth,$post,$last,$ltime,$attach,$type) {
-		$this->name = MU_THREAD.$time.'.dat';
+		$this->name = MU_THREAD.$this->whichDir($time).'.dat';
 		if (!isset($this->topics[$time])) {$this->topics[$time] = new stdClass;}
 		$this->topics[$time]->title = $title;
 		$this->topics[$time]->auth = $auth;
@@ -2605,8 +2622,8 @@ class Init {
 			exit();
 		}
 		if ($replypost) {
-			if($topic && is_file(MU_THREAD.$topic.'.dat')) {
-				if($s = implode('', file(MU_THREAD.$topic.'.dat'))) {
+			if($topic && is_file(MU_THREAD.$this->whichDir($topic).'.dat')) {
+				if($s = implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 					$this->topicObj = unserialize($s);
 					$m = $this->topicObj->getReply($replypost);
 					$this->quote = '[q='.$m->auth.']'.$m->content.'[/q]';
@@ -2689,7 +2706,7 @@ class Init {
 					} else if ($this->members->isMember($anonymous)) {
 					    $this->errors .= ERROR_PSEUDO_ALREADY_USED;
 					} else {
-						if($s = implode('', file(MU_THREAD.$topicID.'.dat'))) {
+						if($s = implode('', file(MU_THREAD.$this->whichDir($topicID).'.dat'))) {
 							$this->tLogin=$this->cLogin?$this->cLogin:$anonymous;
 							$this->topicObj = unserialize($s);
 							$message = Tools::clean($message);
@@ -2833,8 +2850,8 @@ class Init {
 			else if($switchuser) { $this->members->setMod($switchuser); }
 			else if($topic && $postit && !$action) { $type=$postit=="on"?1:0; $this->forum->setType($topic,$type); }
 			else if($topic && $ntitle) { $this->forum->setTitle($topic,$ntitle); }
-			else if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$topicID.'.dat')) {
-				if($s = implode('', file(MU_THREAD.$topicID.'.dat'))) {
+			else if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$this->whichDir($topicID).'.dat')) {
+				if($s = implode('', file(MU_THREAD.$this->whichDir($topicID).'.dat'))) {
 					$message = Tools::clean($message);
 					$message = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$message);
 					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/Y \à H:i',time()).'[/e]';
@@ -2856,7 +2873,7 @@ class Init {
 						exit();
 					}
 				} else {
-					if(is_file(MU_THREAD.$topicID.'.dat') && $s=implode('', file(MU_THREAD.$topic.'.dat'))) {
+					if(is_file(MU_THREAD.$this->whichDir($topicID).'.dat') && $s=implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 						$this->topicObj = unserialize($s);
 						$r=$this->topicObj->getReply($delpost);
 						@unlink($r->attach);
@@ -2898,6 +2915,9 @@ class Init {
 		
 		$this->pages = $stats['topics'];
 		$this->pagesMb = $stats['members'];
+	}
+	public function whichDir($time) {
+		return date('Ym', $time).DS.$time;
 	}
 	private function delCookies() {
 		if( isset($_COOKIE['CookiePassword'])) {unset($_COOKIE['CookiePassword']);}
@@ -3740,7 +3760,7 @@ class Template extends Init {
 		return $topicObj->pagination = $this->pagination($this->nbMsgTopic, $this->page, $topicObj->nbPosts);
 	}
 	private function setPost() {
-		if (!is_file(MU_THREAD.$this->get_topic.'.dat')) {return false;}
+		if (!is_file(MU_THREAD.$this->whichDir($this->get_topic).'.dat')) {return false;}
 		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
 			$this->topicObj->getInfo(0);
 			list($this->topicObj->num,$this->topicObj->auths)=$this->topicObj->getInfo(1);
@@ -3900,7 +3920,7 @@ class Template extends Init {
 			$r->name= ANSWER;
 			$r->join=1;
 		} else if($type=='editpost') {
-			if($s = implode("", file(MU_THREAD.$this->get_topic.'.dat'))) $topicObj = unserialize($s);
+			if($s = implode("", file(MU_THREAD.$this->whichDir($this->get_topic).'.dat'))) $topicObj = unserialize($s);
 			else return false;
 			$reply=$topicObj->getReply($this->get_editpost);
 			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$reply->content);
