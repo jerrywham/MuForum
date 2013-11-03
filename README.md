@@ -76,5 +76,7 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [ ] liste des fichiers présents pour gestion admin
 - [x] ~~En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)~~
 - [ ] lien pour signaler un post à l'administrateur
+- [ ] bannissement de membres par l'administrateur/les modérateurs
+- [ ] règles de fonctionnement
 
 Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
