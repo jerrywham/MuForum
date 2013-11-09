@@ -63,20 +63,24 @@ J'ai dans l'idée de créer des sous-catégories et d'ajouter quelques fonctionn
 - [x] ~~liens vers nouveaux messages~~,
 - [x] ~~vers les différentes pages d'une conversation~~,
 - [ ] flux rss,
-- [X] ~~Revoir le css pour l'alléger encore,~~
+- [x] ~~Revoir le css pour l'alléger encore,~~
 - [ ] voir les messages d'un membre
-- [X] ~~correction des messages lus/membres~~
-- [ ] renouvellement mot de passe si oubli
-- [ ] sous-rubriques
+- [x] ~~correction des messages lus/membres~~
+- [ ] renouvellement mot de passe si oubli ou si désir d'en changer
+- [x] ~~sous-rubriques~~
 - [ ] gestion mots de passe à vérifier
 - [x] ~~email dans lien image (pour le tableau des membres)~~
 - [ ] interdire de poster à moins d'une minute d'intervalle (modif oui, new non)
 - [x] ~~création de templates~~
-- [ ] liste déroulante vers les différentes catégories
+- [x] ~~liste déroulante vers les différentes catégories~~
 - [ ] liste des fichiers présents pour gestion admin
 - [x] ~~En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)~~
 - [ ] lien pour signaler un post à l'administrateur
 - [ ] bannissement de membres par l'administrateur/les modérateurs
 - [ ] règles de fonctionnement
+- [ ] messages sans réponse
+- [x] ~~nombre de réponses par topic (nbMsg - 1)~~
+- [ ] améliorer le suivi des messages lus/non lus en n'utilisant plus les cookies mais le moment de connexion et un temps déterminé
+- [ ] supprimer la possibilité d'importer des fichiers autres que les avatars afin de conserver l'espace sur le disque et éviter les pb de sécurité liés
 
 Pour reprendre un célèbre slogan : la route est longue mais la voie est libre...
