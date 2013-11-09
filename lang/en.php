@@ -27,7 +27,6 @@ $LANG = array(
 'BBCODE_WELCOM_TXT'=>"[b ] [i] Welcome to μforum [/ i] [ / b]
 
 This forum is single-threaded file-based only (no sql database ) .
-The concept is a little different from other forums as the most important information put forward is to recognize a user's avatar (for once there is something ..)
 
 [ u] [ b] It has several features : [/ b] [/ u] [ i] ( ★ = New) [/ i]
 
@@ -53,7 +52,7 @@ The concept is a little different from other forums as the most important inform
 ★ Birthday + Age displayed if it blank.
 ★ Date picker (Registration and profile editing ) .
 ★ Meta description for SEO. [/ C ]",
-'WELCOME_TXT'=>"Welcome to <b> <i> μforum </ i> < / b > <br /> <br /> This forum is single-threaded file-based only (no sql database ) . < br / > the concept is a little different from other forums as the most important information put forward is to recognize a user's avatar (for once there is something ..) <br /> < br / > <ins> <b> It has several features : </ b > < / ins > <i> ( ★ = New ) </ i > <br /> <br /> <pre> ✔ Management by Member login / password (for cookies) <br /> ✔ 4 levels of users: . . Administrator , Moderator, User , Anonymous <br /> Fashion ✔ private / public, to allow non - members <br /> ✔ List . members . <br /> ✔ user Profile ( + edition). <br /> ✔ private messaging between members . <br /> ✔ Upload avatar and attachments ( with extensions filter). < br / > ✔ Smileys and BBCodes ( automatically adding closing tags missing ) . <br /> ★ cut too long chains without cutting the sentences! <br /> ✔ Skins . <br /> ✔ automatic links . <br /> ★ Html5 and css3 ( Bootstrap twitter ) . <br /> ✔ display connected. <br /> ✔ Highlighting code. <br /> ✔ Management administration options . <br /> ✔ Simple system backup and restore . (revised ) <br /> ★ Captcha at registration . <br /> ★ Protection mails on the list of members to counter spam. <br /> ★ Message Indicator ( Status Icon ) . < br / > ★ Birthday + Age displayed if it blank. <br /> ★ Date picker (Registration and profile editing ) . <br /> ★ meta description for SEO. <br />&nbsp;</ pre>
+'WELCOME_TXT'=>"Welcome to <b> <i> μforum </ i> < / b > <br /> <br /> This forum is multi-threaded file-based only (no sql database ) . < br / > <ins> <b> It has several features : </ b > < / ins > <i> ( ★ = New ) </ i > <br /> <br /> <pre> ✔ Management by Member login / password (for cookies) <br /> ✔ 4 levels of users: . . Administrator , Moderator, User , Anonymous <br /> Fashion ✔ private / public, to allow non - members <br /> ✔ List . members . <br /> ✔ user Profile ( + edition). <br /> ✔ private messaging between members . <br /> ✔ Upload avatar and attachments ( with extensions filter). < br / > ✔ Smileys and BBCodes ( automatically adding closing tags missing ) . <br /> ★ cut too long chains without cutting the sentences! <br /> ✔ Skins . <br /> ✔ automatic links . <br /> ★ Html5 and css3 ( Bootstrap twitter ) . <br /> ✔ display connected. <br /> ✔ Highlighting code. <br /> ✔ Management administration options . <br /> ✔ Simple system backup and restore . (revised ) <br /> ★ Captcha at registration . <br /> ★ Protection mails on the list of members to counter spam. <br /> ★ Message Indicator ( Status Icon ) . < br / > ★ Birthday + Age displayed if it blank. <br /> ★ Date picker (Registration and profile editing ) . <br /> ★ meta description for SEO. <br />&nbsp;</ pre>
 	&nbsp;</ div>",
 'INFORMATION'=>"Information",
 'PARAMS'=>"Settings",
@@ -88,6 +87,9 @@ The concept is a little different from other forums as the most important inform
 'CHANGE_CAPTCHA_DIR_NAME' => 'You should change captcha dir name and constant name in index.php file',
 'L_YES' => 'yes',
 'L_NO' => 'no',
+'THREAD' => 'Discussion',
+'THREADS' => 'Discussions',
+'L_THREADS' => 'Discussions',
 'JOIN_COMMUNITY'=>"Join our community",
 'REGISTER'=>"Create Account",
 'NAME'=>"Name",
@@ -127,6 +129,22 @@ The concept is a little different from other forums as the most important inform
 'PRIVATE_INBOX'=>"Private Messaging",
 'PRIVATE_MSG'=>"Private Message",
 'EMPTY_MAILBOX'=>"Empty your mailbox",
+
+'ADD_MAIN_CAT' => 'Add main category',
+'MAIN_CAT_TITLE' => 'Title of main category',
+'ADD_CAT' => 'Add subcategory',
+'CAT_TITLE' => 'Title of category',
+'CAT_SUBTITLE' => 'Subtitle of category',
+'EDIT_MAIN_CAT' => 'Edit main categories',
+'EDIT_CAT' => 'Edit categories',
+'NO_CAT' => 'No category',
+'MAIN_CAT_POSITION' => 'Position of the main category',
+'CAT_POSITION' => 'Position of category',
+'ADD_FORUM' => 'Add forum',
+'FORUM_TITLE' => 'Title of forum',
+'FORUM_POSITION' => 'Position of forum',
+'DISPLAY_FORUM' => 'See forum',
+
 'POST'=>"Article",
 'REPLY'=>"Comment",
 'ADD'=>"Add",
@@ -149,6 +167,7 @@ The concept is a little different from other forums as the most important inform
 'L_ON'=>"The",
 'GOTO_LAST_MSG'=>"Go to last post",
 'DEL_MSG'=>"Delete the topic ?",
+'DEL_MSG_COMPLEMENT' => 'Associated forum will be erased too',
 'FOUNDER'=>"Boss",
 'MODERATOR'=>"Moderator",
 'ANSWER_FROM'=>"response",
@@ -172,6 +191,7 @@ The concept is a little different from other forums as the most important inform
 'SEND'=>"Send",
 'WE_HAVE'=>"We",
 'IN'=>"in",
+'OF' => 'of',
 'TOPIC'=>"subject",
 'WELCOME_TO'=>"Welcome to our newest member ,",
 'TOTAL_MB'=>"Total Member",
@@ -182,6 +202,9 @@ The concept is a little different from other forums as the most important inform
 'LEGEND'=>"Legend",
 'NO_UNREAD_MSG'=>"Contains no unread message",
 'UNREAD_MSG'=>"Contains unread messages",
+'REPLY' => 'Reply',
+'REPLIES' => 'Replies',
+'NO_REPLY' => 'No reply',
 'ATTACHMENT'=>"Attachment",
 'WROTE' => ' wrote :',
 'FORMATING'=>"Formatting",
@@ -232,6 +255,8 @@ The concept is a little different from other forums as the most important inform
 'FORUMS'=>"Forums",
 'STATISTICS'=>"Statistics",
 'TOP'=>"Top",
+'JUMP_TO'=>'Jump to',
+'GO'=>'Go',
 'L_PAGINATION_FIRST_TITLE'=>"Go to the first page",
 'L_PAGINATION_FIRST'=>"«",
 'L_PAGINATION_PREVIOUS_TITLE'=>"Previous Page",
@@ -311,6 +336,8 @@ The concept is a little different from other forums as the most important inform
 'ERROR_EMPTY_PSEUDO'=>"You have not specified a pseudonym .",
 'ERROR_THEME_NOTFOUND' => 'Main theme not found',
 'ERROR_FILE_NOTFOUND' => 'Target file not found',
+'ERROR_CAT_TYPE' => 'Wrong type of main category',
+'ERROR_CAT_TITLE' => 'Name of category must be filled',
 'PAGE_NOT_FOUND' => 'Page not found',
 'DAY'=>"Day",
 'HOUR'=>"time",
