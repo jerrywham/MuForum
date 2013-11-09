@@ -63,7 +63,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','1.1');
+define('VERSION','2.0');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
@@ -93,6 +93,7 @@ define('LICENCEFONT',$LICENCEFONT);
 
 # ---------------- TRADUCTION ----------------------
 Tools::mklang();
+Tools::loadlang('fr');
 /**
 * Vérification de la version de php
 */
@@ -286,9 +287,8 @@ class Tools {
 			'DEFAULT_SUB'=>'Le Forum sans BDD',
 			'BBCODE_WELCOM_TXT' => "[b][i]Bienvenue sur µforum[/i][/b]
 
-			Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql).
-			Le concept est un peu différent des autres forums puisque l'information la plus importante mise en avant pour reconnaître un utilisateur est son avatar (pour une fois qu'il sert à quelque chose..)
-
+			Ce forum multithread est basé sur des fichiers uniquement (pas de base de données sql).
+			
 			[u][b]Il intègre plusieurs fonctionnalités :[/b][/u] [i](★ = Nouveauté)[/i]
 
 			[c]✔ Gestion des membres par login / mot de passe (par cookies).
@@ -313,7 +313,7 @@ class Tools {
 			★ Date de naissance + Âge affiché si celle-ci renseignée.
 			★ Date picker (Inscription et édition du profil). 
 			★ Méta description pour le SEO.[/c]",
-			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum monothread est basé sur des fichiers uniquement (pas de base de données sql). <br />Le concept est un peu différent des autres forums puisque l'information la plus importante mise en avant pour reconnaître un utilisateur est son avatar (pour une fois qu'il sert à quelque chose..) <br /> <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
+			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum multithread est basé sur des fichiers uniquement (pas de base de données sql).  <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
 			'GENERAL_PARAM' => 'Paramètres Généraux',
@@ -348,6 +348,9 @@ class Tools {
 			'CHANGE_CAPTCHA_DIR_NAME' => 'Vous devriez modifier le nom du dossier captcha et le nom de la constante CAPTCHA du fichier index.php',
 			'L_YES' => 'oui',
 			'L_NO' => 'non',
+			'THREAD' => 'Fil de discussion',
+			'THREADS' => 'Fils de discussion',
+			'L_THREADS' => 'Discussions',
 			 
 			# Comptes
 			'JOIN_COMMUNITY' => 'Rejoindre notre communauté',
@@ -390,6 +393,22 @@ class Tools {
 			'PRIVATE_INBOX' => 'Messagerie Privée',
 			'PRIVATE_MSG' => 'Message privé',
 			'EMPTY_MAILBOX' => 'Vider votre boite',
+
+			# Threads
+			'ADD_MAIN_CAT' => 'Ajouter une catégorie principale',
+			'MAIN_CAT_TITLE' => 'Titre de la catégorie principale',
+			'ADD_CAT' => 'Ajouter une sous-catégorie',
+			'CAT_TITLE' => 'Titre de la catégorie',
+			'CAT_SUBTITLE' => 'Soustitre de la catégorie',
+			'EDIT_MAIN_CAT' => 'Modifier les catégories principales',
+			'EDIT_CAT' => 'Modifier les catégories',
+			'NO_CAT' => 'Aucune catégorie',
+			'MAIN_CAT_POSITION' => 'Position de la catégorie principale',
+			'CAT_POSITION' => 'Position de la catégorie',
+			'ADD_FORUM' => 'Ajouter un forum',
+			'FORUM_TITLE' => 'Titre du forum',
+			'FORUM_POSITION' => 'Position du forum',
+			'DISPLAY_FORUM' => 'Voir le forum',
 			   
 			# Topics
 			'POST' => 'Article',
@@ -414,6 +433,7 @@ class Tools {
 			'L_ON' => 'Le',
 			'GOTO_LAST_MSG' => 'Aller au dernier message',
 			'DEL_MSG' => 'Supprimer le sujet ?',
+			'DEL_MSG_COMPLEMENT' => 'Cela supprimera également les forum associés',
 			'FOUNDER' => 'Fondateur',
 			'MODERATOR' => 'Modérateur',
 			'ANSWER_FROM' => 'La réponse postée par',
@@ -437,7 +457,8 @@ class Tools {
 			'SEND' => 'Envoyer',
 			'WE_HAVE' => 'Nous avons',
 			'IN' => 'dans',
-			'TOPIC' => 'sujet',
+			'OF' => 'de',
+			'TOPIC' => 'Sujet',
 			'WELCOME_TO' => 'Bienvenue à notre nouveau membre',
 			'TOTAL_MB' => 'Total Membre',
 			'WHO_IS_ONLINE' => 'Qui est en ligne ?',
@@ -449,6 +470,9 @@ class Tools {
 			'UNREAD_MSG' => 'Contient des messages non lus',
 			'ATTACHMENT' => 'Pièce jointe',
 			'WROTE' => ' a écrit :',
+			'NO_REPLY' => 'Aucune réponse',
+			'REPLY' => 'Réponse',
+			'REPLIES' => 'Réponses',
 			 
 			# BBCODE
 			'FORMATING' => 'Formatage',
@@ -501,7 +525,9 @@ class Tools {
 			'HOME' => 'Accueil',
 			'FORUMS' => 'Forums',
 			'STATISTICS' => 'Statistiques',
-			'TOP' => 'Haut de page',
+			'TOP' => 'Haut de page',	
+			'JUMP_TO'=>'Atteindre',
+			'GO'=>'Aller',
 
 			#Pagination
 			'L_PAGINATION_FIRST_TITLE' => 'Aller à la première page',
@@ -589,6 +615,8 @@ class Tools {
 			'ERROR_EMPTY_PSEUDO' => 'Vous n\'avez pas indiqué de pseudonyme.',
 			'ERROR_THEME_NOTFOUND' => 'Le theme principal est introuvable',
 			'ERROR_FILE_NOTFOUND' => 'Le fichier cible est introuvable',
+			'ERROR_CAT_TITLE' => 'Le nom de la catégorie ne peut pas être vide',
+			'ERROR_CAT_TYPE' => 'La catégorie principale est erronée',
 			'PAGE_NOT_FOUND' => 'La page que vous demandez n\'existe pas ou n\'existe plus',
 
 			# Temps
@@ -773,9 +801,10 @@ class Tools {
 	 *
 	**/
 	public static function clean($text) {
+		$text = utf8_encode(htmlentities($text));
 		if(get_magic_quotes_gpc())
 			$text = stripslashes($text);
-		return htmlspecialchars(trim($text), ENT_QUOTES);
+		return htmlspecialchars(trim($text), ENT_QUOTES | ENT_DISALLOWED,CHARSET);
 	}
 }
 /**
@@ -966,7 +995,7 @@ class BBCHelper {
 	}
 
 	public function parse($msg) {
-	
+
 		return str_replace(array('<b>','<i>','<ins>','<pre>','<code>','</b>','</i>','</ins>','</pre>','</code>','<br />','&nbsp;','</div>','<blockquote>',WROTE,'</blockquote>'), array('[b]','[i]','[u]','[c]','','[/b]','[/i]','[/u]','[/c]','',"\n",' ','','[q=',']','[/q]'), stripslashes($msg));
 	}
 }
@@ -1475,7 +1504,7 @@ class Session {
 			$_GET = array();
 			$_POST = array();
 			$id = ($_SESSION['msg']['fadeout']==true?$_SESSION['msg']['id']:'stop');
-			$r = '<div class="msgFlash '.$_SESSION['msg']['type'].'" id="id_'.$id.'"><p>'.$_SESSION['msg']['msg'].'</p><p class="close-right" onclick="document.getElementById(\'id_'.$id.'\').className=\'closed\';">X</p></div>';
+			$r = '<div id="msgFlash"><div class="msgFlash '.$_SESSION['msg']['type'].'" id="id_'.$id.'"><p>'.$_SESSION['msg']['msg'].'</p><p class="close-right" onclick="document.getElementById(\'id_'.$id.'\').className=\'closed\';">X</p></div></div>';
 			$this->MsgId = 'id_'.$_SESSION['msg']['id'];
 			$_SESSION['msg'] = array();
 			return $r;
@@ -1753,8 +1782,7 @@ class SaveObj {
 
 	public function SaveObj($obj) {
 		if (!empty($this->name)) {
-			file_put_contents($this->name, '',LOCK_EX);
-			file_put_contents($this->name, serialize($obj),LOCK_EX);
+			file_put_contents($this->name, utf8_encode(serialize($obj)),LOCK_EX);
 		}
 	}
 
@@ -1790,16 +1818,13 @@ class Members extends SaveObj {
 		if (is_file(MU_MEMBER.'members.dat')){
 			$mb = unserialize(file_get_contents(MU_MEMBER.'members.dat'));
 			if ($mb->members !== null){
-				$this->members = $mb->members;
-				
-			}else{
-				$this->members = array();
+				$this->members = $mb->members;	
 			}
 		}
 	}
 	public function addMember($name,$password,$mail,$quote='',$url='',$birthday,$pic='',$mod=0) {
 		if(!count($this->members)) $mod=2;
-		if (!isset($this->members[$name])) {$this->members[$name] = new Members();}
+		if (!isset($this->members[$name])) {$this->members[$name] = new stdClass();}
 		$this->members[$name]->password = md5($password);//0
 		$this->members[$name]->time = time();//1
 		$this->members[$name]->mail = $mail;//2
@@ -1887,20 +1912,9 @@ class Members extends SaveObj {
 class Forum extends SaveObj {
 	public $name;
 	public $topics=array();
-	public $members=array();
-
+	
 	public function __construct() {
 		parent::__construct();
-		$this->name = MU_MEMBER.'members.dat';
-		if (is_file(MU_MEMBER.'members.dat')){
-			$mb = unserialize(file_get_contents(MU_MEMBER.'members.dat'));
-			if ($mb->members !== null){
-				$this->members = $mb->members;
-				
-			}else{
-				$this->members = array();
-			}
-		}
 		$msg = scandir(MU_THREAD);
 		foreach ($msg as $m) {
 			if($m[0] != '.' && is_dir(MU_THREAD.$m)) {
@@ -1914,7 +1928,7 @@ class Forum extends SaveObj {
 				}
 			} else {
 				$id = substr($m, -4);
-				if ($id == '.dat') {
+				if ($id == '.dat' && $m != 'threads.dat') {
 					$t = unserialize(file_get_contents(MU_THREAD.$m));
 					$this->topics[$t->time] = $t;
 				}
@@ -1958,7 +1972,13 @@ class Forum extends SaveObj {
 	}
 	public function delTopic($id) {
 		$t = $this->openTopic($id);
+		$nbMsg = $t->infos->posts;
 		$t->removeTopic();
+		$t = unserialize(file_get_contents(MU_THREAD.'threads.dat'));
+		$t->removeTopicFromThreads($id);
+		$stat = new Stat();
+		$stat->updateStats('msg',-$nbMsg);
+		$stat->updateStats('threads',-1);
 		if (isset($this->topics[$id])) {unset($this->topics[$id]);return true;}
 		
 	}
@@ -1979,81 +1999,86 @@ class Forum extends SaveObj {
 		// $this->lastSort();
 		// $this->saveObj($this);
 	}
-	public function getallTopic($showAll=false,$nbrMax=15,$fromPage=1) {
-		$tmp=array();
-		$return=array();
-		$this->lastSort();
-		foreach($this->topics as $k=>$v) {
-			if (isset($v->reply) && $v->reply !== null){
-				if (is_object($v)) $v = get_object_vars($v);
-				krsort($v['reply']);
-				$current = current($v['reply']);
-				if(!is_object($current)) {$current = new stdClass;} 
-				$tmp[$v['type']][$v['time']] = array(
-					'titre' => $v['title'],
-					'auteur' => $v['auth'],
-					'nombrePosts' => count($v['reply']),
-					'dernierPar' => $current->auth,
-					'dernierLe' => $current->time,
-					'attachment' => $current->attach,
-					'postType' => $v['type'],
-					'topicID' => $v['time'],
-				);
+	public function getallTopic($showAll=false,$main,$cat,$nbrMax=15,$fromPage=1) {
+		$this->threads = unserialize(file_get_contents(MU_THREAD.'threads.dat'));
+		$mainCats = $this->threads->getMainCats();
+		$cats = $this->threads->getCats();
+		unset($this->threads);
+		if (array_key_exists($main, $mainCats) && array_key_exists($cat, $cats)) {
+			$tmp=array();
+			$return=array();
+			$this->lastSort();
+			foreach($this->topics as $k=>$v) {
+				if (isset($v->reply) && $v->reply !== null){
+					if (is_object($v)) $v = get_object_vars($v);
+					krsort($v['reply']);
+					if (in_array($v['time'], $cats[$cat])) {
+						$current = current($v['reply']);
+						if(!is_object($current)) {$current = new stdClass;} 
+						$tmp[$v['type']][$v['time']] = array(
+							'titre' => $v['title'],
+							'auteur' => $v['auth'],
+							'nombrePosts' => count($v['reply']),
+							'dernierPar' => $current->auth,
+							'dernierLe' => $current->time,
+							'attachment' => $current->attach,
+							'postType' => $v['type'],
+							'topicID' => $v['time'],
+						);
+					}
+				} else {
+					if (in_array($v->time, $cats[$cat])) {
+						if (isset($v->type)) {
+							$tmp[$v->type][$v->time] = array(
+							'titre' => $v->title,
+							'auteur' => $v->auth,
+							'nombrePosts' => 1,
+							'dernierPar' => $v->auth,
+							'dernierLe' => $v->time,
+							'attachment' => $v->attach,
+							'postType' => $v->type,
+							'topicID' => $v->time,
+						);
+						} 
+					}
+				}
+			}
+			$pin = array();
+			$norm = array();
+			foreach ($tmp as $key => $array) {
+				if ($key==1){
+					$pin = $array;
+				} else {
+					$norm = $array;
+				}
+			}
+			ksort($pin);
+			krsort($norm);
+			$tmp = array();
+			foreach ($pin as $k => $v) {
+				$tmp[] = $v;
+			}
+			foreach ($norm as $k => $v) {
+				$tmp[] = $v;
+			}
+			if ($showAll) {
+				return $tmp;
 			} else {
-				if (isset($v->type)) {
-					$tmp[$v->type][$v->time] = array(
-					'titre' => $v->title,
-					'auteur' => $v->auth,
-					'nombrePosts' => 1,
-					'dernierPar' => $v->auth,
-					'dernierLe' => $v->time,
-					'attachment' => $v->attach,
-					'postType' => $v->type,
-					'topicID' => $v->time,
-				);
-				} 
+				$nbTopics = count($tmp);
+				$nbPages = ceil($nbTopics/$nbrMax);
+				if ($nbPages == 0) $nbPages = 1;
+				if ($fromPage>$nbPages && $nbPages) $fromPage = $nbPages;
+				$to = $fromPage*$nbrMax;
+				if ($to>$nbTopics) $to = $nbTopics;
+				$from = ($fromPage*$nbrMax)-$nbrMax;
+				for ($i=$from; $i < $to; $i++) { 
+					$return[] = $tmp[$i];
+				}
+				return $return;
 			}
+		}else {
+			return false;
 		}
-		$pin = array();
-		$norm = array();
-		foreach ($tmp as $key => $array) {
-			if ($key==1){
-				$pin = $array;
-			} else {
-				$norm = $array;
-			}
-		}
-		ksort($pin);
-		krsort($norm);
-		$tmp = array();
-		foreach ($pin as $k => $v) {
-			$tmp[] = $v;
-		}
-		foreach ($norm as $k => $v) {
-			$tmp[] = $v;
-		}
-		if ($showAll) {
-			return $tmp;
-		} else {
-			$nbTopics = count($tmp);
-			$nbPages = ceil($nbTopics/$nbrMax);
-			if ($nbPages == 0) $nbPages = 1;
-			if ($fromPage>$nbPages && $nbPages) $fromPage = $nbPages;
-			$to = $fromPage*$nbrMax;
-			if ($to>$nbTopics) $to = $nbTopics;
-			$from = ($fromPage*$nbrMax)-$nbrMax;
-			for ($i=$from; $i < $to; $i++) { 
-				$return[] = $tmp[$i];
-			}
-			return $return;
-		}
-	}
-	public function getStat() {
-		$tmp=0;
-		$arr=array(0,"");
-		foreach($this->getallTopic(true) as $v) $tmp += $v['nombrePosts'];//$tmp+=$v[2];
-		foreach($this->members->members as $k=>$v) $arr=($v->time>$arr[0])?array($v->time,$k):$arr;
-		return array('members'=>count($this->members->members),'lastMb'=>$arr[1],'topics'=>count($this->topics),'messages'=>$tmp);
 	}
 	public function openTopic($topic) {
 		if($s = @file_get_contents(MU_THREAD.$this->whichDir($topic).'.dat')) return unserialize($s);
@@ -2070,6 +2095,233 @@ class Forum extends SaveObj {
 	}
 }
 /**
+ * CLASSES DE GESTION DES THREADS
+ */
+class Threads extends SaveObj {
+
+	private $categories = array('main'=>array(),'sub'=>array());
+	private $catPositions = array('main'=>array(),'sub'=>array(),'stat'=>array('main'=>0,'sub'=>0));
+	private $forumPositions = array();
+ 	public $forum;
+
+	public function __construct() {
+		parent::__construct();
+		$this->name = MU_THREAD.'threads.dat';
+		if (is_file(MU_THREAD.'threads.dat')){
+			$t = unserialize(file_get_contents(MU_THREAD.'threads.dat'));
+			if ($this->categories !== null){
+				$this->categories = $t->categories;
+			}
+			if ($this->forumPositions !== null){
+				$this->forumPositions = $t->forumPositions;
+			}
+			if ($this->catPositions !== null){
+				$this->catPositions = $t->catPositions;
+			}
+			if ($this->forum !== null){
+				$this->forum = $t->forum;
+			} else {
+				$this->forum = new Forum();
+			}
+		}
+	}
+	public function getCategories($type='all') {
+		if($type == 'all') {return $this->categories;}
+		else{if(array_key_exists($type, $this->categories)) {
+			return $this->categories[$type];
+		}}
+	}
+	public function delThread($thread,$subcat) {
+		$stat = new Stat();
+		if (isset($this->categories['sub'][$thread][$subcat])) {
+			unset($this->categories['sub'][$thread][$subcat]);
+		}
+		foreach($this->catPositions['sub'][$thread] as $key => $value) {
+			if ($value == $subcat) {
+				unset($this->catPositions['sub'][$thread][$key]);
+				break;
+			}
+		}
+		foreach ($this->forumPositions[$subcat] as $key => $forum) {
+			if (is_file(MU_THREAD.$this->whichDir($forum).'.dat')) {unlink(MU_THREAD.$this->whichDir($forum).'.dat');}
+			unset($this->forum->topics[$forum]);
+			$stat->updateStats('topics',-1);
+		}
+		unset($this->forumPositions[$subcat]);
+		$stat->updateStats('threads',-1);
+		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+		$this->forum = null;
+		$this->SaveObj($this);
+		return true;
+	}
+	public function removeTopicFromThreads($topic) {
+		foreach ($this->forumPositions as $cat => $array) {
+			if (in_array($topic, $array)) {
+				foreach ($array as $key => $top) {
+					if($top = $topic) {
+						unset($this->forumPositions[$cat][$key]);
+					}
+				}
+			}
+		}
+		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+		$this->forum = null;
+		$this->SaveObj($this);
+	}
+	public function getMainCats() {
+		return $this->categories['main'];
+	}
+	public function getMainCatsPositions() {
+		return array_flip($this->catPositions['main']);
+	}
+	public function getCats() {
+		return $this->forumPositions;
+	}
+	public function getSubCatsPositions() {
+		return $this->catPositions['sub'];
+	}
+	public function getallThreads($cat) {
+		if ($cat != 'all' && array_key_exists($cat, $this->categories)) {
+			return $this->categories['sub'][$cat];
+		} else {
+			return $this->categories['sub'];
+		}
+	}
+	public function addMainCat($name) {
+		$id = $this->nextMainCat();
+		$this->categories['main'][$id] = $name;
+		$this->catPositions['main'][] = $id;
+		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+		$this->forum = null;
+		$this->SaveObj($this);
+	}
+	public function updateMainCat($name,$position,$oldposition,$id) {
+		if(isset($this->categories['main'][$id])){
+			$this->categories['main'][$id] = $name;
+			if ($oldposition != $position) {
+				if ($position == '' || $position <  0) {$position = 0;}
+				if ($position > count($this->catPositions['main'])-1) {$position = count($this->catPositions['main']);}
+				if(array_key_exists($position,$this->catPositions['main'])) {
+					$tmp = $this->catPositions['main'][$position];
+				}
+				unset($this->catPositions['main'][$oldposition]);
+				$this->catPositions['main'][$position] = $id;
+				if (isset($tmp)) {
+					$this->catPositions['main'][$oldposition] = $tmp;
+				}
+				ksort($this->catPositions['main']);
+				$this->catPositions['main'] = array_values($this->catPositions['main']);
+			}
+			//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+			$this->forum = null;
+			$this->SaveObj($this);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	private function nextMainCat() {
+		if($this->catPositions['stat']['main'] != 0) {
+			$this->catPositions['stat']['main']++;
+			return str_pad($this->catPositions['stat']['main'],3, '0', STR_PAD_LEFT);
+		} else {
+			$this->catPositions['stat']['main']++;
+			return '001';
+		}
+	}
+	public function addCat($name,$subtitle,$maincat) {
+		$id = $this->nextCat();
+		if (array_key_exists($maincat, $this->categories['main'])) {
+			$this->categories['sub'][$maincat][$id] = array(
+				'cat' => $name,
+				'subtitle' => $subtitle
+			);
+			$this->catPositions['sub'][$maincat][] = $id;
+			$this->forumPositions[$id] = array();
+			//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+			$this->forum = null;
+			$this->SaveObj($this);
+			$stat = new Stat();
+			$stat->updateStats('threads',1);
+			return true;
+		} else {
+			return false;
+		}
+		
+	}
+	public function updateCat($name,$subtitle,$maincat,$position,$oldposition,$id,$oldmainid) {
+		if (!isset($this->forumPositions[$id])) {$this->forumPositions[$id] = array();}
+		if ($position == '' || $position <  0) {$position = 0;}
+		if (array_key_exists($maincat, $this->categories['main'])) {
+			//On déplace le forum
+			if (isset($this->categories['sub'][$maincat][$id]) && $maincat != $oldmainid) {
+				$tmp = $this->categories['sub'][$maincat][$id];
+			}
+			unset($this->categories['sub'][$oldmainid][$id]);
+			$this->categories['sub'][$maincat][$id] = array(
+				'cat' => $name,
+				'subtitle' => $subtitle
+			);
+			if (isset($tmp) && $maincat != $oldmainid) {
+				$this->categories['sub'][$oldmainid][$id] = $tmp;
+			}
+			//On lui attribue la nouvelle position
+			//La catégorie principale est la même que précédemment
+			if ($oldmainid == $maincat){
+				if ($position > count($this->catPositions['sub'][$maincat])-1) {$position = count($this->catPositions['sub'][$maincat]);}
+				if(array_key_exists($position,$this->catPositions['sub'][$maincat])) {
+					$tmp = $this->catPositions['sub'][$maincat][$position];
+				}
+				$atmp = array_flip($this->catPositions['sub'][$oldmainid]);
+				unset($this->catPositions['sub'][$oldmainid][$atmp[$id]]);
+				$this->catPositions['sub'][$maincat][$position] = $id;
+				if (isset($tmp)) {
+					$this->catPositions['sub'][$oldmainid][$atmp[$id]] = $tmp;
+				}
+			}else {//La catégorie principale est différente
+				if ($position > count($this->catPositions['sub'][$maincat])-1) {$position = count($this->catPositions['sub'][$maincat]);}
+				if (isset($this->catPositions['sub'][$maincat]) && array_key_exists($position,$this->catPositions['sub'][$maincat])) {
+					$tmp = $this->catPositions['sub'][$maincat][$position];
+				}
+				$atmp = array_flip($this->catPositions['sub'][$oldmainid]);
+				unset($this->catPositions['sub'][$oldmainid][$atmp[$id]]);
+				$this->catPositions['sub'][$maincat][$position] = $id;
+				if (isset($tmp)) {
+					$this->catPositions['sub'][$maincat][$oldmainid] = $tmp;
+				}
+			}
+			foreach ($this->catPositions['sub'] as $main => $cat) {
+				ksort($this->catPositions['sub'][$main]);
+				$this->catPositions['sub'][$main] = array_values($this->catPositions['sub'][$main]);
+			}
+			//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+			$this->forum = null;
+			$this->SaveObj($this);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	private function nextCat() {
+		if($this->catPositions['stat']['sub'] != 0) {
+			$this->catPositions['stat']['sub']++;
+			return str_pad($this->catPositions['stat']['sub'],3, '0', STR_PAD_LEFT);
+		} else {
+			$this->catPositions['stat']['sub']++;
+			return '001';
+		}
+	}
+	public function getTitleCat($mainAndcat) {
+		return $this->categories['sub'][substr($mainAndcat,0,3)][substr($mainAndcat,-3)]['cat'];
+	}
+	public function addForum($cat,$forum) {
+		$this->forumPositions[$cat][] = $forum;
+		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+		$this->forum = null;
+		$this->saveObj($this);
+	}
+}
+/**
 *
 * CLASSE DE GESTION DES DISCUSSIONS
 */
@@ -2083,19 +2335,34 @@ class Topic extends SaveObj {
 	public $pos=0;
 	public $infos;
 
-	public function __construct($auth,$title,$content,$attach='',$type=false) {
+	private $threads;
+
+	public function __construct($main,$cat,$auth,$title,$content,$attach='',$type=false) {
 		parent::__construct();
-		$this->time=time();
-		$this->mkdirThread($this->time);
-		$this->name=MU_THREAD.$this->whichDir($this->time).'.dat';
-		$this->addReply($auth,$content,$this->time,$attach);
-		$this->title=Tools::clean($title);
-		$this->type=$type;
-		$this->auth=$auth;
-		$this->saveObj($this);
+		$this->threads = unserialize(file_get_contents(MU_THREAD.'threads.dat'));
+		$mainCats = $this->threads->getMainCats();
+		$cats = $this->threads->getCats();
+		if (array_key_exists($main, $mainCats) && array_key_exists($cat, $cats)) {
+			$this->time=time();
+			$this->mkdirThread($this->time);
+			$this->name=MU_THREAD.$this->whichDir($this->time).'.dat';
+			$this->addReply($auth,$content,$this->time,$attach);
+			$this->title=Tools::clean($title);
+			$this->type=$type;
+			$this->auth=$auth;
+			$this->threads->addForum($cat,$this->time);
+			unset($this->threads);
+			$stat = new Stat();
+			$stat->updateStats('topics',1);
+			$this->saveObj($this);
+		} else {
+			return false;
+		}
 	}
 	public function removeTopic() {
 		unlink($this->name);
+		$stat = new Stat();
+		$stat->updateStats('topics',-1);
 	}
 	public function updateTopic($time,$title,$auth,$post,$last,$ltime,$attach,$type) {
 		$this->name = MU_THREAD.$this->whichDir($time).'.dat';
@@ -2111,6 +2378,7 @@ class Topic extends SaveObj {
 		$this->saveObj($this);
 	}
 	public function addReply($auth,$content,$time,$attach='') {
+		$name = $this->name;
 		$id = count($this->reply);
 		if ($id == -1) {$id = 0;}
 		if (!isset($this->reply[$id])) {$this->reply[$id] = new stdClass;}
@@ -2119,6 +2387,8 @@ class Topic extends SaveObj {
 		$this->reply[$id]->content = $content;
 		$this->reply[$id]->attach =$attach;
 		$this->saveObj($this);
+		$stat = new Stat();
+		$stat->updateStats('msg',1);
 		return $this->getlastReply();
 	}
 	public function removeReply($id) {
@@ -2126,7 +2396,11 @@ class Topic extends SaveObj {
 		$tmp=array();
 		foreach($this->reply as $r) if($r->time!=$id) $tmp[]=$r;
 		$this->reply=$tmp;
+		$this->infos->posts--;
+		if($this->infos->posts<0) $this->infos->posts = 0;
 		$this->saveObj($this);
+		$stat = new Stat();
+		$stat->updateStats('msg',-1);
 	}
 	public function getlastReply() {
 		$this->verifName($this,MU_THREAD);
@@ -2189,31 +2463,60 @@ class Topic extends SaveObj {
 *
 * STATISTIQUES (Online)
 */
-class Visit extends saveObj {
+class Stat extends saveObj {
 	public $name;
 	public $conn=array();
+	public $stats=array('threads'=>0,'topics'=>0,'msg'=>0);
+
 	public function __construct() {
-		$this->name = MU_MEMBER.'connected.dat';
 		parent::__construct();
+		if (!is_file(MU_MEMBER.'connected.dat')) {
+			$this->visit();
+		}if (!is_file(MU_MEMBER.'stats.dat')) {
+			$this->mkStats();
+		}else {
+			$t = unserialize(file_get_contents(MU_MEMBER.'stats.dat'));
+			$this->conn = $t->conn;
+			$this->stats = $t->stats;
+		}
 	}
 	public function visit($id='') {
-		$this->conn[$_SERVER['REMOTE_ADDR']]=array('id'=>$id,'time'=>time());
+		$this->name = MU_MEMBER.'connected.dat';
+		$this->stat[$_SERVER['REMOTE_ADDR']]=array('id'=>$id,'time'=>time());
 		$this->saveObj($this);
 	}
 	public function updateVisit($id='') {
+		$this->name = MU_MEMBER.'connected.dat';
 		$r=$_SERVER['REMOTE_ADDR'];
 		$connected=0;
 		$mbConnected='';
-		$this->conn[$r]=array('id'=>$id,'time'=>time());
-		foreach($this->conn as $k=>$v) {
-			if(((time()-$v['time'])>120) && $k!=$r) unset($this->conn[$k]);
+		$this->stat[$r]=array('id'=>$id,'time'=>time());
+		foreach($this->stat as $k=>$v) {
+			if(((time()-$v['time'])>120) && $k!=$r) unset($this->stat[$k]);
 			else {
-				if($this->conn[$k]['id']!='') $mbConnected.=($r==$k)?$id.' ':'<a href="?private='.$this->conn[$k]['id'].'" rel="tooltip" title="'.SEND_PRIVATE_MSG.'">'.$this->conn[$k]['id'].'</a> ';
+				if($this->stat[$k]['id']!='') $mbConnected.=($r==$k)?$id.' ':'<a href="?private='.$this->stat[$k]['id'].'" rel="tooltip" title="'.SEND_PRIVATE_MSG.'">'.$this->stat[$k]['id'].'</a> ';
 				else $connected++;
 			}
 		}
 		$this->saveObj($this);
 		return array('mbConnected'=>$mbConnected,'guestsConnected'=>$connected);
+	}
+	public function mkStats() {
+		$this->name = MU_MEMBER.'stats.dat';
+		$this->stats=array('threads'=>0,'topics'=>0,'msg'=>0);
+		$this->saveObj($this);
+	}
+	public function updateStats($id='msg',$increment=1) {
+		$this->name = MU_MEMBER.'stats.dat';
+		if (array_key_exists($id, $this->stats)){
+			$this->stats[$id] += $increment;
+			$this->saveObj($this);
+		} else {
+			return $this->stats;
+		}
+	}
+	public function getStats() {
+			return unserialize(file_get_contents(MU_MEMBER.'stats.dat'));
 	}
 }
 /**
@@ -2380,14 +2683,14 @@ class BanYourAss {
 * Initialisation du forum
 */
 class Init {
+	public $MainError;
 	public $errors;
 	public $colors;
 	public $cNames=array();
 	public $theme = 'default';
 
-	public $forum;
 	public $captcha;
-	public $conn;
+	public $stat;
 	public $session=null;
 	public $gzip=0;
 
@@ -2413,6 +2716,8 @@ class Init {
 	public $cLogin;
 	public $cStyle;
 	public $haveMP; //Messages privés
+	public $threads;
+	public $thread;
 	public $topicObj;
 	public $topic;
 	public $quote=null;
@@ -2424,6 +2729,7 @@ class Init {
 	public $active='home';
 	public $get_editpost;
 	public $get_conf;
+	public $get_topics;
 	public $get_topic;
 	public $get_memberlist;
 	public $get_editprofil;
@@ -2455,8 +2761,6 @@ class Init {
 			$this->theme = $theme;
 			$this->gzip = $gzip;
 		}
-
-		Tools::loadlang($this->lang);
 
 		if(!is_file('version') || file_get_contents('version')!=VERSION) {
 			file_put_contents('version', VERSION);
@@ -2494,21 +2798,21 @@ class Init {
 		if (!is_file(MU_MEMBER.'members.dat')) {
 			$this->mkressources();
 		}
+		Tools::loadlang($this->lang);
 		$this->members = new Members();
-		$this->forum = new Forum();
+		$this->threads = new Threads();
 		$this->captcha = new Captcha(LANG,$this->session);
-		$this->conn = new Visit();
-		$this->forum->members = $this->members;
+		$this->stat = new Stat();
 		$s = file_get_contents(MU_MEMBER.'connected.dat');
-		$this->conn = unserialize($s);
-
+		$this->stat = unserialize($s);
 		$Ban = new BanYourAss();
 
 		/**
 		*
 		* GET & POST
 		*/
-		$gets=array('topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','topicID','postID','deluser','delfile','switchuser','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost');
+		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum');
+
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
 			if(!$$o) $$o=(isset($_POST[$o]) && is_string($_POST[$o]))?$_POST[$o]:'';
@@ -2626,6 +2930,7 @@ class Init {
 				if($s = implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 					$this->topicObj = unserialize($s);
 					$m = $this->topicObj->getReply($replypost);
+					$m->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$m->content);
 					$this->quote = '[q='.$m->auth.']'.$m->content.'[/q]';
 					$this->showform = true;
 				}
@@ -2660,7 +2965,7 @@ class Init {
 						file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX);
 						file_put_contents($memberDir.DS.'index.html', GOTO_INDEX);
 						$avatar=$this->checkUpload($memberDirUp,1,$login);
-						$this->members->addMember($login,$password,$email,$signature,$site,$birthday,$avatar);
+						$this->members->addMember($login,$password,$email,Tools::clean($signature),$site,$birthday,$avatar);
 						setCookie('CookiePassword', md5($password), time() + (3600 * 24 * 30));
 						setCookie('CookieLogin', base64_encode($login), time() + (3600 * 24 * 30));
 						header('Location: index.php?wco=true');
@@ -2717,8 +3022,8 @@ class Init {
 							$this->topicObj->updateTopic($this->topicObj->infos->time,$ntitle,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
 							if($this->isMember) $this->members->setForumPost($this->cLogin);
 							$this->page = ceil($this->topicObj->infos->posts/$this->nbMsgTopic);
-							if(BBCHelper::verif($message,'topic='.$topicID.'&editpost='.$time.'&page='.$this->page,$this->session)){
-								header('Location: index.php?topic='.$topicID.'&page='.$this->page);
+							if(BBCHelper::verif($message,'viewforum='.$viewforum.'&topic='.$topicID.'&editpost='.$time.'&page='.$this->page,$this->session)){
+								header('Location: ?viewforum='.$viewforum.'&topic='.$topicID.'&page='.$this->page);
 								exit();
 							}
 						} else $this->errors .= ERROR_INVALID_TOPIC;
@@ -2740,12 +3045,21 @@ class Init {
 						$this->tLogin=$this->cLogin?$this->cLogin:$anonymous;
 						$postType=$postit?1:0;
 						$message = Tools::clean($message);
-						$this->topicObj = new Topic($this->tLogin,$titre,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0),$postType);
-						//list($time,$title,$auth,$posts,$lastAuth,$tlastTime,$attach,$type)=
-						$this->topicObj->getInfo(0);
-						$this->members->addTopic($this->topicObj->infos->auth);
-						$this->topic=$this->topicObj->infos->time;
-						setCookie('uFread'.$this->topic.$this->loginForCookie,1,time()+2592000);
+						list($main,$cat) = explode('-', $viewforum);
+						if ($this->topicObj = new Topic($main,$cat,$this->tLogin,$titre,$message,$this->checkUpload(MU_UPLOAD.md5(SECURITY_SALT.$this->tLogin),0),$postType)) {
+							//list($time,$title,$auth,$posts,$lastAuth,$tlastTime,$attach,$type)=
+							$this->topicObj->getInfo(0);
+							$this->members->addTopic($this->topicObj->infos->auth);
+							$this->topic=$this->topicObj->infos->time;
+							setCookie('uFread'.$this->topic.$this->loginForCookie,1,time()+2592000);
+							$this->session->setMsg(MSG_DATA_REC);
+							header('Location: index.php?viewforum='.$viewforum.'#msgFlash');
+							exit();
+						} else {
+							$this->MainError = 404;
+							break;
+						}
+						
 					}
 				}
 				if (empty($this->errors)) {
@@ -2761,9 +3075,9 @@ class Init {
 					$mpObj=unserialize($s);
 				}
 				else $mpObj= new Messages($mpTo);
-				if($anonymous) $mpObj->addMessage($anonymous.' ('.$_SERVER['REMOTE_ADDR'].')',$message,$mpTo);
+				if($anonymous) $mpObj->addMessage($anonymous.' ('.$_SERVER['REMOTE_ADDR'].')',Tools::clean($message),$mpTo);
 				else if(!$this->isMember) $this->errors.=ERROR_EMPTY_PSEUDO;
-				else $mpObj->addMessage($this->cLogin,$message,$mpTo);
+				else $mpObj->addMessage($this->cLogin,Tools::clean($message),$mpTo);
 				if (empty($this->errors)) {
 					$this->session->setMsg(MSG_PRIVATE_REC);
 					header('Location: index.php');
@@ -2817,7 +3131,76 @@ class Init {
 					$this->session->setMsg(MSG_DATA_REC);
 					header('Location: index.php?conf=1');
 					exit();
+				}	
+			case 'newmainthread':
+				if ($this->isAdmin) {
+					if (!empty($newmaincat)) {
+						$newmaincat = Tools::clean($newmaincat);
+					} else {
+						$this->session->setMsg(ERROR_CAT_TITLE,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+					$this->threads->addMainCat($newmaincat);
+					$this->session->setMsg(MSG_DATA_REC);
+					header('Location: index.php#msgFlash');
+					exit();
 				}
+			break;case 'newthread':
+				if ($this->isAdmin) {
+					if (!empty($newcat)) {
+						$newcat = Tools::clean($newcat);
+					} else {
+						$this->session->setMsg(ERROR_CAT_TITLE,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+					if (!is_numeric($newcatmaincat)) {
+						$this->session->setMsg(ERROR_CAT_TYPE,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+					$newcatsubtitle = Tools::clean($newcatsubtitle);
+					if($this->threads->addCat($newcat,$newcatsubtitle,$newcatmaincat)) {
+						$this->session->setMsg(MSG_DATA_REC);
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+				}
+			break;
+			case 'editmainthread':
+				if ($this->isAdmin) {
+					if (!empty($editmaincat)) {
+						$editmaincat = Tools::clean($editmaincat);
+					} else {
+						$this->session->setMsg(ERROR_CAT_TITLE,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+					if($this->threads->updateMainCat($editmaincat,intval($editmaincatposition),$oldposition,$id)) {
+						$this->session->setMsg(MSG_DATA_REC);
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+				}
+			break;
+			case 'editthread':
+				if ($this->isAdmin) {
+					if (!empty($editcat)) {
+						$editcat = Tools::clean($editcat);
+					} else {
+						$this->session->setMsg(ERROR_CAT_TITLE,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+					$editcatsubtitle = Tools::clean($editcatsubtitle);
+					if($this->threads->updateCat($editcat,$editcatsubtitle,$editcatmaincat,intval($editcatposition),$position,$catid,$maincatid)) {
+						$this->session->setMsg(MSG_DATA_REC);
+						header('Location: index.php#msgFlash');
+						exit();
+					}
+				}
+			break;
 		}// Fin du switch
 		if (!empty($this->errors)) {
 			$this->session->setMsg($this->errors,'error');
@@ -2829,8 +3212,8 @@ class Init {
 		* TÂCHES ADMIN
 		*/
 		if($topic && $ntitle) { 
-			if($this->cLogin == $this->forum->getPostAuth($topic)){
-				$this->forum->setTitle($topic,$ntitle); 
+			if($this->cLogin == $this->threads->forum->getPostAuth($topic)){
+				$this->threads->forum->setTitle($topic,Tools::clean($ntitle)); 
 			}
 		}
 		if($delfile) { 
@@ -2848,32 +3231,32 @@ class Init {
 		if($this->isAdmin) {
 			if($deluser) { $this->members->removeMember($deluser); }
 			else if($switchuser) { $this->members->setMod($switchuser); }
-			else if($topic && $postit && !$action) { $type=$postit=="on"?1:0; $this->forum->setType($topic,$type); }
-			else if($topic && $ntitle) { $this->forum->setTitle($topic,$ntitle); }
+			else if($topic && $postit && !$action) { $type=$postit=="on"?1:0; $this->threads->forum->setType($topic,$type); }
+			else if($topic && $ntitle) { $this->threads->forum->setTitle($topic,Tools::clean($ntitle)); }
 			else if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$this->whichDir($topicID).'.dat')) {
 				if($s = implode('', file(MU_THREAD.$this->whichDir($topicID).'.dat'))) {
 					$message = Tools::clean($message);
 					$message = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$message);
-					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/Y \à H:i',time()).'[/e]';
+					$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/Y \&\a\g\r\a\v\e\; H:i',time()).'[/e]';
 					$this->topicObj = unserialize($s);
 					$this->topicObj->setReply($postID,'',$message);
 					$this->topicObj->getInfo(0);
 					$topic=$topicID;
-					if(BBCHelper::verif($message,'topic='.$topicID.'&editpost='.$postID.'&page='.$this->page,$this->session)){
-						header('Location: ?topic='.$topic.'&page='.$this->page.'#p-'.$postID);
+					if(BBCHelper::verif($message,'viewforum='.$viewforum.'&topic='.$topicID.'&editpost='.$postID.'&page='.$this->page,$this->session)){
+						header('Location: ?viewforum='.$viewforum.'&topic='.$topic.'&page='.$this->page.'#p-'.$postID);
 						exit();
 					}
 				}
 			}
 			else if($topic && $delpost) {
-				if($topic==$delpost) {
-					if($this->forum->delTopic($topic)) {
+				if($topic==$delpost) {//Suppression de la totalité de la discussion
+					if($this->threads->forum->delTopic($topic)) {
 						$this->session->setMsg(MSG_DATA_DEL);
-						header('Location: index.php');
+						header('Location: index.php?viewforum='.$viewforum.'#msgFlash');
 						exit();
 					}
-				} else {
-					if(is_file(MU_THREAD.$this->whichDir($topicID).'.dat') && $s=implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
+				} else {//Suppression d'un message
+					if(is_file(MU_THREAD.$this->whichDir($topic).'.dat') && $s=implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
 						$this->topicObj = unserialize($s);
 						$r=$this->topicObj->getReply($delpost);
 						@unlink($r->attach);
@@ -2883,12 +3266,19 @@ class Init {
 						//$this->forum->updateTopic($this->topicObj->infos->time,$this->topicObj->infos->title,$this->topicObj->infos->auth,$this->topicObj->infos->posts,$this->topicObj->infos->lastAuth,$this->topicObj->infos->lastTime,$this->topicObj->infos->attach,$this->topicObj->infos->type);
 						if(ceil($this->topicObj->infos->posts/$this->nbMsgTopic) == 1 ) $this->page = 1;
 						$this->session->setMsg(MSG_DATA_DEL);
-						header('Location: ?topic='.$topic.'&page='.$this->page);
+						header('Location: ?viewforum='.$viewforum.'&topic='.$topic.'&page='.$this->page.'#msgFlash');
 						exit();
 					}
 				}
 			}
-			else if($backup) {$r=$this->do_backup(MU_DATA, 'backup/data_' . date('d-m-Y-h:i:s'). '.zip');}
+			else if($thread && $delforum) {
+				if($this->threads->delThread($thread,$delforum)) {
+					$this->session->setMsg(MSG_DATA_DEL);
+					header('Location: index.php#msgFlash');
+					exit();
+				}
+			} 
+			else if($backup) {$r=$this->do_backup(MU_DATA, 'backup/data_' . date('Y-m-d-h\hi\ms\s'). '.zip');}
 			else if($restore && $action=='restore') {
 				if(@is_uploaded_file($_FILES['backup']['tmp_name'])) {
 					$r=$this->restore_forum($_FILES['backup']['tmp_name']);
@@ -2900,21 +3290,29 @@ class Init {
 		}
 
 		$this->get_editpost   = $editpost;
-		$this->get_conf      = $conf;
+		$this->get_conf       = $conf;
+		$this->get_topics     = $viewforum;
 		$this->get_topic      = $topic;
 		$this->get_memberlist = $memberlist;
 		$this->get_editprofil = $editprofil;
 		$this->get_private    = $private	;
 		$this->get_restore    = $restore;
 
-		if (is_object($this->forum)) {
-			$stats = $this->pagesMsg = $this->forum->getStat();
+		if (is_object($this->threads)) {
+			$stats = $this->pagesMsg = $this->getStat();
 		} else {
 			$stats = $this->pagesMsg = 0;
 		}
 		
 		$this->pages = $stats['topics'];
 		$this->pagesMb = $stats['members'];
+	}
+	public function getStat() {
+		$tmp=0;
+		$arr=array(0,"");
+		$stats = $this->stat->getStats();
+		foreach($this->members->members as $k=>$v) $arr=($v->time>$arr[0])?array($v->time,$k):$arr;
+		return array('members'=>count($this->members->members),'lastMb'=>$arr[1],'threads'=>$stats->stats['threads'],'topics'=>$stats->stats['topics'],'messages'=>($stats->stats['msg']-$stats->stats['topics']));
 	}
 	public function whichDir($time) {
 		return date('Ym', $time).DS.$time;
@@ -2951,11 +3349,6 @@ class Init {
 			$config.="\$siteBase='".MU_BASE_URL."'\n;?>";
 			file_put_contents('config.php', utf8_encode($config));
 
-			if (!file_exists(MU_MEMBER.'members.dat')) {
-				$this->members = array();
-				file_put_contents(MU_MEMBER.'members.dat', serialize($this->members),LOCK_EX);
-			}
-
 			$errors='';
 			$errors.= (is_dir(MU_THEMES))? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
 			$errors.= (@mkdir(MU_THEMES.$this->theme.DS.MU_CSS))? sprintf("&#10004;&nbsp;".MKCSS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKCSS." .\n");
@@ -2968,6 +3361,11 @@ class Init {
 			$errors.= (@mkdir(MU_THREAD))? sprintf("&#10004;&nbsp;".MKMSG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKMSG.".\n");
 			$errors.= (@mkdir(MU_JS))? sprintf("&#10004;&nbsp;".MKJS.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKJS.".\n");
 			$errors.= (@mkdir(MU_IMG))? sprintf("&#10004;&nbsp;".MKIMG.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKIMG.".\n");
+
+			if (!file_exists(MU_MEMBER.'members.dat')) {
+				$this->members = new Members();
+				@file_put_contents(MU_MEMBER.'members.dat', serialize($this->members),LOCK_EX);
+			}
 
 			$this->errors = $errors;
 
@@ -3112,7 +3510,7 @@ class Init {
 	    }
 
 	    $zip->close();
-	    $msg= ARCHIVE_REC.'  <a class="btn btn-success pull-right" href="'.$destination.'" title="'.DOWNLOAD.'"><i class="icon-download-alt icon-white"></i>&nbsp;'.DOWNLOAD_ARCHIVE.'</a>';
+	    $msg= ARCHIVE_REC.' </p><p><a class="btn btn-success pull-right" href="'.$destination.'" title="'.DOWNLOAD.'"><i class="icon-download-alt icon-white"></i>&nbsp;'.DOWNLOAD_ARCHIVE.'</a>';
 	    $this->session->setMsg($msg,'success-msg',false);
 	    header('location: index.php?conf=1');
 		exit();
@@ -3212,7 +3610,7 @@ class Init {
 /**
 * Mise en forme du forum
 */
-class Template extends Init {	
+class Template extends Init {
 
 	private $aThemes=array();
 	private $aLang=array();
@@ -3350,7 +3748,9 @@ class Template extends Init {
 				$this->content();
 				$this->registrationForm();
 				$this->replyForm();
+				$this->recThreadsForm();
 				$this->formattingHelp();
+				$this->showThreads();
 				$this->showTopics();
 				$this->showPosts();
 				$this->showPrivateMsg();
@@ -3371,16 +3771,21 @@ class Template extends Init {
 				$this->_loadCss();
 			} else {
 				$error = '';
+				if ($this->MainError == 404) {
+					$error = 404;
+				}
 				// !$this->forumMode = forum public
 				if (empty($this->cLogin) && !$this->forumMode) {
-					if (!empty($params) && !preg_match('!^(\?)topic=([0-9]{10,13})(&(amp;)?page=([0-9]+)?)?$!', $params) ) {
+					if (!empty($params) && !preg_match('!^(\?)viewforum=([0-9]{3}-[0-9]{3})(&(amp;)?topic=([0-9]{10,13}))?(&(amp;)?page=([0-9]+)?)?$!', $params) ) {
 						$error = 404;
 					}
 				}
 				if (empty($this->cLogin) && $this->forumMode && !empty($params)) {
 					$error = 404;
 				}
+
 				$this->template = $this->setTemplate($error);
+
 				# On démarre la bufferisation
 				ob_start();
 				ob_implicit_flush(0);
@@ -3417,7 +3822,7 @@ class Template extends Init {
 				    }
 				}
 				# Restitution écran
-				echo $output;	
+				echo html_entity_decode($output,ENT_NOQUOTES,CHARSET);	
 			}	
 	}
 	private function _loadCss() {
@@ -3479,7 +3884,7 @@ class Template extends Init {
 		if(!$wtp=@file_get_contents('welcome.txt')) {
 			$buf.= WELCOME_TXT;
 		} else {
-			$buf .= BBCHelper::decode($wtp).'</div>';
+			$buf .= BBCHelper::decode(nl2br($wtp)).'</div>';
 		}
 		return $buf;
 	}
@@ -3581,10 +3986,11 @@ class Template extends Init {
 				else if($this->get_editprofil)$template['template'] = 'editProfilForm';
 				else if($this->get_private) $template = array('template'=>'replyForm-mp','options'=>$this->get_private);
 				else if($this->get_restore) $template['template'] = 'frestore';
+				else if($this->get_topics) $template['template'] = 'showTopics';
 				// MODE LIBRE
 				else if(!$this->forumMode && !$this->isMember) $template['template'] = 'content';
 				#on est connecté, alors on affiche uniquement la liste des forums
-				else  $template['template'] =  'showTopics';
+				else  $template['template'] =  'showThreads';
 			} else {// MODE PRIVÉ
 				$template['template'] = 'content';
 			}
@@ -3644,16 +4050,22 @@ class Template extends Init {
 				$this->active = 'forums';
 				$this->showTopics();
 				break;
+			case 'showThreads':
+				$this->active = 'forums';
+				$this->showThreads();
+				break;
 		}
 	}
 	private function setFooter($stats) {
-		$f['updateVisit']=$this->conn->updateVisit($this->cLogin);
+		$f['updateVisit']=($this->cLogin ? $this->stat->updateVisit($this->cLogin) : '');
 		$f['mb']=array();
 		if($stats['members']>1) {$f['mb']['singularPlural']='s';$f['conjug'][1]='ont';}
 		else {$f['mb']['singularPlural']='';$f['mb']['conjug']='a';}//Total membres
 		$f['m']=($stats['messages']>1)?'s':'';//Messages
 		$f['s']=($stats['topics']>1)?'s':'';//Sujets
-		$f['updateVisit']['mbConnected']=($f['updateVisit']['mbConnected'])?$f['updateVisit']['mbConnected']:L_NONE;
+		$f['d']=($stats['threads']>1)?THREADS:THREAD;//Discussions
+		$f['updateVisit']['mbConnected']=isset($f['updateVisit']['mbConnected'])?$f['updateVisit']['mbConnected']:L_NONE;
+		$f['updateVisit']['guestsConnected']=isset($f['updateVisit']['guestsConnected'])?$f['updateVisit']['guestsConnected']:1;
 		$f['stats'] = $stats;
 		return $f;
 	}
@@ -3700,28 +4112,65 @@ class Template extends Init {
 	}
 	private function setBreadcrumbsLinks() {
 		ob_start();
-		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?topic=<?php echo $this->get_topic?>"><i class="icon-megaphone"></i>&nbsp;<?php echo $this->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="icon-pencil"></i>&nbsp;<?php echo EDIT?>
+		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?topic=<?php echo $this->get_topic?>"><i class="icon-megaphone"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="icon-pencil"></i>&nbsp;<?php echo EDIT?>
 		<?php }else{if($this->get_conf){?><i class="icon-cog"></i>&nbsp;<?php echo CONFIG_OPTIONS?>
-		<?php }else{if($this->get_topic){?><i class="icon-comment-empty"></i>&nbsp;<?php echo $this->forum->getPostsTitle($this->get_topic)?>
+		<?php }else{if($this->get_topics){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?viewforum=<?php echo $this->get_topics?>"><?php }?><i class="icon-chat-empty"></i>&nbsp;<?php echo $this->threads->getTitleCat($this->get_topics);if($this->get_topic){?></a></li><li><i class="icon-comment-empty"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic);?>
 		<?php }else{if($this->get_memberlist){?><i class="icon-user"></i>&nbsp;<?php echo MEMBERS?>
 		<?php }else{if($this->searchMember){?><i class="icon-user"></i>&nbsp;<?php echo RESULT_FOR.$this->searchMember?>
 		<?php }else{if($this->get_editprofil){?><i class="icon-eye"></i>&nbsp;<?php echo EDIT_PROFIL?>
 		<?php }else{if($this->get_private){ ?><i class="icon-leaf">&nbsp;<?php echo PRIVATE_MSG?></i>
 		<?php }else{if($this->get_restore){?><i class="icon-ccw"></i>&nbsp;<?php echo RESTORE?>
-		<?php }}}}}}}} 
+		<?php }else{?>
+		<?php }}}}}}}}} 
 		$links = ob_get_clean();
 		if(!empty($links)) return '<li>'.$links.'</li>';
 	}
+	private function setThreads() {
+		$t['nombreThreads'] = $this->threads->getCats();
+		$lastOn = $by = null;
+		$t['nombrePosts'] = array();
+		foreach ($t['nombreThreads'] as $cat => $replies) {
+			$lastOn[$cat] = end($t['nombreThreads'][$cat]);
+			if ($lastOn[$cat] != '') {$by[$cat] = $this->threads->forum->topics[$lastOn[$cat]]->auth;}
+			else {$by[$cat] = NO_REPLY;}
+			if (!isset($t['nombrePosts'][$cat])) {$t['nombrePosts'][$cat] = 0;}
+			foreach ($replies as $key => $reply) {
+				$t['nombrePosts'][$cat] += $this->threads->forum->topics[$reply]->infos != null ? ($this->threads->forum->topics[$reply]->infos->posts)-1 : 0;
+			}
+		}
+		$t['stats'] = array('lastOn'=>$lastOn,'by'=>$by);
+		$t['aMainPositions'] = $this->threads->getMainCatsPositions();
+		$t['cats'] = $this->threads->getMainCats();
+		$t['aSubPositions'] = $this->threads->getSubCatsPositions();
+		$t['threads'] = $this->threads->getallThreads('all');
+		return $t;
+	}
+	private function setSubCats($cat) {
+		return $this->threads->getallThreads($cat);
+	}
+	private function setThreadTitle($cat,$maincat,$subcat,$ifTrue='', $ifFalse='') {
+		echo '<a href="?viewforum='.$maincat.'-'.$subcat.'" title="'.DISPLAY_FORUM.'" '.((isset($_COOKIE["uTread".$maincat.'-'.$subcat.$this->loginForCookie.""]) && $this->cLogin) ? (!empty($ifTrue)? 'class="'.$ifTrue.'"':'') : ($this->cLogin ? (!empty($ifFalse)? 'class="'.$ifFalse.'"':'') : '')).'>'.stripslashes($cat).'</a>';
+	}
+	private function setThreadTitleLegend($legend) {
+		echo stripslashes($legend);
+	}
+	private function setThreadLastMsg($maincat,$subcat,$lastOn,$class='') {
+		if ($lastOn) echo '<a href="?viewforum='.$maincat.'-'.$subcat.'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$lastOn).'</a>';
+	}
+	private function setThreadLastMsgBy($t,$class='') {
+		if($t) echo $this->members->isMember($t)?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t.'" title="'.SEND_PRIVATE_MSG.'">'.$t.'</a>':$t;
+	}
 	private function setTopics($val) {
+		list($main,$cat) = explode('-',$this->get_topics);
 		switch ($val) {
 			case 'pagination':
 				echo $this->pagination($this->nbrMsgIndex, $this->page, $this->pages);
 				break;
 			case 'topicList':
-				return $this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page);
+				return $this->threads->forum->getallTopic(false,$main,$cat,$this->nbrMsgIndex,$this->page);
 				break;
 			case 'reply':
-				$this->setReplyForm('newtopic',count($this->forum->getallTopic(false,$this->nbrMsgIndex,$this->page)));
+				$this->setReplyForm('newtopic',count($this->threads->forum->getallTopic(false,$main,$cat,$this->nbrMsgIndex,$this->page)));
 				break;
 		}
 	}
@@ -3736,12 +4185,12 @@ class Template extends Init {
 		$linksToPages = '';
 		if ($nbPages>1) {
 			for ($i=1; $i < ($nbPages+1); $i++) { 
-				$linksToPages .= '<a href="?topic='.$t['topicID'].'&amp;page='.$i.'" title="'.DISPLAY_TOPIC.'">'.$i.'</a>&nbsp;';
+				$linksToPages .= '<a href="?viewforum='.$this->get_topics.'&amp;topic='.$t['topicID'].'&amp;page='.$i.'" title="'.DISPLAY_TOPIC.'">'.$i.'</a>&nbsp;';
 			}
 			if (!empty($linksToPages)) $linksToPages = '[&nbsp;'.$linksToPages.']';
 		}
 		
-		echo '<a href="?topic='.$t['topicID'].'" title="'.DISPLAY_TOPIC.'" '.((isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""]) && $this->cLogin) ? (!empty($ifTrue)? 'class="'.$ifTrue.'"':'') : ($this->cLogin ? (!empty($ifFalse)? 'class="'.$ifFalse.'"':'') : '')).'>'.stripslashes($t['titre']).'</a>&nbsp;'.$linksToPages;
+		echo '<a href="?viewforum='.$this->get_topics.'&amp;topic='.$t['topicID'].'" title="'.DISPLAY_TOPIC.'" '.((isset($_COOKIE["uFread".$t['topicID'].$this->loginForCookie.""]) && $this->cLogin) ? (!empty($ifTrue)? 'class="'.$ifTrue.'"':'') : ($this->cLogin ? (!empty($ifFalse)? 'class="'.$ifFalse.'"':'') : '')).'>'.stripslashes($t['titre']).'</a>&nbsp;'.$linksToPages;
 	}
 	private function setTopicStartonBy($t) {
 		echo STARTED_ON.' '.date('d M Y', $t['topicID']).', '.BY.' ';
@@ -3750,7 +4199,7 @@ class Template extends Init {
 		echo $this->members->isMember($t['auteur'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['auteur'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['auteur'].'</a>':$t['auteur'];
 	}
 	private function setTopicLastMsg($t,$class='') {
-		echo '<a href="?topic='.$t['topicID'].'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$t['dernierLe']).'</a>';
+		echo '<a href="?viewforum='.$this->get_topics.'&amp;topic='.$t['topicID'].'#bottom" '.($class!=''? 'class="'.$class.'"':'').' title="'.GOTO_LAST_MSG.'">'.date('d M Y à H:i',$t['dernierLe']).'</a>';
 	}
 	private function setTopicLastMsgBy($t,$class='') {
 		echo $this->members->isMember($t['dernierPar'])?'<a '.($class!=''? 'class="'.$class.'"':'').' href="index.php?private='.$t['dernierPar'].'" title="'.SEND_PRIVATE_MSG.'">'.$t['dernierPar'].'</a>':$t['dernierPar'];
@@ -3761,7 +4210,7 @@ class Template extends Init {
 	}
 	private function setPost() {
 		if (!is_file(MU_THREAD.$this->whichDir($this->get_topic).'.dat')) {return false;}
-		if($this->topicObj = $this->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
+		if($this->topicObj = $this->threads->forum->getPosts($this->get_topic,false,$this->nbMsgTopic,$this->page)){
 			$this->topicObj->getInfo(0);
 			list($this->topicObj->num,$this->topicObj->auths)=$this->topicObj->getInfo(1);
 			$this->topicObj->pagination = $this->setPostPagination($this->topicObj);
@@ -3771,6 +4220,16 @@ class Template extends Init {
 			return $this->topicObj;
 		}
 		return false;
+	}
+	private function setOptions() {
+		$mains = $this->threads->getCategories('main');
+		$sub = $this->threads->getCategories('sub');
+		foreach ($sub as $main => $cats) {
+			foreach ($cats as $key => $value) {
+				$options[$mains[$main]][$main.'-'.$key] = $value['cat'];
+			}
+		}
+		return $options;
 	}
 	private function topicId() {
 		echo $this->get_topic;
@@ -3939,7 +4398,6 @@ class Template extends Init {
 		}else {
 			include(MU_THEMES.$this->theme.DS.'replyForm.php'); 
 		}
-		//$this->template['template'] = 'replyForm';
 	}
 	private function searchDirFile($dirToScan=MU_THEMES,$type='dir') {
 		if(is_dir($dirToScan)) {
@@ -4074,6 +4532,7 @@ END;
 	
 	<section><!-- Main -->
     <?php echo \$this->session->msg(); ?>
+
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'header.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'header.php', $string);
@@ -4096,7 +4555,7 @@ if(!\$this->forumMode) :// MODE LIBRE?>
 				<?php echo \$this->welcomeText()?>
 				</div>
 				<div class="tabContent" id="tabContenttopics">
-				<?php echo \$this->showTopics()?>
+				<?php echo \$this->showThreads()?>
 				</div>
 				<div class="tabContent" id="tabContentsignup">
 				<?php echo \$this->registrationForm()?>
@@ -4127,7 +4586,7 @@ END;
 	}
 	public function footer() {
 		$string =<<<END
-<?php \$f = \$this->setFooter(\$this->forum->getStat())?>
+<?php \$f = \$this->setFooter(\$this->getStat())?>
 
 </section><!-- Fin Main -->
 
@@ -4139,11 +4598,13 @@ END;
 		<li>
 			<h4><?php echo STATISTICS?></h4>
 			
-			<p><?php echo WE_HAVE.' '.\$f['stats']['messages'].' '.MESSAGE.\$f['m'].' '.IN.' '.\$f['stats']['topics'].' '.TOPIC.\$f['s']?> 
-				<br />
+			<p>
 				<?php echo WELCOME_TO?>, <span class="color-orange"><?php echo \$f['stats']['lastMb']?></span>
 				<br />
 				<?php echo TOTAL_MB.\$f['mb']['singularPlural'].': '. \$f['stats']['members']?>
+				<br />
+				<?php echo WE_HAVE.':<br/>'.\$f['stats']['messages'].' '.MESSAGE.\$f['m'].' '.IN.' '.\$f['stats']['topics'].' '.TOPIC.\$f['s'].' '.OF.' '.\$f['stats']['threads'].' '.\$f['d']?> 
+				
 
 			</p>
 		</li>
@@ -4320,7 +4781,7 @@ END;
 	*/
 	public function menu() {
 		$string =<<<END
-<?php \$stats=\$this->forum->getStat();
+<?php \$stats=\$this->getStat();
 
 		if(\$this->isMember) :?>
 			<li><a href="?logout=1" title="<?php echo QUIT;?>"><i class="icon-off"></i> <?php echo LOGOUT;?></a></li>
@@ -4370,17 +4831,20 @@ END;
 		}
 	}
 	/**
-	* AFFICHAGE DE LA LISTE DES SUJETS (Forum home)
+	* AFFICHAGE DE LA LISTE DES CATEGORIES DE CONVERSATION (Forum home)
 	*/
-	public function showTopics() {
+	public function showThreads() {
 		$string =<<<END
-<?php if (!empty(\$_GET) || \$this->cLogin) include(dirname(__FILE__).'/header.php');?>
-		<p class="pagination"><?php \$this->setTopics('pagination');?></p>
-
+<?php if (!empty(\$_GET) || \$this->cLogin) include(dirname(__FILE__).'/header.php');
+	\$t = \$this->setThreads();
+	foreach (\$t['aMainPositions'] as \$id => \$c) {?>
+	
+		<h1><?php echo \$t['cats'][\$id]?></h1>
 		<table id="topics">
 			<thead>
 				<tr class="info gradient">
-					<th style="width:60%;"><?php echo TITLE_SUBJECT;?></th>
+					<th style="width:60%;"></th>
+					<th style="width:5%; text-align:center;"><?php echo L_THREADS;?></th>
 					<th style="width:5%; text-align:center;"><?php echo MESSAGES;?></th>
 					<th style="width:30%;"><?php echo LAST_MSG;?></th>
 					<?php if(\$this->isAdmin) :?><th style="width:5%"><?php echo ADMIN;?></th><?php endif; ?>
@@ -4389,7 +4853,172 @@ END;
 			</thead>
 			<tbody>
 
- 		<?php foreach(\$this->setTopics('topicList') as \$t) :
+ 		<?php if (isset(\$t['aSubPositions'][\$id])) : 
+ 				foreach(\$t['aSubPositions'][\$id] as \$k => \$f) :?>
+
+			<tr>
+				<td>
+					<p class="left">
+						<?php \$this->setThreadTitle(\$t['threads'][\$id][\$f]['cat'],\$id,\$f,'read','unread')?>
+
+					<br/>
+						<?php \$this->setThreadTitleLegend(\$t['threads'][\$id][\$f]['subtitle'])?>
+
+					</p>
+				</td>
+				<td class="mess"><?php echo count(\$t['nombreThreads'][\$f]);?></td>
+				<td class="mess"><?php echo \$t['nombrePosts'][\$f];?></td>
+				<td class="lastmsg">
+					<i><?php echo L_ON;?> :</i> 
+					<?php \$this->setThreadLastMsg(\$id,\$f,\$t['stats']['lastOn'][\$f]);?><br />
+					<i><?php echo BY;?>:</i>
+					<?php \$this->setThreadLastMsgBy(\$t['stats']['by'][\$f],'Lien');?>
+
+				</td>
+				<?php if(\$this->isAdmin) :?>
+
+				<td class="admin">
+					<a href="?thread=<?php echo \$id;?>&amp;delforum=<?php echo \$f;?>" onclick="return confirmLink(this,'<?php echo str_replace("'","\'",\$t['threads'][\$id][\$f]['cat'])?>'+'\n'+'<?php echo DEL_MSG_COMPLEMENT;?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="icon-trash"></i></a>
+				</td><?php endif;?>
+
+			</tr>
+		<?php endforeach;
+		endif;?>
+			
+			</tbody>
+		</table>
+	<?php }
+	if(\$this->isAdmin) :\$this->recThreadsForm();endif;
+	if (!empty(\$_GET) || \$this->cLogin) {include(dirname(__FILE__).'/footer.php');} ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showThreads.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showThreads.php', $string);
+		}
+		if (!$this->forumMode && !$this->isMember && !$this->cLogin) {include(MU_THEMES.$this->theme.DS.'showThreads.php');}
+	}
+	/**
+	* FORMULAIRE DE RÉPONSE
+	*/
+	public function recThreadsForm() {
+		$string =<<<END
+				<?php \$t = \$this->setThreads(); ?>
+
+			<!-- Record form -->	
+			<p><a class="btn btn-big" href="javascript:switchLayer('form');" title="formulaire"><?php echo EDIT?></a></p>
+			<div class="toggle" id="form">	
+			<div class="Box">
+			<h2 class="forms-section"><?php echo ADD_MAIN_CAT?></h2>
+
+				<form id="formulaire-main" action="index.php#bottom" method="post" class="forms forms-columnar">
+					<input type="hidden" name="action" value="newmainthread" />
+					<p><?php echo  Tools::input(MAIN_CAT_TITLE, 'newmaincat', '', 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p>
+						<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i> <?php echo SEND?></button>
+					</p>
+				</form>
+			</div>
+			<div class="Box">		
+			<h2 class="forms-section"><?php echo ADD_CAT?></h2>
+
+				<form id="formulaire-cat" action="index.php#bottom" method="post" class="forms forms-columnar">
+					<input type="hidden" name="action" value="newthread" />
+					<p><?php echo  Tools::input(CAT_TITLE, 'newcat', '', 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p><?php echo  Tools::input(CAT_SUBTITLE, 'newcatsubtitle', '', 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p class="forms-inline"><?php echo Tools::select(MAIN_CAT_TITLE, 'newcatmaincat', \$t['cats'], '', false, '', true)?></p>
+					<p>&nbsp;</p>
+					<p>
+						<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i> <?php echo SEND?></button>
+					</p>
+				</form>
+			</div>
+			<div class="Box">
+			<h2 class="forms-section"><?php echo EDIT_MAIN_CAT?></h2>
+
+				<?php foreach (\$t['cats'] as \$id => \$cat) {?>
+
+				<form id="formulaire-editmain" action="index.php#bottom" method="post" class="forms forms-columnar">
+					<input type="hidden" name="action" value="editmainthread" />
+					<?php if (empty(\$t)) {?>
+
+					<p><?php echo NO_CAT ?></p>
+					<?php }?>
+
+					<input type="hidden" name="id" value="<?php echo \$id ?>" />
+					<input type="hidden" name="oldposition" value="<?php echo \$t['aMainPositions'][\$id] ?>" />
+					<p><?php echo  Tools::input(MAIN_CAT_TITLE, 'editmaincat', \$cat, 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p><?php echo  Tools::input(MAIN_CAT_POSITION, 'editmaincatposition', \$t['aMainPositions'][\$id], 'text', '', '255' ,false,'small','','required',false,false,10)?></p>
+					<p>
+						<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i> <?php echo EDIT?></button>
+					</p>
+				</form>
+				<p>&nbsp;</p>
+				<hr/>
+				<?php } ?>
+
+			</div>
+			<div class="Box">
+			<h2 class="forms-section"><?php echo EDIT_CAT?></h2>
+				<?php foreach (\$t['threads'] as \$id => \$main) {
+					\$pos = array_flip(\$t['aSubPositions'][\$id]);
+					foreach (\$t['aSubPositions'][\$id] as \$key => \$cat) {?>
+
+				<form id="formulaire-edit" action="index.php#bottom" method="post" class="forms forms-columnar">
+					<input type="hidden" name="action" value="editthread" />
+					<?php if (empty(\$t)) {?>
+
+					<p><?php echo NO_CAT ?></p>
+					<?php }?>
+
+					<input type="hidden" name="position" value="<?php echo \$pos[\$cat] ?>" />
+					<input type="hidden" name="catid" value="<?php echo \$cat ?>" />
+					<input type="hidden" name="maincatid" value="<?php echo \$id ?>" />
+					<p><?php echo  Tools::input(CAT_TITLE, 'editcat', \$main[\$cat]['cat'], 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p><?php echo  Tools::input(CAT_SUBTITLE, 'editcatsubtitle', \$main[\$cat]['subtitle'], 'text', '', '255' ,false,'width-40','','required',false,false,100)?></p>
+					<p><?php echo  Tools::input(CAT_POSITION, 'editcatposition', \$pos[\$cat], 'text', '', '255' ,false,'small','','required',false,false,10)?></p>
+					<p class="forms-inline"><?php echo Tools::select(MAIN_CAT_TITLE, 'editcatmaincat', \$t['cats'], \$id, false, '', true)?></p>
+					<p>&nbsp;</p>
+					<p>
+						<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i> <?php echo EDIT?></button>
+					</p>
+				</form>
+				<p>&nbsp;</p>
+				<hr/>
+				<?php }
+				} ?>
+					
+			</div>
+			</div>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'recThreadsForm.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'recThreadsForm.php', $string);
+		}
+		if (!$this->install) {
+			include(MU_THEMES.$this->theme.DS.'recThreadsForm.php');
+		}
+	}
+	/**
+	* AFFICHAGE DE LA LISTE DES SUJETS
+	*/
+	public function showTopics() {
+		$string =<<<END
+<?php \$topicList = \$this->setTopics('topicList');
+if (\$topicList === false) {include(dirname(__FILE__).'/404.php');exit();}
+if (!empty(\$_GET) || \$this->cLogin) include(dirname(__FILE__).'/header.php');?>
+		<p class="pagination"><?php \$this->setTopics('pagination');?></p>
+
+		<table id="topics">
+			<thead>
+				<tr class="info gradient">
+					<th style="width:60%;"><?php echo TITLE_SUBJECT;?></th>
+					<th style="width:5%; text-align:center;"><?php echo REPLIES;?></th>
+					<th style="width:30%;"><?php echo LAST_MSG;?></th>
+					<?php if(\$this->isAdmin) :?><th style="width:5%"><?php echo ADMIN;?></th><?php endif; ?>
+
+				</tr>
+			</thead>
+			<tbody>
+
+ 		<?php foreach(\$topicList as \$t) :
 			?>
 			<tr>
 				<td><p class="left"><?php \$this->setTopicList(\$t['postType'],'<i class="icon-pin"></i> ');?>
@@ -4400,7 +5029,7 @@ END;
 					</p>
 					<span class="image-right"><?php \$this->setTopicStartonBy(\$t);\$this->setTopicPrivate(\$t,'Lien');?></span>
 				</td>
-				<td class="mess"><?php echo \$t['nombrePosts'];?></td>
+				<td class="mess"><?php echo \$t['nombrePosts']-1;?></td>
 				<td class="lastmsg">
 					<i><?php echo L_ON;?> :</i> 
 					<?php \$this->setTopicLastMsg(\$t);?><br />
@@ -4411,7 +5040,7 @@ END;
 				<?php if(\$this->isAdmin) :?>
 
 				<td class="admin">
-					<a href="?topic=<?php echo \$t['topicID'];?>&amp;delpost=<?php echo \$t['topicID'];?>" onclick="return confirmLink(this,'<?php echo \$t['titre'];?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="icon-trash"></i></a>
+					<a href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$t['topicID'];?>&amp;delpost=<?php echo \$t['topicID'];?>" onclick="return confirmLink(this,'<?php echo \$t['titre'];?>');" rel="tooltip" title="<?php echo DEL_MSG;?>"><i class="icon-trash"></i></a>
 				</td><?php endif;?>
 
 			</tr>
@@ -4420,12 +5049,20 @@ END;
 			</tbody>
 		</table>
 		<p class="pagination"><?php \$this->setTopics('pagination');?></p>
+
+		<form action="index.php" method="post">
+			<input type="hidden" name="action" value="jumpto" />
+			<p class="forms-inline"><?php echo Tools::select(JUMP_TO, 'viewforum', \$this->setOptions(), \$this->get_topics, false, '', true)?>
+				<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i> <?php echo GO?></button>
+			</p>
+		</form>
+		<p>&nbsp;</p>
+
 	   <?php if (!empty(\$_GET) || \$this->cLogin) {\$this->setTopics('reply'); include(dirname(__FILE__).'/footer.php');} ?>
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'showTopics.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'showTopics.php', $string);
 		}
-		if (!$this->cLogin && !$this->install) include(MU_THEMES.$this->theme.DS.'showTopics.php');
 	}
 	/**
 	* AFFICHAGE DE LA DISCUSSION
@@ -4507,16 +5144,16 @@ END;
 						<tr class="tr-bottom">
 							<td>
 								<?php if(!empty(\$this->cLogin) && !\$this->forumMode): ?>
-								<a href="?topic=<?php echo \$this->get_topic?>&amp;replypost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>#form" class="btn btn-small btn-orange" title="<?php echo QUOTE_MSG_FROM.' '.\$reply->auth?>" /><i class="icon-chat-empty"></i> <?php echo QUOTE?></a>
+								<a href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;replypost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>#form" class="btn btn-small btn-orange" title="<?php echo QUOTE_MSG_FROM.' '.\$reply->auth?>" /><i class="icon-chat-empty"></i> <?php echo QUOTE?></a>
 								<?php endif; ?>
 
 							</td>
 							<td>
 					<?php if(\$this->isAdmin || (\$this->cLogin == \$reply->auth && \$cnt== 0)) :?>
 						
-								<a class="btn btn-small" href="?topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
+								<a class="btn btn-small" href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
 									<i class="icon-pencil"></i> <?php echo EDIT?>
-								</a>&nbsp;<a class="btn btn-small btn-red" href="?topic=<?php echo \$this->get_topic?>&amp;delpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php \$this->delMsg(\$cnt,\$reply->auth)?>')">
+								</a>&nbsp;<a class="btn btn-small btn-red" href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;delpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo DEL?>" onclick="return confirmLink(this,'<?php \$this->delMsg(\$cnt,\$reply->auth)?>')">
 									<i class="icon-trash"></i> <?php echo DEL?>
 								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
 									<i class="icon-megaphone"></i> <?php echo ANSWER?>
@@ -4524,7 +5161,7 @@ END;
 					<?php endif;
 					if(\$this->cLogin && \$this->cLogin == \$reply->auth && !\$this->isAdmin) :?>
 						
-								<a class="btn btn-small" href="?topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
+								<a class="btn btn-small" href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
 									<i class="icon-pencil"></i> <?php echo EDIT?>
 								</a>
 					<?php endif;	
@@ -4586,7 +5223,7 @@ END;
 				</tr>
 			</thead>
 			<tbody>
-		<?php foreach(\$this->forum->listMember(\$this->nbrMb,\$this->page,false) as \$m) {
+		<?php foreach(\$this->members->listMember(\$this->nbrMb,\$this->page,false) as \$m) {
 			\$mb = \$this->setMbOfList(\$m);?>
 
 				<tr>
@@ -4784,6 +5421,7 @@ END;
 	*/
 	public function replyForm() {
 		$string =<<<END
+				<?php if(\$this->cLogin) :?>
 		<!-- Reply form -->
 		<?php if(\$r->edit || \$r->show) {?>
 			
@@ -4799,6 +5437,7 @@ END;
 				<form id="formulaire" action="index.php#bottom" method="post" enctype="multipart/form-data" class="forms forms-columnar">
 					<input type="hidden" name="action" value="<?php echo \$type?>" />
 					<input type="hidden" name="page" value="<?php echo \$this->page?>" />
+					<input type="hidden" name="viewforum" value="<?php echo \$this->get_topics?>" />
 		<?php // Réponse
 		if(\$type== 'newpost' || \$r->edit) {?><input type="hidden" name="topicID" value="<?php echo \$this->get_topic?>" />
 		<?php // Mesage privé
@@ -4825,6 +5464,7 @@ END;
 				</p>
 			</form>
 		</div>
+		<?php endif; ?>
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'replyForm.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'replyForm.php', $string);
