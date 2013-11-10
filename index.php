@@ -157,6 +157,7 @@ class Tools {
 	public static function correctAccents($str,$charset='utf-8') {
 		$str = preg_replace('#\&amp\;([A-za-z])(acute|cedil|circ|grave|ring|tilde|uml|uro)\;#', '&$1$2;', $str);
 		$str = preg_replace('#\&amp\;([A-za-z]{2})(?:lig)\;#', '&$1$2', $str); # pour les ligatures e.g. '&oelig;'
+		$str = preg_replace('#\&amp\;([A-za-z]{5})\;#', '&$1$2', $str); # pour les lettres comme µ
 		return $str;
 	}
 	/**
@@ -837,7 +838,7 @@ class BBCHelper {
 	* SYNTAXE HIGHLITER
 	*/
 	public static function colorSyntax($txt) { 
-			return nl2br(trim("<pre><code>" . str_replace('   ','&nbsp;&nbsp;&nbsp;&nbsp;',$txt).'<br />&nbsp;</code></pre>&nbsp;'));
+			return trim(nl2br("<pre><code>" . str_replace('   ','&nbsp;&nbsp;&nbsp;&nbsp;',$txt).'<br />&nbsp;</code></pre>&nbsp;'));
 	}
 	/**
 	*
@@ -868,10 +869,10 @@ class BBCHelper {
 	    	
 		$text = preg_replace($pattern, $replace, $text);
 
-		preg_match_all(self::$searchopentags, $text, $matchesopentags);
 		preg_match_all(self::$searchclosetags, $text, $matchesclosetags);
+		preg_match_all(self::$searchopentags, $text, $matchesopentags);
 		preg_match_all(self::$searchoptions, $text, $matchesoptions);
-	
+
 		$opentags = $matchesopentags[3];
 		$opentagskeys = array_flip($opentags);
 
@@ -883,7 +884,7 @@ class BBCHelper {
 
 		array_walk($matchesopentags[4], create_function('&$v,$k', '$v = str_replace("=", "", $v);'));
 		$paramsopentags = $matchesopentags[4];
-		
+
 		$replaceOpentags = array();
 		foreach ($opentags as $k => $v) {
 			switch ($v) {
@@ -938,22 +939,16 @@ class BBCHelper {
 		if (count($opentags) != count($closetags)) {
 			return $text;
 		} else {
-			foreach ($paramsopentags as $k => $v) {
-				if ($v != '') {
-					$text = str_replace('='.$v, '%'.$k.'%', $text);
-				} else {
-					$text = str_replace('['.$opentags[$k].']', $replaceOpentags[$k], $text);
-				}
-			}
 			foreach ($opentags as $k => $v) {
-				$text = str_replace('['.$v.'%'.$k.'%]', $replaceOpentags[$k], $text);
+				$text = str_replace('['.$v.'='.$paramsopentags[$k].']', $replaceOpentags[$k], $text);
+				$text = str_replace('['.$v.']', $replaceOpentags[$k], $text);
 			}
 			foreach ($closetags as $k => $v) {
 				$text = isset($replaceClosetags[$v]) ? str_replace('['.$v.']', $replaceClosetags[$v], $text) : $text;
 			}
 		}
 
-		return $text;
+		return nl2br($text);
 		
 	}
 
@@ -3827,7 +3822,7 @@ class Template extends Init {
 				    }
 				}
 				# Restitution écran
-				echo Tools::correctAccents(html_entity_decode($output,ENT_NOQUOTES,CHARSET));	
+				echo html_entity_decode(Tools::correctAccents($output),ENT_NOQUOTES,CHARSET);	
 			}	
 	}
 	private function _loadCss() {
@@ -4117,7 +4112,7 @@ class Template extends Init {
 	}
 	private function setBreadcrumbsLinks() {
 		ob_start();
-		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?topic=<?php echo $this->get_topic?>"><i class="icon-megaphone"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="icon-pencil"></i>&nbsp;<?php echo EDIT?>
+		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?viewforum=<?php echo $this->get_topics?>&amp;topic=<?php echo $this->get_topic?>"><i class="icon-megaphone"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="icon-pencil"></i>&nbsp;<?php echo EDIT?>
 		<?php }else{if($this->get_conf){?><i class="icon-cog"></i>&nbsp;<?php echo CONFIG_OPTIONS?>
 		<?php }else{if($this->get_topics){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?viewforum=<?php echo $this->get_topics?>"><?php }?><i class="icon-chat-empty"></i>&nbsp;<?php echo $this->threads->getTitleCat($this->get_topics);if($this->get_topic){?></a></li><li><i class="icon-comment-empty"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic);?>
 		<?php }else{if($this->get_memberlist){?><i class="icon-user"></i>&nbsp;<?php echo MEMBERS?>
@@ -4128,7 +4123,7 @@ class Template extends Init {
 		<?php }else{?>
 		<?php }}}}}}}}} 
 		$links = ob_get_clean();
-		if(!empty($links)) return '<li>'.$links.'</li>';
+		if(!empty($links)) return '<li>'.Tools::correctAccents($links).'</li>';
 	}
 	private function setThreads() {
 		$t['nombreThreads'] = $this->threads->getCats();
@@ -4387,7 +4382,7 @@ class Template extends Init {
 			if($s = implode("", file(MU_THREAD.$this->whichDir($this->get_topic).'.dat'))) $topicObj = unserialize($s);
 			else return false;
 			$reply=$topicObj->getReply($this->get_editpost);
-			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$reply->content);
+			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',Tools::correctAccents($reply->content));
 			$r->name= CHANGE;
 			$r->edit=1;
 		} else {
