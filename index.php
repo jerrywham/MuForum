@@ -154,6 +154,11 @@ class Tools {
 		    $str = preg_replace('#\&[^;]+\;#', '', $str); # supprime les autres caractères
 		    return $str;
 	}
+	public static function correctAccents($str,$charset='utf-8') {
+		$str = preg_replace('#\&amp\;([A-za-z])(acute|cedil|circ|grave|ring|tilde|uml|uro)\;#', '&$1$2;', $str);
+		$str = preg_replace('#\&amp\;([A-za-z]{2})(?:lig)\;#', '&$1$2', $str); # pour les ligatures e.g. '&oelig;'
+		return $str;
+	}
 	/**
 	 * Méthode qui convertit une chaine de caractères au format valide pour un nom de fichier
 	 *
@@ -3822,7 +3827,7 @@ class Template extends Init {
 				    }
 				}
 				# Restitution écran
-				echo html_entity_decode($output,ENT_NOQUOTES,CHARSET);	
+				echo Tools::correctAccents(html_entity_decode($output,ENT_NOQUOTES,CHARSET));	
 			}	
 	}
 	private function _loadCss() {
