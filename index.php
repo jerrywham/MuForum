@@ -63,7 +63,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','2.0');
+define('VERSION','2.1');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
@@ -320,6 +320,8 @@ class Tools {
 			★ Date picker (Inscription et édition du profil). 
 			★ Méta description pour le SEO.[/c]",
 			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum multithread est basé sur des fichiers uniquement (pas de base de données sql).  <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
+			'FORUM_RULES' => 'Règles du forum',
+			'FORUM_RULES_TXT' => '',
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
 			'GENERAL_PARAM' => 'Paramètres Généraux',
@@ -830,8 +832,11 @@ class BBCHelper {
 		$aSmileys = array_keys(Tools::$names);
 		$smileys='';
 		$s=array(':)',';)',':D',':|',':(','8(',':p',':$','->'); // smileys
-		for($i=0;$i<sizeof($s);$i++) { $smileys .= "<li><a href=\"javascript:insert(' ".$s[$i]." ','',$id);\" title='".$s[$i]."'>".Tools::img($aSmileys[$i])."</a></li>"; }
+		for($i=0;$i<sizeof($s);$i++) { $smileys .= "<li><a href=\"javascript:insert(' ".$s[$i]." ','','".$id."');\" title='".$s[$i]."'>".Tools::img($aSmileys[$i])."</a></li>"; }
 		return $smileys;
+	}
+	public static function areaToFormat($id) {
+		return $id;
 	}
 	/**
 	*
@@ -2346,7 +2351,7 @@ class Topic extends SaveObj {
 			$this->time=time();
 			$this->mkdirThread($this->time);
 			$this->name=MU_THREAD.$this->whichDir($this->time).'.dat';
-			$this->addReply($auth,$content,$this->time,$attach);
+			$this->addReply($auth,utf8_encode(strip_tags($content)),$this->time,$attach);
 			$this->title=Tools::clean($title);
 			$this->type=$type;
 			$this->auth=$auth;
@@ -2372,7 +2377,7 @@ class Topic extends SaveObj {
 		$this->topics[$time]->time = $ltime;
 		$this->topics[$time]->attach = $attach;
 		$this->topics[$time]->type = $type;
-		$this->topics[$time]->post = $post;
+		$this->topics[$time]->post = utf8_encode(strip_tags($post));
 		$this->topics[$time]->last = $last;
 		$this->topics[$time]->attach = $attach;
 		$this->saveObj($this);
@@ -2384,7 +2389,7 @@ class Topic extends SaveObj {
 		if (!isset($this->reply[$id])) {$this->reply[$id] = new stdClass;}
 		$this->reply[$id]->auth =$auth;
 		$this->reply[$id]->time =$time;
-		$this->reply[$id]->content = $content;
+		$this->reply[$id]->content = utf8_encode(strip_tags($content));
 		$this->reply[$id]->attach =$attach;
 		$this->saveObj($this);
 		$stat = new Stat();
@@ -2811,7 +2816,7 @@ class Init {
 		*
 		* GET & POST
 		*/
-		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum');
+		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum','rules');
 
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
@@ -3123,9 +3128,13 @@ class Init {
 				$config .="\$gzip='".$this->gzip."';\n";
 				$config .="\$siteBase='".MU_BASE_URL."'\n?>";
 				file_put_contents('config.php', utf8_encode($config));
-				if(empty($message) && file_exists('welcome.txt')) @unlink('welcome.txt');
+				if(empty($message) && file_exists(MU_THREAD.'welcome.txt')) @unlink(MU_THREAD.'welcome.txt');
 				else {
-					file_put_contents('welcome.txt', stripslashes($message));
+					file_put_contents(MU_THREAD.'welcome.txt', stripslashes($message));
+				}
+				if(empty($rules) && file_exists(MU_THREAD.'rules.txt')) @unlink(MU_THREAD.'rules.txt');
+				else {
+					file_put_contents(MU_THREAD.'rules.txt', stripslashes($rules));
 				}
 				if (empty($this->errors)) {
 					$this->session->setMsg(MSG_DATA_REC);
@@ -3881,10 +3890,24 @@ class Template extends Init {
 		$buf='<!-- Welcome text -->';
 		$buf.='<h4 class="forms-section">'.INFORMATION.'</h4>
 	          <div class="lead">';
-		if(!$wtp=@file_get_contents('welcome.txt')) {
+		if(!$wtp=@file_get_contents(MU_THREAD.'welcome.txt')) {
 			$buf.= WELCOME_TXT;
 		} else {
 			$buf .= BBCHelper::decode(nl2br($wtp)).'</div>';
+		}
+		return $buf;
+	}
+	/**
+	* REGLES DU FORUM
+	*/
+	public function rulesText() {
+		$buf='<!-- Rules text -->';
+		$buf.='<h4 class="forms-section">'.FORUM_RULES.'</h4>
+	          <div class="lead">';
+		if(!$rtxt=@file_get_contents(MU_THREAD.'rules.txt')) {
+			$buf.= FORUM_RULES_TXT;
+		} else {
+			$buf .= BBCHelper::decode(nl2br($rtxt)).'</div>';
 		}
 		return $buf;
 	}
@@ -4440,24 +4463,24 @@ END;
 		}
 	}
 
-	public function formattingHelp() {
+	public function formattingHelp($id='message') {
 		$string =<<<END
 		<!--<p class="forms-inline"><label><?php //echo SMILEY?></label></p>-->
 		<ul class="forms-inline-list">
-			<?php echo BBCHelper::formattingHelp(); ?>
+			<?php echo BBCHelper::formattingHelp(\$id); ?>
 		</ul>
 		<p class="clear">&nbsp;</p>
 		<!--<p><label><?php echo FORMATING?></label></p>-->
 		<ul class="forms-inline btn-group"> 
-		   <li><a class="btn" href="javascript:insert('[b]','[/b]')" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[i]','[/i]')" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[u]','[/u]')" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[s]','[/s]')" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[quote=]','[/quote]')" rel="tooltip" title="<?php echo QUOTE?> ([q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q])"><i class="icon-chat-empty"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[c]','[/c]')" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[url=]','[/url]')" rel="tooltip" title="<?php echo LINK?> ([url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url])"><i class="icon-link"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[img=]','[/img]')" rel="tooltip" title="<?php echo PICTURE?> ([img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img])"><i class="icon-picture"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[youtube=]','[/youtube]')" rel="tooltip" title="<?php echo VIDEO?> ([youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/yoube])"><i class="icon-video"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[b]','[/b]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[i]','[/i]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[u]','[/u]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[s]','[/s]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[quote=]','[/quote]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo QUOTE?> ([q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q])"><i class="icon-chat-empty"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[c]','[/c]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[url=]','[/url]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo LINK?> ([url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url])"><i class="icon-link"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[img=]','[/img]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo PICTURE?> ([img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img])"><i class="icon-picture"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[youtube=]','[/youtube]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo VIDEO?> ([youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/yoube])"><i class="icon-video"></i></a></li>
 		</ul><!-- /btn-group --> 
 		<p class="clear">&nbsp;</p>
 END;
@@ -4835,7 +4858,7 @@ END;
 	*/
 	public function showThreads() {
 		$string =<<<END
-<?php if (!empty(\$_GET) || \$this->cLogin) include(dirname(__FILE__).'/header.php');
+<?php include(dirname(__FILE__).'/header.php');
 	\$t = \$this->setThreads();
 	foreach (\$t['aMainPositions'] as \$id => \$c) {?>
 	
@@ -4889,7 +4912,7 @@ END;
 		</table>
 	<?php }
 	if(\$this->isAdmin) :\$this->recThreadsForm();endif;
-	if (!empty(\$_GET) || \$this->cLogin) {include(dirname(__FILE__).'/footer.php');} ?>
+	include(dirname(__FILE__).'/footer.php'); ?>
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'showThreads.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'showThreads.php', $string);
@@ -5502,7 +5525,8 @@ END;
 <?php include(dirname(__FILE__).'/header.php');
 		\$this->searchDirFile();
 		\$this->searchDirFile(MU_LANG,'file');
-		if(!\$wtp=@file_get_contents('welcome.txt')) \$wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));?>
+		if(!\$wtp=@file_get_contents(MU_THREAD.'welcome.txt')) \$wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));
+		if(!\$rules=@file_get_contents(MU_THREAD.'rules.txt')) \$rules='';?>
 		
 		<!-- Edit config form -->
 		<h2 class="forms-section"><?php echo CONFIG_OPTIONS?></h2>
@@ -5548,6 +5572,8 @@ END;
 				</p>
 					<?php echo \$this->formattingHelp()?>
 				<p class="forms-inline"><?php echo Tools::textarea(WELCOME_MSG, 'message', \$wtp, '40', '20', '', '', '', 'width-70')?></p>
+					<?php echo \$this->formattingHelp('rules')?>
+				<p class="forms-inline"><?php echo Tools::textarea(FORUM_RULES, 'rules', \$rules, '40', '20', '', '', '', 'width-70')?></p>
 				<p class="text-right">
 					<button type="submit" class="btn btn-green"><i class="icon-right-hand"></i>&nbsp;<?php echo REC?></button>
 				</p>
