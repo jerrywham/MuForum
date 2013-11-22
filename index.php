@@ -156,8 +156,8 @@ class Tools {
 	}
 	public static function correctAccents($str,$charset='utf-8') {
 		$str = preg_replace('#\&amp\;([A-za-z])(acute|cedil|circ|grave|ring|tilde|uml|uro)\;#', '&$1$2;', $str);
-		$str = preg_replace('#\&amp\;([A-za-z]{2})(?:lig)\;#', '&$1$2', $str); # pour les ligatures e.g. '&oelig;'
-		$str = preg_replace('#\&amp\;([A-za-z]{5})\;#', '&$1$2', $str); # pour les lettres comme µ
+		$str = preg_replace('#\&amp\;([A-za-z]{2})(?:lig)\;#', '&$1$2;', $str); # pour les ligatures e.g. '&oelig;'
+		$str = preg_replace('#\&amp\;([A-za-z]{5})\;#', '&$1$2;', $str); # pour les lettres comme µ
 		return $str;
 	}
 	/**
@@ -852,10 +852,17 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 	 *
 	**/
 	public static function clean($text) {
+
+		//iconv('iso-8859-1', 'utf-8', $text);
 		$text = utf8_encode(htmlentities($text));
+		$text = preg_replace('{^\xEF\xBB\xBF|\x1A}', '', $text); 
+		$text = str_replace("\0", '', $text);
 		if(get_magic_quotes_gpc())
 			$text = stripslashes($text);
-		return htmlspecialchars(trim($text), ENT_QUOTES | ENT_DISALLOWED,CHARSET);
+		$text = self::correctAccents(htmlspecialchars(trim($text), ENT_QUOTES | ENT_DISALLOWED,CHARSET));
+		$text = str_replace('Â�', '', $text);
+
+		return $text;
 	}
 }
 /**
@@ -893,8 +900,6 @@ class BBCHelper {
 	* PARSER BBcode 
 	*/
 	public static function bbCode($text, $summary = false) {
-
-		$text = preg_replace('{^\xEF\xBB\xBF|\x1A}', '', $text); 
 
 	    /* smiley */
 	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
@@ -5225,7 +5230,7 @@ END;
 			<div class="gradient">
 			<?php if(\$this->isAdmin || \$this->cLogin == \$topic->auth):?>
 
-				<form action="index.php?topic=<?php \$this->topicId()?>" name="sub" method="post" class="forms-inline" id="form-title">
+				<form action="index.php?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php \$this->topicId()?>" name="sub" method="post" class="forms-inline" id="form-title">
 					<input type="hidden" name="topicID" value="<?php \$this->topicId()?>" />
 					<?php if(\$this->isAdmin): ?>
 
