@@ -4,7 +4,7 @@
 #
 # This file is part of µForum project: http://uforum.ecyseo.net
 #
-# @update     2013-10-21
+# @update     2013-11-22
 # @copyright  2013 Cyril MAGUIRE and contributors (Special Thanks to Stephen Taylor http://stephentaylor.x10.mx)
 # @copyright  2011-2013  Frédéric Kaplon and contributors
 # @copyright   ~   2008  Okkin  Avetenebrae
@@ -63,7 +63,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','2.1');
+define('VERSION','2.2');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
