@@ -5298,7 +5298,7 @@ END;
 
 							</td>
 							<td>
-					<?php if(\$this->isAdmin || (\$this->cLogin == \$reply->auth && \$cnt== 0)) :?>
+					<?php if(\$this->isAdmin || (\$this->cLogin == \$reply->auth)) :?>
 						
 								<a class="btn btn-small" href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
 									<i class="icon-pencil"></i> <?php echo EDIT?>
@@ -5306,12 +5306,6 @@ END;
 									<i class="icon-trash"></i> <?php echo DEL?>
 								</a>&nbsp;<a class="btn btn-small" href="javascript:switchLayer('form');" title="<?php echo ANSWER?>">
 									<i class="icon-megaphone"></i> <?php echo ANSWER?>
-								</a>
-					<?php endif;
-					if(\$this->cLogin && \$this->cLogin == \$reply->auth && !\$this->isAdmin) :?>
-						
-								<a class="btn btn-small" href="?viewforum=<?php echo \$this->get_topics ?>&amp;topic=<?php echo \$this->get_topic?>&amp;editpost=<?php echo \$reply->time?>&amp;page=<?php echo \$this->page?>" title="<?php echo EDIT?>">
-									<i class="icon-pencil"></i> <?php echo EDIT?>
 								</a>
 					<?php endif;	
 					if(\$this->cLogin && \$this->cLogin != \$reply->auth && !\$this->isAdmin) :?>
