@@ -82,7 +82,7 @@ TODO
 - [x] ~~En mode libre, prévoir un mode lecture seule (le topics sont visibles mais il faut être inscrit pour répondre ou créer un nouveau sujet)~~
 - [ ] lien pour signaler un post à l'administrateur/aux modérateurs
 - [ ] bannissement de membres par l'administrateur/les modérateurs
-- [ ] règles de fonctionnement : ajouter la possibilité de les rédiger dans la partie administration
+- [x] ~~règles de fonctionnement : ajouter la possibilité de les rédiger dans la partie administration~~
 - [x] ~~nombre de réponses par topic (nbMsg - 1)~~
 - [ ] supprimer la possibilité d'importer des fichiers autres que les avatars afin de conserver l'espace sur le disque et éviter les pb de sécurité liés
 - [ ] ajouter la possibilité de fermer un fils de discussion
