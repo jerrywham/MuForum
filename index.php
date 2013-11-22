@@ -321,7 +321,45 @@ class Tools {
 			★ Méta description pour le SEO.[/c]",
 			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum multithread est basé sur des fichiers uniquement (pas de base de données sql).  <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
 			'FORUM_RULES' => 'Règles du forum',
-			'FORUM_RULES_TXT' => '',
+			'FORUM_RULES_TXT' => '[b][u]Conditions d\'utilisation des forums[/u][/b]
+
+[b]Propos racistes[/b] :
+Les propos racistes ne sont pas tolérés sur le forum, sous aucune forme.
+
+[b]Propos agressifs, vulgaires & injurieux[/b] :
+Merci d\'utiliser un langage correct et respectable sur le forum, tout abus sera sanctionné.
+
+[b]Propos diffamatoires[/b] :
+Les propos diffamatoires ne sont pas tolérés sur le forum.
+
+[b]Piratage & Hacking[/b] :
+Il est interdit d\'inciter au piratage et au hacking sur le forum, par quelque biais que ce soit.
+
+[b]Charme & Pornographie[/b] :
+La pornographie n\'est pas tolérée sur le forum. Des textes ou images évoquant l\'érotisme ou la nudité sont acceptés uniquement sur les topics clairement identifiés comme pouvant héberger ce type de contenu, et créés par des administrateurs du forum.
+
+[b]Freepost[/b] :
+Le freepost (« parler pour ne rien dire ») est toléré, mais merci de ne pas en abuser de manière systématique.
+
+[b]Signature dans les messages[/b] :
+Les signatures affichées dans vos messages sont tolérées, à partir du moment où elles ne vont pas à l\'encontre de la bonne lisibilité du forum. Si un modérateur vous demande de la modifier ou de la réduire, merci de le faire. Les signatures répondent aux mêmes règles que les messages en terme de modération.
+
+[b]Discussions politiques[/b] :
+Les discussions tournant autour de la politique sont acceptées, à partir du moment où vous faites preuve d\'ouverture d\'esprit, que vous n\'entravez pas les débats, et que vous ne faites pas de propagande systématique.
+
+[b]Discussions sur les religions[/b] :
+Les discussions axées sur la religion sont tolérées à partir du moment où elles sont posées, et respectueuses de toutes les opinions et de tous les cultes. Le prosélytisme n\'est en aucun cas toléré sur le forum.
+
+[b]Langage SMS & Majuscule[/b]s :
+[u]Le langage SMS est à proscrire[/u]. Merci d\'utiliser un français correct et de ne pas abuser d\'abréviations. Merci aussi de faire autant que possible attention à l\'orthographe, à la grammaire et à la ponctuation.
+Inversement, merci aux intégristes de la langue française de ne pas agresser les internautes ayant une orthographe bancale, et de les aider cordialement. Merci de ne pas rédiger vos titres et messages en majuscules.
+
+[b]Multi-Comptes[/b] :
+L\'utilisation de plusieurs comptes est à éviter, merci donc de n\'utiliser qu\'un seul compte.
+
+[b]Publicité[/b] :
+La publicité n\'est pas acceptée sur les forums, que ce soit pour des sites commerciaux ou personnels. Après un certain temps passé sur les forums, vous pouvez évoquer vos blogs ou sites persos, si ses évocations restent dans le sujet des topics auxquels vous participez. Si un topic dédié à la publicité existe, vous pouvez y faire la votre.
+Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le système pyramidal ne sont en aucun cas tolérés sur les forums. Merci donc de ne pas les relayer.',
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
 			'GENERAL_PARAM' => 'Paramètres Généraux',
@@ -511,6 +549,11 @@ class Tools {
 			'TXT_REPLACEMENT' => 'Texte de remplacement',
 			'URL' => 'URL',
 			'SRC' => 'Source',
+			'LEVEL' => 'Quel est le niveau du titre (de 1 à 4) ?',
+			'WHO' => 'Quel est l\\\'auteur de la citation ?',
+			'LINK_ADDRESS' => 'Quelle est l\\\'url du lien ?',
+			'LINK_PICTURE' => 'Quelle est l\\\'url  de l\\\'image ?',
+			'LINK_VIDEO' => 'Quelle est l\\\'url de la vidéo (de la forme //youtu.be/xxxxx) ?',
 
 			# Navigation
 			'LOGOUT' => 'Déconnexion',
@@ -832,7 +875,7 @@ class BBCHelper {
 		$aSmileys = array_keys(Tools::$names);
 		$smileys='';
 		$s=array(':)',';)',':D',':|',':(','8(',':p',':$','->'); // smileys
-		for($i=0;$i<sizeof($s);$i++) { $smileys .= "<li><a href=\"javascript:insert(' ".$s[$i]." ','','".$id."');\" title='".$s[$i]."'>".Tools::img($aSmileys[$i])."</a></li>"; }
+		for($i=0;$i<sizeof($s);$i++) { $smileys .= "<li><a href=\"javascript:insert(' ".$s[$i]." ','','".$id."',false,false);\" title='".$s[$i]."'>".Tools::img($aSmileys[$i])."</a></li>"; }
 		return $smileys;
 	}
 	public static function areaToFormat($id) {
@@ -850,6 +893,8 @@ class BBCHelper {
 	* PARSER BBcode 
 	*/
 	public static function bbCode($text, $summary = false) {
+
+		$text = preg_replace('{^\xEF\xBB\xBF|\x1A}', '', $text); 
 
 	    /* smiley */
 	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
@@ -900,10 +945,14 @@ class BBCHelper {
 					$replaceOpentags[] = '<blockquote><strong>'.$paramsopentags[$k].WROTE.'</strong><p class="text-quote">';
 					break;
 				case 'img':
-					$replaceOpentags[] = '<img class="thumbnail" src="'.$paramsopentags[$k].'" alt="';
+					if(!preg_match('%^((http|ftp)(s)?:)?\/\/%', $paramsopentags[$k])) {$src = 'http://'.$paramsopentags[$k];}
+					else {$src = $paramsopentags[$k];}
+					$replaceOpentags[] = '<img class="thumbnail" src="'.$src.'" alt="';
 					break;
 				case 'url':
-					$replaceOpentags[] = '<a href="'.$paramsopentags[$k].'" onclick="window.open(this.href);return false;">';
+					if(!preg_match('%^((http|ftp)(s)?:)?\/\/%', $paramsopentags[$k])) {$src = 'http://'.$paramsopentags[$k];}
+					else {$src = $paramsopentags[$k];}
+					$replaceOpentags[] = '<a href="'.$src.'" onclick="window.open(this.href);return false;">';
 					break;
 				case 'b':
 					$replaceOpentags[] = '<strong>';
@@ -923,6 +972,14 @@ class BBCHelper {
 				case 'e':
 					$replaceOpentags[] = '<p class="editby">'.EDIT_BY.' : ';
 					break;
+				case 'title':
+					$replaceOpentags[] = '<h'.$paramsopentags[$k].'>';
+					break;
+				case 'youtube':
+					if(!preg_match('%^http:\/\/youtu\.be\/%', $paramsopentags[$k])) {$src = 'http://youtu.be/'.$paramsopentags[$k];}
+					else {$src = $paramsopentags[$k];}
+					$replaceOpentags[] = '<div class="center"><iframe width="560" height="315" src="//www.youtube.com/embed/'.str_replace('http://youtu.be/','',$src).'" frameborder="0" allowfullscreen></iframe><br/><em><a href="'.$src.'" onclick="window.open(this.href);return false;">';
+					break;
 				default:
 					$replaceOpentags[] = '';
 			}
@@ -939,17 +996,22 @@ class BBCHelper {
 			'/i' => '</span>',
 			'/s' => '</del>',
 			'/e' => '</p>',
+			'/title' => '</h',
+			'/youtube' => '</a></em></div>',
 		);
 
 		if (count($opentags) != count($closetags)) {
 			return $text;
 		} else {
+			$niveau = '';
 			foreach ($opentags as $k => $v) {
+				if ($v == 'title') {$niveau = $paramsopentags[$k];}
 				$text = str_replace('['.$v.'='.$paramsopentags[$k].']', $replaceOpentags[$k], $text);
 				$text = str_replace('['.$v.']', $replaceOpentags[$k], $text);
 			}
 			foreach ($closetags as $k => $v) {
-				$text = isset($replaceClosetags[$v]) ? str_replace('['.$v.']', $replaceClosetags[$v], $text) : $text;
+				if ($v == '/titre' && !empty($niveau)) {$text = str_replace('['.$v.']', $replaceClosetags[$v].$niveau.'>', $text);}
+				else {$text = isset($replaceClosetags[$v]) ? str_replace('['.$v.']', $replaceClosetags[$v], $text) : $text;}
 			}
 		}
 
@@ -1977,13 +2039,17 @@ class Forum extends SaveObj {
 	}
 	public function delTopic($id) {
 		$t = $this->openTopic($id);
-		$nbMsg = $t->infos->posts;
+		if (is_object($t->infos)){
+			$nbMsg = $t->infos->posts;
+		} else {
+			$nbMsg = 0;
+		}
 		$t->removeTopic();
 		$t = unserialize(file_get_contents(MU_THREAD.'threads.dat'));
 		$t->removeTopicFromThreads($id);
 		$stat = new Stat();
 		$stat->updateStats('msg',-$nbMsg);
-		$stat->updateStats('threads',-1);
+		$stat->updateStats('topics',-1);
 		if (isset($this->topics[$id])) {unset($this->topics[$id]);return true;}
 		
 	}
@@ -2740,6 +2806,7 @@ class Init {
 	public $get_editprofil;
 	public $get_private;
 	public $get_restore;
+	public $get_viewrules;
 	public $showAll;
 	public $searchMember;
 	
@@ -2816,7 +2883,7 @@ class Init {
 		*
 		* GET & POST
 		*/
-		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum','rules');
+		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum','rules','viewrules');
 
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
@@ -3210,12 +3277,30 @@ class Init {
 					}
 				}
 			break;
+			case 'editpost':
+				if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$this->whichDir($topicID).'.dat')) {
+					if($s = implode('', file(MU_THREAD.$this->whichDir($topicID).'.dat'))) {
+						$message = Tools::clean($message);
+						$message = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$message);
+						$message = $message.'[e]'.$this->cLogin.' le '.date('d/m/Y \&\a\g\r\a\v\e\; H:i',time()).'[/e]';
+						$this->topicObj = unserialize($s);
+						$this->topicObj->setReply($postID,'',$message);
+						$this->topicObj->getInfo(0);
+						$topic=$topicID;
+						if(BBCHelper::verif($message,'viewforum='.$viewforum.'&topic='.$topicID.'&editpost='.$postID.'&page='.$this->page,$this->session)){
+							header('Location: ?viewforum='.$viewforum.'&topic='.$topic.'&page='.$this->page.'#p-'.$postID);
+							exit();
+						}
+					}
+				}
+			break;
 		}// Fin du switch
 		if (!empty($this->errors)) {
 			$this->session->setMsg($this->errors,'error');
 			header('Location: index.php');
 			exit();
 		}
+
 		/**
 		*
 		* TÂCHES ADMIN
@@ -3234,6 +3319,35 @@ class Init {
 					$this->session->setMsg($file.' : '.MSG_FILE_DEL);
 					header('Location: ?editprofil=1');
 					exit();
+				}
+			}
+		}
+		if ($delpost && $this->cLogin && !$this->isAdmin) {
+			if($topic==$delpost) {//Suppression de la totalité de la discussion
+				$this->topicObj = unserialize($s);
+				if ($this->threads->forum->topics[$topic]->auth == $this->cLogin) {
+					if($this->threads->forum->delTopic($topic)) {
+						$this->session->setMsg(MSG_DATA_DEL);
+						header('Location: index.php?viewforum='.$viewforum.'#msgFlash');
+						exit();
+					}
+				}
+			} else {//Suppression d'un message
+				if(is_file(MU_THREAD.$this->whichDir($topic).'.dat') && $s=implode('', file(MU_THREAD.$this->whichDir($topic).'.dat'))) {
+					$this->topicObj = unserialize($s);					
+					$r=$this->topicObj->getReply($delpost);
+					if ($r->auth == $this->cLogin) {
+						@unlink($r->attach);
+						$this->topicObj->removeReply($delpost);
+						$this->topicObj->getInfo(0);
+						if(ceil($this->topicObj->infos->posts/$this->nbMsgTopic) == 1 ) $this->page = 1;
+						$this->session->setMsg(MSG_DATA_DEL);
+						header('Location: ?viewforum='.$viewforum.'#msgFlash');
+						exit();
+					} else {
+						header('Location: ?viewforum='.$viewforum.'&topic='.$topic.'&page='.$this->page);
+						exit();
+					}
 				}
 			}
 		}
@@ -3306,6 +3420,7 @@ class Init {
 		$this->get_editprofil = $editprofil;
 		$this->get_private    = $private	;
 		$this->get_restore    = $restore;
+		$this->get_viewrules    = $viewrules;
 
 		if (is_object($this->threads)) {
 			$stats = $this->pagesMsg = $this->getStat();
@@ -3768,6 +3883,7 @@ class Template extends Init {
 				$this->editProfilForm();
 				$this->editConf();
 				$this->frestore();
+				$this->rules();
 				$this->footer();
 				$this->e404();
 				ob_get_clean();
@@ -3902,8 +4018,8 @@ class Template extends Init {
 	*/
 	public function rulesText() {
 		$buf='<!-- Rules text -->';
-		$buf.='<h4 class="forms-section">'.FORUM_RULES.'</h4>
-	          <div class="lead">';
+		$buf.='<h1>'.FORUM_RULES.'</h1>
+	          <div class="Box">';
 		if(!$rtxt=@file_get_contents(MU_THREAD.'rules.txt')) {
 			$buf.= FORUM_RULES_TXT;
 		} else {
@@ -4010,6 +4126,7 @@ class Template extends Init {
 				else if($this->get_private) $template = array('template'=>'replyForm-mp','options'=>$this->get_private);
 				else if($this->get_restore) $template['template'] = 'frestore';
 				else if($this->get_topics) $template['template'] = 'showTopics';
+				else if($this->get_viewrules) $template['template'] = 'showRules';
 				// MODE LIBRE
 				else if(!$this->forumMode && !$this->isMember) $template['template'] = 'content';
 				#on est connecté, alors on affiche uniquement la liste des forums
@@ -4077,6 +4194,10 @@ class Template extends Init {
 				$this->active = 'forums';
 				$this->showThreads();
 				break;
+			case 'showRules':
+				$this->active = 'rules';
+				$this->showRules();
+				break;
 		}
 	}
 	private function setFooter($stats) {
@@ -4135,6 +4256,8 @@ class Template extends Init {
 	}
 	private function setBreadcrumbsLinks() {
 		ob_start();
+		if($this->get_viewrules){?><i class="icon-bell"></i>&nbsp;<?php echo FORUM_RULES?>
+		<?php }
 		if($this->get_editpost){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?viewforum=<?php echo $this->get_topics?>&amp;topic=<?php echo $this->get_topic?>"><i class="icon-megaphone"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic)?></a></li><li><?php }?><i class="icon-pencil"></i>&nbsp;<?php echo EDIT?>
 		<?php }else{if($this->get_conf){?><i class="icon-cog"></i>&nbsp;<?php echo CONFIG_OPTIONS?>
 		<?php }else{if($this->get_topics){if($this->get_topic){?><a href="<?php echo MU_BASE_URL;?>?viewforum=<?php echo $this->get_topics?>"><?php }?><i class="icon-chat-empty"></i>&nbsp;<?php echo $this->threads->getTitleCat($this->get_topics);if($this->get_topic){?></a></li><li><i class="icon-comment-empty"></i>&nbsp;<?php echo $this->threads->forum->getPostsTitle($this->get_topic);?>
@@ -4472,15 +4595,16 @@ END;
 		<p class="clear">&nbsp;</p>
 		<!--<p><label><?php echo FORMATING?></label></p>-->
 		<ul class="forms-inline btn-group"> 
-		   <li><a class="btn" href="javascript:insert('[b]','[/b]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[i]','[/i]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[u]','[/u]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[s]','[/s]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[quote=]','[/quote]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo QUOTE?> ([q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q])"><i class="icon-chat-empty"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[c]','[/c]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[url=]','[/url]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo LINK?> ([url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url])"><i class="icon-link"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[img=]','[/img]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo PICTURE?> ([img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img])"><i class="icon-picture"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[youtube=]','[/youtube]','<?php echo BBCHelper::areaToFormat(\$id)?>')" rel="tooltip" title="<?php echo VIDEO?> ([youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/yoube])"><i class="icon-video"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[title=','[/title]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LEVEL?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo TITLE?> ( [title=1,2,3,4]<?php echo TXT_REPLACEMENT?>[/title] )"><i class="icon-angle-up"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[b]','[/b]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[i]','[/i]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[u]','[/u]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[s]','[/s]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[quote=','[/quote]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo WHO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo QUOTE?> ( [q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q] )"><i class="icon-chat-empty"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[c]','[/c]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[url=','[/url]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_ADDRESS?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo LINK?> ( [url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url] )"><i class="icon-link"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[img=','[/img]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_PICTURE?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo PICTURE?> ( [img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img] )"><i class="icon-picture"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[youtube=','[/youtube]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_VIDEO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo VIDEO?> ( [youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/youtube] )"><i class="icon-video"></i></a></li>
 		</ul><!-- /btn-group --> 
 		<p class="clear">&nbsp;</p>
 END;
@@ -4812,6 +4936,7 @@ END;
 			<li><a href="?memberlist=1" title="<?php echo LIST_OF_MEMBERS;?>"><i class="icon-user"></i> <?php echo MEMBERS;?></a></li>
 			<?php if(!\$this->isOwner) :?>
 
+			<li><a href="?viewrules=1" title="<?php echo FORUM_RULES;?>"><i class="icon-bell"></i> <?php echo FORUM_RULES;?></a></li>
 			<li><a href="index.php" title="<?php echo HOME;?>"><i class="icon-home"></i> <?php echo FORUMS;?></a></li>
 			<?php endif;?>
 		<?php else :?>
@@ -4843,6 +4968,7 @@ END;
 			<li><a href="?conf=1" title="<?php echo GENERAL_PARAM;?>"><i class="icon-wrench"></i> <?php echo CONFIG;?></a></li>
 			<li><a href="?backup=1" title="<?php echo SAVE_BACKUP;?>"><i class="icon-floppy"></i> <?php echo SAVE;?></a></li>
 			<li><a href="?restore=1" title="<?php echo RESTORE_FROM_BACKUP;?>"><i class="icon-ccw"></i> <?php echo RESTORE;?></a></li>
+			<li><a href="?viewrules=1" title="<?php echo FORUM_RULES;?>"><i class="icon-bell"></i> <?php echo FORUM_RULES;?></a></li>
 			<li><a href="index.php" title="<?php echo HOME;?>"><i class="icon-home"></i> <?php echo FORUMS;?></a></li>
 <?php endif;?>
 END;
@@ -5584,6 +5710,19 @@ END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'editConf.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'editConf.php', $string);
 		}
+	}
+	/**
+	* FORMULAIRE DE RESTAURATION DE LA SAUVEGARDE
+	*/
+	public function showRules() {
+		$string =<<<END
+<?php include(dirname(__FILE__).'/header.php');
+\$this->rulesText();
+include(dirname(__FILE__).'/footer.php'); ?>
+END;
+		if (!is_file(MU_THEMES.$this->theme.DS.'showRules.php')) {
+			file_put_contents(MU_THEMES.$this->theme.DS.'showRules.php', $string);
+		} 
 	}
 }
 /**
