@@ -3888,7 +3888,7 @@ class Template extends Init {
 				$this->editProfilForm();
 				$this->editConf();
 				$this->frestore();
-				$this->rules();
+				$this->showRules();
 				$this->footer();
 				$this->e404();
 				ob_get_clean();
