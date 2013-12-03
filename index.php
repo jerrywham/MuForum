@@ -58,6 +58,7 @@ define('MU_UPLOAD', MU_ROOT.'upload'.DS);
 * Fixe les date en Français
 */
 define('CHARSET','UTF-8');
+define('REPLACE_FLAGS',ENT_QUOTES | ENT_DISALLOWED);
 setlocale(LC_TIME, 'fr_FR.utf8','fra');
 date_default_timezone_set('Europe/Paris');
 /*
@@ -859,10 +860,14 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 		$text = str_replace("\0", '', $text);
 		if(get_magic_quotes_gpc())
 			$text = stripslashes($text);
-		$text = self::correctAccents(htmlspecialchars(trim($text), ENT_QUOTES | ENT_DISALLOWED,CHARSET));
+		$text = self::correctAccents(self::_html(trim($text)));
 		$text = str_replace('Â�', '', $text);
 
 		return $text;
+	}
+
+	public static function _html($string) {
+		return htmlspecialchars($string, REPLACE_FLAGS, CHARSET);
 	}
 }
 /**
