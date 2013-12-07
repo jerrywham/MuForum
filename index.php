@@ -64,7 +64,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','2.3');
+define('VERSION','2.4');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
@@ -142,6 +142,19 @@ class Tools {
 		$str = strtolower(self::removeAccents($str,CHARSET));
 		$str = preg_replace('/[^[:alnum:]]+/',' ',$str);
 		return strtr(trim($str), ' ', '-');
+	}
+	/**
+	 * Méthode qui retourne le nom du navigateur utilisé
+	 */
+	public static function getUserAgent() {
+		$nav = array('Chrome','Trident','Opera','Firefox');
+		foreach ($nav as $key => $value) {
+			if (strpos($_SERVER['HTTP_USER_AGENT'], $value) !== false) {
+				if ($value == 'Trident') $value = 'IE';
+				return $value;
+			}
+		}
+		return false; 
 	}
 	/**
 	*
@@ -4227,10 +4240,11 @@ class Template extends Init {
 	 * INITIALISATION DES VARIABLES DU FORMULAIRE DE SOUSCRIPTION
 	 */
 	private function setRegistrationForm($form=array()) {
+		$nav = Tools::getUserAgent();
 		//input($label, $name, $value, $type, $placeholder, $maxlength, $readonly, $class, $icon, $require,onclick)
 		$form['userLogin'] = Tools::input(USER_LOGIN, 'login', '', 'text', '', '20', '', 'width-30 input-success', 'icon-user', 'success');
 		$form['password'] = Tools::input(PASSWORD, 'password', '', 'password', '', '50', '', 'width-30 input-success', 'icon-lock', 'success');
-		$form['birthday'] = Tools::input(BIRTHDAY, 'birthday', '', 'date', 'Jour/Mois/Année', '10', true, 'width-20 input-success', 'icon-calendar', 'success','ds_sh(this)','ds_sh(this)');
+		$form['birthday'] = Tools::input(BIRTHDAY, 'birthday', '', 'date', 'Jour/Mois/Année', '10', ($nav != 'Chrome' ? true : false), 'width-20 input-success', 'icon-calendar', 'success',($nav != 'Chrome' ? 'ds_sh(this)':''),($nav != 'Chrome' ? 'ds_sh(this)':''));
 		$form['email'] = Tools::input(EMAIL, 'email', '', 'email', '', '50', '', 'width-30 input-success', 'icon-mail', 'success');
 		$form['website'] = Tools::input(WEBSITE, 'site', '', 'url', 'http://', '255', '', 'width-30', 'icon-globe');
 		$form['signature'] = Tools::textarea(SIGNATURE, 'signature', '', '10', '2', SIGNATURE_MSG, '150', '', 'signature width-70');
@@ -4639,7 +4653,6 @@ END;
 
     <link rel="icon" href="<?php echo Tools::img('icon','',true);?>" />
 	<base href="<?php echo MU_BASE_URL; ?>" />
-	<link rel="stylesheet" type="text/css" href="<?php echo MU_BASE_URL.MU_URL_THEMES.\$this->theme; ?>/css/style_<?php echo \$this->cStyle; ?>.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="<?php echo MU_BASE_URL.'?css='.MU_URL_THEMES.\$this->theme; ?>/css/main.css" media="screen"/>
     <link rel="stylesheet" type="text/css" href="<?php echo MU_BASE_URL.MU_URL_THEMES.\$this->theme; ?>/css/print.css" media="print"/>
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
