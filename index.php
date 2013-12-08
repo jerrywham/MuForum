@@ -58,7 +58,7 @@ define('MU_UPLOAD', MU_ROOT.'upload'.DS);
 * Fixe les date en Français
 */
 define('CHARSET','UTF-8');
-define('REPLACE_FLAGS',ENT_QUOTES | ENT_DISALLOWED);
+define('REPLACE_FLAGS',ENT_QUOTES);
 setlocale(LC_TIME, 'fr_FR.utf8','fra');
 date_default_timezone_set('Europe/Paris');
 /*
@@ -4614,21 +4614,21 @@ END;
 		$string =<<<END
 		<!--<p class="forms-inline"><label><?php //echo SMILEY?></label></p>-->
 		<ul class="forms-inline-list">
-			<?php echo BBCHelper::formattingHelp(\$id); ?>
+			<?php echo BBCHelper::formattingHelp('\$id'); ?>
 		</ul>
 		<p class="clear">&nbsp;</p>
 		<!--<p><label><?php echo FORMATING?></label></p>-->
 		<ul class="forms-inline btn-group"> 
-		   <li><a class="btn" href="javascript:insert('[title=','[/title]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LEVEL?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo TITLE?> ( [title=1,2,3,4]<?php echo TXT_REPLACEMENT?>[/title] )"><i class="icon-angle-up"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[b]','[/b]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[i]','[/i]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[u]','[/u]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[s]','[/s]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[quote=','[/quote]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo WHO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo QUOTE?> ( [q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q] )"><i class="icon-chat-empty"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[c]','[/c]','<?php echo BBCHelper::areaToFormat($id)?>',false,false)" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[url=','[/url]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_ADDRESS?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo LINK?> ( [url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url] )"><i class="icon-link"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[img=','[/img]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_PICTURE?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo PICTURE?> ( [img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img] )"><i class="icon-picture"></i></a></li>
-		   <li><a class="btn" href="javascript:insert('[youtube=','[/youtube]','<?php echo BBCHelper::areaToFormat($id)?>','<?php echo LINK_VIDEO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo VIDEO?> ( [youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/youtube] )"><i class="icon-video"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[title=','[/title]','<?php echo BBCHelper::areaToFormat('$id')?>','<?php echo LEVEL?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo TITLE?> ( [title=1,2,3,4]<?php echo TXT_REPLACEMENT?>[/title] )"><i class="icon-angle-up"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[b]','[/b]','<?php echo BBCHelper::areaToFormat('$id')?>',false,false)" rel="tooltip" title="<?php echo BOLD?>"><i class="icon-bold"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[i]','[/i]','<?php echo BBCHelper::areaToFormat('$id')?>',false,false)" rel="tooltip" title="<?php echo ITALIC?>"><i class="icon-italic"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[u]','[/u]','<?php echo BBCHelper::areaToFormat('$id')?>',false,false)" rel="tooltip" title="<?php echo UNDERLINE?>"><i class="icon-underline"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[s]','[/s]','<?php echo BBCHelper::areaToFormat('$id')?>',false,false)" rel="tooltip" title="<?php echo STROKE_THROUGH?>"><i class="icon-strike"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[quote=','[/quote]','<?php echo BBCHelper::areaToFormat('$id')?>','<?php echo WHO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo QUOTE?> ( [q=<?php echo AUTHOR?>]<?php echo TXT_REPLACEMENT?>[/q] )"><i class="icon-chat-empty"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[c]','[/c]','<?php echo BBCHelper::areaToFormat('$id')?>',false,false)" rel="tooltip" title="<?php echo CODE?>"><i class="icon-code"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[url=','[/url]','<?php echo BBCHelper::areaToFormat('$id')?>','<?php echo LINK_ADDRESS?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo LINK?> ( [url=<?php echo URL?>]<?php echo TXT_REPLACEMENT?>[/url] )"><i class="icon-link"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[img=','[/img]','<?php echo BBCHelper::areaToFormat('$id')?>','<?php echo LINK_PICTURE?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo PICTURE?> ( [img=<?php echo SRC?>]<?php echo TXT_REPLACEMENT?>[/img] )"><i class="icon-picture"></i></a></li>
+		   <li><a class="btn" href="javascript:insert('[youtube=','[/youtube]','<?php echo BBCHelper::areaToFormat('$id')?>','<?php echo LINK_VIDEO?>','<?php echo TXT_REPLACEMENT?>')" rel="tooltip" title="<?php echo VIDEO?> ( [youtube=<?php SRC?>]<?php echo TXT_REPLACEMENT?>[/youtube] )"><i class="icon-video"></i></a></li>
 		</ul><!-- /btn-group --> 
 		<p class="clear">&nbsp;</p>
 END;
@@ -5007,7 +5007,8 @@ END;
 	*/
 	public function showThreads() {
 		$string =<<<END
-<?php include(dirname(__FILE__).'/header.php');
+<?php if (\$this->forumMode && \$this->cLogin) include(dirname(__FILE__).'/header.php');
+ if (!\$this->forumMode && \$this->cLogin) include(dirname(__FILE__).'/header.php');
 	\$t = \$this->setThreads();
 	foreach (\$t['aMainPositions'] as \$id => \$c) {?>
 	
@@ -5061,7 +5062,8 @@ END;
 		</table>
 	<?php }
 	if(\$this->isAdmin) :\$this->recThreadsForm();endif;
-	include(dirname(__FILE__).'/footer.php'); ?>
+	if (\$this->forumMode && \$this->cLogin) include(dirname(__FILE__).'/footer.php');
+	if (!\$this->forumMode && \$this->cLogin) include(dirname(__FILE__).'/footer.php');?>
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'showThreads.php')) {
 			file_put_contents(MU_THEMES.$this->theme.DS.'showThreads.php', $string);
