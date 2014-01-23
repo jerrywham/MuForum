@@ -172,7 +172,12 @@ class Tools {
 		$str = preg_replace('#\&amp\;([A-za-z])(acute|cedil|circ|grave|ring|tilde|uml|uro)\;#', '&$1$2;', $str);
 		$str = preg_replace('#\&amp\;([A-za-z]{2})(?:lig)\;#', '&$1$2;', $str); # pour les ligatures e.g. '&oelig;'
 		$str = preg_replace('#\&amp\;([A-za-z]{5})\;#', '&$1$2;', $str); # pour les lettres comme µ
-		return $str;
+		return html_entity_decode($str,ENT_NOQUOTES,CHARSET);
+	}
+	public static function displayAccents($str) {
+		$caracteres=array('é','è','ë','ê','à','â','ä','î','ï','ô','ö','û','ü','ù','É','È','Ë','Ê','À','Â','Ä','Î','Ï','Ô','Ö','Û','Ü','Ù');
+		$entities=array('&eacute;', '&egrave;','&euml;','&ecirc;','&agrave;','&acirc;','&auml;','&icirc;', '&iuml;','&ocirc;', '&ouml;','&ucirc;', '&uuml;','&ugrave;','&Eacute;', '&Egrave;','&Euml;','&Ecirc;','&Agrave;','&Acirc;','&Auml;','&Icirc;', '&Iuml;','&Ocirc;', '&Ouml;','&Ucirc;', '&Uuml;','&Ugrave;');
+		return str_replace($caracteres,$entities,$str);
 	}
 	/**
 	 * Méthode qui convertit une chaine de caractères au format valide pour un nom de fichier
@@ -683,6 +688,7 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 			'ERROR_CAT_TITLE' => 'Le nom de la catégorie ne peut pas être vide',
 			'ERROR_CAT_TYPE' => 'La catégorie principale est erronée',
 			'PAGE_NOT_FOUND' => 'La page que vous demandez n\'existe pas ou n\'existe plus',
+			'ERROR_INVALID_BIRTHDAY' => 'Format de date de naissance invalide',
 
 			# Temps
 			'DAY' => 'Jour',
@@ -867,8 +873,7 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 	**/
 	public static function clean($text) {
 
-		//iconv('iso-8859-1', 'utf-8', $text);
-		$text = utf8_encode(htmlentities($text));
+		$text = utf8_encode(htmlentities($text,ENT_NOQUOTES,'UTF-8'));
 		$text = preg_replace('{^\xEF\xBB\xBF|\x1A}', '', $text); 
 		$text = str_replace("\0", '', $text);
 		if(get_magic_quotes_gpc())
@@ -1037,7 +1042,7 @@ class BBCHelper {
 				else {$text = isset($replaceClosetags[$v]) ? str_replace('['.$v.']', $replaceClosetags[$v], $text) : $text;}
 			}
 		}
-
+		
 		return nl2br($text);
 		
 	}
@@ -2440,7 +2445,7 @@ class Topic extends SaveObj {
 			$this->time=time();
 			$this->mkdirThread($this->time);
 			$this->name=MU_THREAD.$this->whichDir($this->time).'.dat';
-			$this->addReply($auth,utf8_encode(strip_tags($content)),$this->time,$attach);
+			$this->addReply($auth,$content,$this->time,$attach);
 			$this->title=Tools::clean($title);
 			$this->type=$type;
 			$this->auth=$auth;
@@ -2466,7 +2471,7 @@ class Topic extends SaveObj {
 		$this->topics[$time]->time = $ltime;
 		$this->topics[$time]->attach = $attach;
 		$this->topics[$time]->type = $type;
-		$this->topics[$time]->post = utf8_encode(strip_tags($post));
+		$this->topics[$time]->post = htmlentities(strip_tags($post),ENT_NOQUOTES,'UTF-8');
 		$this->topics[$time]->last = $last;
 		$this->topics[$time]->attach = $attach;
 		$this->saveObj($this);
@@ -2478,7 +2483,7 @@ class Topic extends SaveObj {
 		if (!isset($this->reply[$id])) {$this->reply[$id] = new stdClass;}
 		$this->reply[$id]->auth =$auth;
 		$this->reply[$id]->time =$time;
-		$this->reply[$id]->content = utf8_encode(strip_tags($content));
+		$this->reply[$id]->content = htmlentities(strip_tags($content),ENT_NOQUOTES,'UTF-8');
 		$this->reply[$id]->attach =$attach;
 		$this->saveObj($this);
 		$stat = new Stat();
@@ -2503,7 +2508,7 @@ class Topic extends SaveObj {
 	public function setReply($id,$title,$content,$attach='') {
 		$this->verifName($this,MU_THREAD);
 		if($title!='') $this->title=$title;
-		foreach($this->reply as $k=>$r) { if($r->time==$id) {$this->reply[$k]->content=$content;}}
+		foreach($this->reply as $k=>$r) { if($r->time==$id) {$this->reply[$k]->content=htmlentities($content,ENT_NOQUOTES,'UTF-8');}}
 		$this->saveObj($this);
 	}
 	public function getReply($id) {
@@ -2524,7 +2529,7 @@ class Topic extends SaveObj {
 	}
 	public function setTopicTitle($title) {
 		$this->verifName($this,MU_THREAD);
-		$this->title=$title;
+		$this->title=htmlentities(strip_tags($title),ENT_NOQUOTES,'UTF-8');
 		$this->saveObj($this);
 	}
 	public function getInfo($type) {
@@ -3052,21 +3057,30 @@ class Init {
 				$avatar='';
 				if(in_array($login,$this->members->listMember())) $this->errors .= ERROR_USER_ALREADY_EXISTS;
 				else if($login != '' && $password != '' && $email != '' && $birthday != ''){
-					if((preg_match('/(^[0-9a-zA-Z_\.-]{1,}@[0-9a-zA-Z_\-]{1,}\.[0-9a-zA-Z_\-]{2,}$)/', $email)) && (strlen($login)<13)) {
-						$memberDirUp = MU_UPLOAD.md5(SECURITY_SALT.$login);
-						@mkdir($memberDirUp);
-						$memberDir = MU_MEMBER.md5($login.SECURITY_SALT);
-						@mkdir($memberDir);
-						file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX);
-						file_put_contents($memberDir.DS.'index.html', GOTO_INDEX);
-						$avatar=$this->checkUpload($memberDirUp,1,$login);
-						$this->members->addMember($login,$password,$email,Tools::clean($signature),$site,$birthday,$avatar);
-						setCookie('CookiePassword', md5($password), time() + (3600 * 24 * 30));
-						setCookie('CookieLogin', base64_encode($login), time() + (3600 * 24 * 30));
-						header('Location: index.php?wco=true');
-						exit();
+					$birth = explode('/',$birthday);
+					if (!isset($birth[2])) {
+						$this->errors .= ERROR_INVALID_BIRTHDAY;
 					} else {
-						$this->errors .= ERROR_INVALID_EMAIL;
+						if (!checkdate($birth[1], $birth[0], $birth[2])) {
+							$this->errors .= ERROR_INVALID_BIRTHDAY;
+						} else {	
+							if((preg_match('/(^[0-9a-zA-Z_\.-]{1,}@[0-9a-zA-Z_\-]{1,}\.[0-9a-zA-Z_\-]{2,}$)/', $email)) && (strlen($login)<13)) {
+								$memberDirUp = MU_UPLOAD.md5(SECURITY_SALT.$login);
+								@mkdir($memberDirUp);
+								$memberDir = MU_MEMBER.md5($login.SECURITY_SALT);
+								@mkdir($memberDir);
+								file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX);
+								file_put_contents($memberDir.DS.'index.html', GOTO_INDEX);
+								$avatar=$this->checkUpload($memberDirUp,1,$login);
+								$this->members->addMember($login,$password,$email,Tools::clean($signature),$site,$birthday,$avatar);
+								setCookie('CookiePassword', md5($password), time() + (3600 * 24 * 30));
+								setCookie('CookieLogin', base64_encode($login), time() + (3600 * 24 * 30));
+								header('Location: index.php?wco=true');
+								exit();
+							} else {
+								$this->errors .= ERROR_INVALID_EMAIL;
+							}
+						}
 					}
 				} else {
 					$this->errors .= ERROR_FILL_FIELDS;
@@ -3090,7 +3104,16 @@ class Init {
 						exit();
 					} else if(!$avatar) $avatar = "";
 					$signature=Tools::clean($signature);
-					$this->members->setMember($this->cLogin,$email,$signature,$site,$birthday,$avatar);
+					$birth = explode('/',$birthday);
+					if (!isset($birth[2])) {
+						$this->errors .= ERROR_INVALID_BIRTHDAY;
+					} else {
+						if (!checkdate($birth[1], $birth[0], $birth[2])) {
+							$this->errors .= ERROR_INVALID_BIRTHDAY;
+						} else {
+							$this->members->setMember($this->cLogin,$email,$signature,$site,$birthday,$avatar);
+						}
+					}
 				} else { header('Location: index.php?editprofil=1'); exit(); }
 				break;
 				if (empty($this->errors)) {
@@ -3245,7 +3268,8 @@ class Init {
 					header('Location: index.php#msgFlash');
 					exit();
 				}
-			break;case 'newthread':
+			break;
+			case 'newthread':
 				if ($this->isAdmin) {
 					if (!empty($newcat)) {
 						$newcat = Tools::clean($newcat);
@@ -3579,7 +3603,7 @@ class Init {
 			/*VISUAL EFFECTS from http://www.pluxml.org */
 			function setOpacity(obj,opacity){obj.style.minHeight=obj.style.minHeight;opacity=(opacity==100)?99.999:opacity;obj.style.filter="alpha(opacity="+opacity+")";obj.style.KHTMLOpacity=opacity/100;obj.style.MozOpacity=opacity/100;obj.style.opacity=opacity/100}function fadeOut(objId,opacity){var obj=document.getElementById(objId);var stop=document.getElementById(\'noToogle\');if(obj&&!stop){if(opacity==undefined){window.setTimeout("fadeOut(\'"+objId+"\',"+100+")",3000)}else{if(opacity>=0){setOpacity(obj,opacity);opacity-=10;window.setTimeout("fadeOut(\'"+objId+"\',"+opacity+")",100)}else{obj.style.display=\'none\'}}}}
 			/*CALENDRIER Script featured on JavaScript Kit- http://www.javascriptkit.com */
-			var ds_i_date=new Date();ds_c_month=ds_i_date.getMonth()+1;ds_c_year=ds_i_date.getFullYear()-40;function ds_getel(id){return document.getElementById(id)}function ds_getleft(el){var tmp=el.offsetLeft;el=el.offsetParent; while(el){tmp+=el.offsetLeft;el=el.offsetParent}return tmp}function ds_gettop(el){var tmp=el.offsetTop;el=el.offsetParent; while(el){tmp+=el.offsetTop;el=el.offsetParent}return tmp}var ds_oe=ds_getel(\'ds_calclass\');var ds_ce=ds_getel(\'ds_conclass\');var ds_ob=\'\';function ds_ob_clean(){ds_ob=\'\'}function ds_ob_flush(){ds_oe.innerHTML=ds_ob;ds_ob_clean()}function ds_echo(t){ds_ob+=t}var ds_element;var ds_monthnames=[\''.L_JANUARY.'\',\''.L_FEBRUARY.'\',\''.L_MARCH.'\',\''.L_APRIL.'\',\''.L_MAY.'\',\''.L_JUNE.'\',\''.L_JULY.'\',\''.L_AUGUST.'\',\''.L_SEPTEMBER.'\',\''.L_OCTOBER.'\',\''.L_NOVEMBER.'\',\''.L_DECEMBER.'\'];var ds_daynames=[\''.L_SUND.'\',\''.L_MOND.'\',\''.L_TUES.'\',\''.L_WEDN.'\',\''.L_THUR.'\',\''.L_FRID.'\',\''.L_SATU.'\'];function ds_template_main_above(t){return\'<table cellpadding="3" cellspacing="1" class="ds_tbl">\'+\'<tr>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_py();">&lt;&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_pm();">&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_hi();" colspan="3">['.CLOSE.']</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_nm();">&gt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_ny();">&gt;&gt;</td>\'+\'</tr>\'+\'<tr>\'+\'<td colspan="7" class="ds_head">\'+t+\'</td>\'+\'</tr>\'+\'<tr>\'}function ds_template_day_row(t){return\'<td class="ds_subhead">\'+t+\'</td>\'}function ds_template_new_week(){return\'</tr><tr>\'}function ds_template_blank_cell(colspan){return\'<td colspan="\'+colspan+\'"></td>\'}function ds_template_day(d,m,y){return\'<td class="ds_cell" onclick="ds_onclick(\'+d+\',\'+m+\',\'+y+\')">\'+d+\'</td>\'}function ds_template_main_below(){return\'</tr>\'+\'</table>\'}function ds_draw_calendar(m,y){ds_ob_clean();ds_echo(ds_template_main_above(ds_monthnames[m-1]+\' \'+y));for(i=0;i<7;i++){ds_echo(ds_template_day_row(ds_daynames[i]))}var ds_dc_date=new Date();ds_dc_date.setMonth(m-1);ds_dc_date.setFullYear(y);ds_dc_date.setDate(1);if(m==1||m==3||m==5||m==7||m==8||m==10||m==12){days=31}else if(m==4||m==6||m==9||m==11){days=30}else{days=(y%4==0)?29:28}var first_day=ds_dc_date.getDay();var first_loop=1;ds_echo(ds_template_new_week());if(first_day!=0){ds_echo(ds_template_blank_cell(first_day))}var j=first_day;for(i=0;i<days;i++){if(j==0&&!first_loop){ds_echo(ds_template_new_week())}ds_echo(ds_template_day(i+1,m,y));first_loop=0;j++;j%=7}ds_echo(ds_template_main_below());ds_ob_flush();/*ds_ce.scrollIntoView()*/}function ds_sh(t){ds_element=t;var ds_sh_date=new Date();ds_c_month=ds_sh_date.getMonth()+1;ds_c_year=ds_sh_date.getFullYear()-40;ds_draw_calendar(ds_c_month,ds_c_year);ds_ce.style.display=\'\';the_left=ds_getleft(t);the_top=ds_gettop(t)+t.offsetHeight;ds_ce.style.left=the_left+\'px\';ds_ce.style.top=the_top+\'px\';/*ds_ce.scrollIntoView()*/}function ds_hi(){ds_ce.style.display=\'none\'}function ds_nm(){ds_c_month++;if(ds_c_month>12){ds_c_month=1;ds_c_year++}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_pm(){ds_c_month=ds_c_month-1;if(ds_c_month<1){ds_c_month=12;ds_c_year=ds_c_year-1}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_ny(){ds_c_year++;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_py(){ds_c_year=ds_c_year-1;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_format_date(d,m,y){m2=\'00\'+m;m2=m2.substr(m2.length-2);d2=\'00\'+d;d2=d2.substr(d2.length-2);return d2+\'/\'+m2+\'/\'+y}function ds_onclick(d,m,y){ds_hi();if(typeof(ds_element.value)!=\'undefined\'){ds_element.value=ds_format_date(d,m,y)}else if(typeof(ds_element.innerHTML)!=\'undefined\'){ds_element.innerHTML=ds_format_date(d,m,y)}else{alert(ds_format_date(d,m,y))}}
+			var ds_i_date=new Date();var ds_c_month=ds_i_date.getMonth()+1;var ds_c_year=ds_i_date.getFullYear() - 40;function ds_getel(id){return document.getElementById(id)}function ds_getleft(el){var tmp=el.offsetLeft;el=el.offsetParent;while(el){tmp+=el.offsetLeft;el=el.offsetParent}return tmp}function ds_gettop(el){var tmp=el.offsetTop;el=el.offsetParent;while(el){tmp+=el.offsetTop;el=el.offsetParent}return tmp}var ds_oe=ds_getel(\'ds_calclass\');var ds_ce=ds_getel(\'ds_conclass\');var ds_ob=\'\';function ds_ob_clean(){ds_ob=\'\'}function ds_ob_flush(){ds_oe.innerHTML=ds_ob;ds_ob_clean()}function ds_echo(t){ds_ob+=t}var ds_element;var ds_monthnames=[\''.L_JANUARY.'\',\''.L_FEBRUARY.'\',\''.L_MARCH.'\',\''.L_APRIL.'\',\''.L_MAY.'\',\''.L_JUNE.'\',\''.L_JULY.'\',\''.L_AUGUST.'\',\''.L_SEPTEMBER.'\',\''.L_OCTOBER.'\',\''.L_NOVEMBER.'\',\''.L_DECEMBER.'\'];var ds_daynames=[\''.L_SUND.'\',\''.L_MOND.'\',\''.L_TUES.'\',\''.L_WEDN.'\',\''.L_THUR.'\',\''.L_FRID.'\',\''.L_SATU.'\'];function ds_template_main_above(t){return\'<table cellpadding="3" cellspacing="1" class="ds_tbl">\'+\'<tr>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_py();">&lt;&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_pm();">&lt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_hi();" colspan="3">['.CLOSE.']</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_nm();">&gt;</td>\'+\'<td class="ds_head" style="cursor: pointer" onclick="ds_ny();">&gt;&gt;</td>\'+\'</tr>\'+\'<tr>\'+\'<td colspan="7" class="ds_head">\'+t+\'</td>\'+\'</tr>\'+\'<tr>\'}function ds_template_day_row(t){return\'<td class="ds_subhead">\'+t+\'</td>\'}function ds_template_new_week(){return\'</tr><tr>\'}function ds_template_blank_cell(colspan){return\'<td colspan="\'+colspan+\'"></td>\'}function ds_template_day(d,m,y){return\'<td class="ds_cell" onclick="ds_onclick(\'+d+\',\'+m+\',\'+y+\')">\'+d+\'</td>\'}function ds_template_main_below(){return\'</tr>\'+\'</table></div>\'}function ds_draw_calendar(m,y){ds_ob_clean();ds_echo(ds_template_main_above(ds_monthnames[m-1]+\' \'+y));for(var i=0;i<7;i++){ds_echo(ds_template_day_row(ds_daynames[i]))}var ds_dc_date=new Date();ds_dc_date.setMonth(m-1);ds_dc_date.setFullYear(y);ds_dc_date.setDate(1);var days=0;if(m==1||m==3||m==5||m==7||m==8||m==10||m==12){days=31}else if(m==4||m==6||m==9||m==11){days=30}else{days=(y%4==0)?29:28}var first_day=ds_dc_date.getDay();var first_loop=1;ds_echo(ds_template_new_week());if(first_day!=0){ds_echo(ds_template_blank_cell(first_day))}var j=first_day;for(i=0;i<days;i++){if(j==0&&!first_loop){ds_echo(ds_template_new_week())}ds_echo(ds_template_day(i+1,m,y));first_loop=0;j++;j%=7}ds_echo(ds_template_main_below());ds_ob_flush()}function ds_sh(t){ds_element=t;var ds_sh_date=new Date();ds_c_month=ds_sh_date.getMonth()+1;ds_c_year=ds_sh_date.getFullYear() - 40;ds_draw_calendar(ds_c_month,ds_c_year);ds_ce.style.display=\'\';var the_left=ds_getleft(t);var the_top=ds_gettop(t)+t.offsetHeight;ds_ce.style.left=the_left+\'px\';ds_ce.style.top=the_top+\'px\'}function ds_hi(){ds_ce.style.display=\'none\'}function ds_nm(){ds_c_month++;if(ds_c_month>12){ds_c_month=1;ds_c_year++}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_pm(){ds_c_month=ds_c_month-1;if(ds_c_month<1){ds_c_month=12;ds_c_year=ds_c_year-1}ds_draw_calendar(ds_c_month,ds_c_year)}function ds_ny(){ds_c_year++;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_py(){ds_c_year=ds_c_year-1;ds_draw_calendar(ds_c_month,ds_c_year)}function ds_format_date(d,m,y){var m2=\'00\'+m;m2=m2.substr(m2.length-2);var d2=\'00\'+d;d2=d2.substr(d2.length-2);return d2+\'/\'+m2+\'/\'+y}function ds_onclick(d,m,y){ds_hi();if(typeof(ds_element.value)!=\'undefined\'){ds_element.value=ds_format_date(d,m,y)}else if(typeof(ds_element.innerHTML)!=\'undefined\'){ds_element.innerHTML=ds_format_date(d,m,y)}else{alert(ds_format_date(d,m,y))}}
 		';
 
 			file_put_contents(MU_JS.'scripts.js', $js);
@@ -3961,6 +3985,7 @@ class Template extends Init {
 
 				# Récuperation de la bufférisation
 				$output = ob_get_clean();
+				$output = Tools::correctAccents($output);
 
 				# On applique la compression gzip si nécessaire et disponible
 				if($this->gzip) {
@@ -3970,7 +3995,7 @@ class Template extends Init {
 				    }
 				}
 				# Restitution écran
-				echo html_entity_decode(Tools::correctAccents($output),ENT_NOQUOTES,CHARSET);	
+				echo $output;	
 			}	
 	}
 	private function _loadCss() {
@@ -4293,7 +4318,7 @@ class Template extends Init {
 		<?php }else{?>
 		<?php }}}}}}}}} 
 		$links = ob_get_clean();
-		if(!empty($links)) return '<li>'.Tools::correctAccents($links).'</li>';
+		if(!empty($links)) return '<li>'.$links.'</li>';
 	}
 	private function setThreads() {
 		$t['nombreThreads'] = $this->threads->getCats();
@@ -4552,7 +4577,8 @@ class Template extends Init {
 			if($s = implode("", file(MU_THREAD.$this->whichDir($this->get_topic).'.dat'))) $topicObj = unserialize($s);
 			else return false;
 			$reply=$topicObj->getReply($this->get_editpost);
-			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',Tools::correctAccents($reply->content));
+			$reply->content = preg_replace('!\[e\](.*)\[\/e\](\\r\\n)*!Ui','',$reply->content);
+			$reply->content = html_entity_decode($reply->content,ENT_NOQUOTES,CHARSET);
 			$r->name= CHANGE;
 			$r->edit=1;
 		} else {
