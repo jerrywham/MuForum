@@ -2158,7 +2158,7 @@ class Forum extends SaveObj {
 	}
 	public function setTitle($topic,$title) {
 		$this->name = MU_THREAD.$this->whichDir($topic).'.dat';
-		$this->topics[$topic]->title=$title;
+		$this->topics[$topic]->title=htmlentities(strip_tags($title),ENT_NOQUOTES,'UTF-8');
 		$t = $this->openTopic($topic);
 		$t->setTopicTitle($title);
 		unset($t);
@@ -2355,7 +2355,7 @@ class Threads extends SaveObj {
 	}
 	public function addMainCat($name) {
 		$id = $this->nextMainCat();
-		$this->categories['main'][$id] = $name;
+		$this->categories['main'][$id] = htmlentities(strip_tags($name),ENT_NOQUOTES,'UTF-8');
 		$this->catPositions['main'][] = $id;
 		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
 		$this->forum = null;
@@ -2363,7 +2363,7 @@ class Threads extends SaveObj {
 	}
 	public function updateMainCat($name,$position,$oldposition,$id) {
 		if(isset($this->categories['main'][$id])){
-			$this->categories['main'][$id] = $name;
+			$this->categories['main'][$id] = htmlentities(strip_tags($name),ENT_NOQUOTES,'UTF-8');
 			if ($oldposition != $position) {
 				if ($position == '' || $position <  0) {$position = 0;}
 				if ($position > count($this->catPositions['main'])-1) {$position = count($this->catPositions['main']);}
@@ -2399,8 +2399,8 @@ class Threads extends SaveObj {
 		$id = $this->nextCat();
 		if (array_key_exists($maincat, $this->categories['main'])) {
 			$this->categories['sub'][$maincat][$id] = array(
-				'cat' => $name,
-				'subtitle' => $subtitle
+				'cat' => htmlentities(strip_tags($name),ENT_NOQUOTES,'UTF-8'),
+				'subtitle' => htmlentities(strip_tags($subtitle),ENT_NOQUOTES,'UTF-8')
 			);
 			$this->catPositions['sub'][$maincat][] = $id;
 			$this->forumPositions[$id] = array();
@@ -2425,8 +2425,8 @@ class Threads extends SaveObj {
 			}
 			unset($this->categories['sub'][$oldmainid][$id]);
 			$this->categories['sub'][$maincat][$id] = array(
-				'cat' => $name,
-				'subtitle' => $subtitle
+				'cat' => htmlentities(strip_tags($name),ENT_NOQUOTES,'UTF-8'),
+				'subtitle' => htmlentities(strip_tags($subtitle),ENT_NOQUOTES,'UTF-8')
 			);
 			if (isset($tmp) && $maincat != $oldmainid) {
 				$this->categories['sub'][$oldmainid][$id] = $tmp;
@@ -2533,7 +2533,7 @@ class Topic extends SaveObj {
 	public function updateTopic($time,$title,$auth,$post,$last,$ltime,$attach,$type) {
 		$this->name = MU_THREAD.$this->whichDir($time).'.dat';
 		if (!isset($this->topics[$time])) {$this->topics[$time] = new stdClass;}
-		$this->topics[$time]->title = $title;
+		$this->topics[$time]->title = htmlentities(strip_tags($title),ENT_NOQUOTES,'UTF-8');
 		$this->topics[$time]->auth = $auth;
 		$this->topics[$time]->time = $ltime;
 		$this->topics[$time]->attach = $attach;
@@ -2703,7 +2703,7 @@ class Messages extends saveObj {
 		if (!isset($this->mess[$id])) {$this->mess[$id] = new stdClass;}
 		$this->mess[$id]->time = time();
 		$this->mess[$id]->from = $from;
-		$this->mess[$id]->content = $content;
+		$this->mess[$id]->content = htmlentities(strip_tags($content),ENT_NOQUOTES,'UTF-8');
 		$this->mess[$id]->to = $mpTo;
 		$this->saveMsgObj($this);
 	}
