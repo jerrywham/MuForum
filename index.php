@@ -924,6 +924,11 @@ class BBCHelper {
 	*/
 	public static function bbCode($text, $summary = false) {
 
+		// If the message contains a code tag we have to split it up (text within [code][/code] shouldn't be touched)
+		if (strpos($text, '[c]') !== false && strpos($text, '[/c]') !== false) {
+			list($inside, $text) = self::extract_blocks($text, '[c]', '[/c]');
+		}
+
 	    /* smiley */
 	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
 	    $pattern[] = '%;\)%';    $replace[] = Tools::img('wink','',false,true);
@@ -986,7 +991,7 @@ class BBCHelper {
 					$replaceOpentags[] = '<strong>';
 					break;
 				case 'c':
-					$replaceOpentags[] = '<pre><code>'.(isset($options['c']) ? $options['c'] : '');
+					$replaceOpentags[] = '<pre>'.(isset($options['c']) ? $options['c'] : '');
 					break;
 				case 'u':
 					$replaceOpentags[] = '<span style="text-decoration:underline">';
@@ -1019,7 +1024,7 @@ class BBCHelper {
 			'/url' => '</a>',
 			'/youtube' => '',
 			'/b' => '</strong>',
-			'/c' => '</code></pre>',
+			'/c' => '</pre>',
 			'/u' => '</span>',
 			'/i' => '</span>',
 			'/s' => '</del>',
@@ -1043,8 +1048,79 @@ class BBCHelper {
 			}
 		}
 		
+		// If we split up the message before we have to concatenate it together again (code tags)
+		if (isset($inside))
+		{
+			$parts = explode("\1", $text);
+			$text = '';
+			foreach ($parts as $i => $part)
+			{
+				$text .= $part;
+				if (isset($inside[$i]))
+				{
+					$num_lines = (substr_count($inside[$i], "\n"));
+					$text .= '<pre>'.trim($inside[$i], "\n\r").'</pre>';
+				}
+			}
+		}
 		return nl2br($text);
 		
+	}
+	// From forum Fluxbb
+	//
+	// Extract blocks from a text with a starting and ending string
+	// This function always matches the most outer block so nesting is possible
+	//
+	function extract_blocks($text, $start, $end, $retab = true)
+	{
+		global $pun_config;
+
+		$code = array();
+		$start_len = strlen($start);
+		$end_len = strlen($end);
+		$regex = '%(?:'.preg_quote($start, '%').'|'.preg_quote($end, '%').')%';
+		$matches = array();
+
+		if (preg_match_all($regex, $text, $matches))
+		{
+			$counter = $offset = 0;
+			$start_pos = $end_pos = false;
+
+			foreach ($matches[0] as $match)
+			{
+				if ($match == $start)
+				{
+					if ($counter == 0)
+						$start_pos = strpos($text, $start);
+					$counter++;
+				}
+				elseif ($match == $end)
+				{
+					$counter--;
+					if ($counter == 0)
+						$end_pos = strpos($text, $end, $offset + 1);
+					$offset = strpos($text, $end, $offset + 1);
+				}
+
+				if ($start_pos !== false && $end_pos !== false)
+				{
+					$code[] = substr($text, $start_pos + $start_len,
+						$end_pos - $start_pos - $start_len);
+					$text = substr_replace($text, "\1", $start_pos,
+						$end_pos - $start_pos + $end_len);
+					$start_pos = $end_pos = false;
+					$offset = 0;
+				}
+			}
+		}
+
+		if ($pun_config['o_indent_num_spaces'] != 8 && $retab)
+		{
+			$spaces = str_repeat(' ', $pun_config['o_indent_num_spaces']);
+			$text = str_replace("\t", $spaces, $text);
+		}
+
+		return array($code, $text);
 	}
 
 	public static function verif($text,$origin,$session) {
