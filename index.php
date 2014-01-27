@@ -4177,6 +4177,9 @@ class Template extends Init {
 	 * Modifications Cyril MAGUIRE.
 	 */
 	private function _compress($buffer) {
+		if (is_file(MU_URL_THEMES.$this->theme.'/css/userconfig.php')) {
+			require_once(MU_URL_THEMES.$this->theme.'/css/userconfig.php');
+		}
 		// A décommenter pour utiliser des variables dans le css
 		// Les variables seront du type : +MAVARIABLE+
 		// Pour les rechercher dans la css, rechercher un +
@@ -5849,7 +5852,7 @@ END;
 		\$this->searchDirFile();
 		\$this->searchDirFile(MU_LANG,'file');
 		if(!\$wtp=@file_get_contents(MU_THREAD.'welcome.txt')) \$wtp=Tools::clean(BBCHelper::parse(WELCOME_TXT));
-		if(!\$rules=@file_get_contents(MU_THREAD.'rules.txt')) \$rules='';?>
+		if(!\$rules=@file_get_contents(MU_THREAD.'rules.txt')) \$rules=FORUM_RULES_TXT;?>
 		
 		<!-- Edit config form -->
 		<h2 class="forms-section"><?php echo CONFIG_OPTIONS?></h2>
