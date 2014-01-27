@@ -4207,9 +4207,9 @@ class Template extends Init {
 		$buf.='<h4 class="forms-section">'.INFORMATION.'</h4>
 	          <div class="lead">';
 		if(!$wtp=@file_get_contents(MU_THREAD.'welcome.txt')) {
-			$buf.= WELCOME_TXT;
+			$buf.= BBCHelper::decode(WELCOME_TXT);
 		} else {
-			$buf .= BBCHelper::decode(nl2br($wtp)).'</div>';
+			$buf .= BBCHelper::decode($wtp).'</div>';
 		}
 		return $buf;
 	}
