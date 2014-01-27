@@ -109,6 +109,86 @@ if (version_compare(PHP_VERSION, '5.3', '<')) {
 */
 class Tools {
 	/**
+	 * Génère un mot de passe aléatoire
+	 */
+	public static function generateurMot($longueur = 8,$nbCaracteres = 4,$caracteresSup = array(),$nombresSup = array(),$voyellesSup = array(),$consonnesSupp = array()) {
+
+		$mot = '';
+		$consonnes = array('b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','z');
+		$voyelles = array('a','e','i','o','u','y');
+		$caracteres = array('@','#','?','!','+','=','-','%','&','*');
+		$nombres = array('0','1','2','3','4','5','6','7','8','9');
+		$caracteresDejaChoisis = array();
+		
+		if (!empty($consonnesSupp)) {
+			$consonnes = array_diff($consonnes,$consonnesSupp);
+		}
+		if (!empty($voyellesSup)) {
+			$voyelles = array_diff($voyelles,$voyellesSup);
+		}
+		if (!empty($caracteresSup)) {
+			$caracteres = array_diff($caracteres,$caracteresSup);
+		}
+		if (!empty($nombresSup)) {
+			$nombres = array_diff($nombres,$nombresSup);
+		}
+		
+		if (empty($consonnes)) {
+			$consonnes = array('b');
+		}
+		if (empty($voyelles)) {
+			$voyelles = $consonnes;
+		}
+		if (empty($nombres)) {
+			$nombres = $consonnes;
+		}
+		
+		if ($nbCaracteres == 0) {
+			$caracteres = $consonnes;
+		}
+		$choix = array('0'=>$consonnes,'1'=>$voyelles,'2'=>$caracteres,'3'=>$nombres);
+		$j = 0;
+		for($i=0;$i<$longueur;$i++) {
+			if (count($caracteresDejaChoisis) == $nbCaracteres) {
+				$caracteres = $caracteresDejaChoisis;
+			}
+			//choix aléatoire entre consonnes et voyelles
+			$rand = array_rand($choix,1);
+			$tab = $choix[$rand];
+			//on recherche l'index d'une lettre, au hasard dans le tableau choisi
+			$lettre = array_rand($tab,1);
+			if (in_array($lettre, $caracteresDejaChoisis)) {
+				$lettre = array_rand($consonnes,1);
+				$tab = $consonnes;
+			}
+			//On ajoute le caractère au tableau des caractères déjà choisis
+			if ($tab == $caracteres) {
+				$caracteresDejaChoisis[] = $lettre;
+			}
+			//on recherche la dernière lettre du mot généré
+			if (strlen($mot) > 0) {
+				$derniereLettre = $mot[strlen($mot)-1];
+			} else {
+				$derniereLettre = '';
+			}
+			
+			//si la lettre choisie est déjà à la fin du mot généré, on relance la boucle
+			if ($tab[$lettre] == $derniereLettre || in_array($derniereLettre,$tab)) {
+				$i--;
+			} else {//sinon on l'ajoute au mot généré
+				$maj = mt_rand(0,10);
+				if ($maj<2) {
+					$mot .= strtoupper($tab[$lettre]);	
+				} else {
+					$mot .= $tab[$lettre];	
+				}
+			}
+		}
+		
+		return $mot;
+	}
+	
+	/**
 	 * TRADUCTIONS
 	 */
 	public static function loadlang($lang) {
@@ -122,6 +202,7 @@ class Tools {
 			if(!defined($key)) define($key,$value);
 		}
 	}
+
 	/**
 	*
 	* NETTOIE LES NOMS D'UTILISATEURS
@@ -930,15 +1011,15 @@ class BBCHelper {
 		}
 
 	    /* smiley */
-	    $pattern[] = '%:\)%';    $replace[] = Tools::img('smile','',false,true);
-	    $pattern[] = '%;\)%';    $replace[] = Tools::img('wink','',false,true);
-	    $pattern[] = '%:D%' ;    $replace[] = Tools::img('laugh','',false,true);    
-	    $pattern[] = '%:\|%';    $replace[] = Tools::img('indifferent','',false,true);
-	    $pattern[] = '%:\(%';    $replace[] = Tools::img('sad','',false,true);
-	    $pattern[] = '%8\(%';    $replace[] = Tools::img('wry','',false,true); 
-	    $pattern[] = '%:p%';     $replace[] = Tools::img('tongue','',false,true);
-	    $pattern[] = '%:\$%';    $replace[] = Tools::img('sorry','',false,true);
-	    $pattern[] = '% -&gt; %';  $replace[] = Tools::img('arrow','',false,true);
+	    $pattern[] = '% :\)%';    $replace[] = ' '.Tools::img('smile','',false,true);
+	    $pattern[] = '% ;\)%';    $replace[] = ' '.Tools::img('wink','',false,true);
+	    $pattern[] = '% :D%' ;    $replace[] = ' '.Tools::img('laugh','',false,true);    
+	    $pattern[] = '% :\|%';    $replace[] = ' '.Tools::img('indifferent','',false,true);
+	    $pattern[] = '% :\(%';    $replace[] = ' '.Tools::img('sad','',false,true);
+	    $pattern[] = '% 8\(%';    $replace[] = ' '.Tools::img('wry','',false,true); 
+	    $pattern[] = '% :p%';     $replace[] = ' '.Tools::img('tongue','',false,true);
+	    $pattern[] = '% :\$%';    $replace[] = ' '.Tools::img('sorry','',false,true);
+	    $pattern[] = '% -&gt; %';  $replace[] = ' '.Tools::img('arrow','',false,true);
 
 	    $pattern[] = '%\[sm=smile\]%';          $replace[] = Tools::img('smile','',false,true);
 	    $pattern[] = '%\[sm=wink\]%';           $replace[] = Tools::img('wink','',false,true);
@@ -2758,7 +2839,7 @@ class BanYourAss {
 			if (!defined('MSG_MIN_OR_NOT')) {define('MSG_MIN_OR_NOT','minutes ou pas...');}
 			if (!defined('MSG_IF_NOT_SPAMMER')) {define('MSG_IF_NOT_SPAMMER','Si vous n\'êtes pas un robot');}
 			if (!defined('CLICK_HERE')) {define('CLICK_HERE','cliquez ici');}
-			if (!defined('SECURITY_SALT')) {define('SECURITY_SALT','DSKQJfmi879fdiznKSDJ56SD8734QRer980ZOIDQ');}
+			if (!defined('SECURITY_SALT')) {define('SECURITY_SALT',Tools::generateurMot(100));}
 			$this->DATABANDIR = 'ban'; // Data subdirectory
 		} else {
 			if (defined('MU_DATA') && is_dir(substr(MU_DATA,0,-1))) {
@@ -2797,12 +2878,12 @@ class BanYourAss {
 	    	if (!isset($gb['NOTSPAM'][$ip])) {$gb['NOTSPAM'][$ip]=$notSpamCode;}
 	    	if (empty($gb['NOTSPAM'][$ip])) {$gb['NOTSPAM'][$ip]=$notSpamCode;}
 	        $this->logm('IP address banned from login');
-	    	file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>");
+	    	file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>", LOCK_EX);
 	        echo MSG_COME_BACK_IN.'&nbsp;'.($this->BAN_DURATION/60).'&nbsp;'.MSG_MIN_OR_NOT;
 			echo MSG_IF_NOT_SPAMMER.'<a href=index.php?notspam='.$notSpamCode.'>&nbsp;'.CLICK_HERE.'</a>';
 			exit();
 	    }
-	    file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>");
+	    file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>", LOCK_EX);
 	}
 
 	// Signals a successful login. Resets failed login counter.
@@ -2810,7 +2891,7 @@ class BanYourAss {
 	    $ip=$_SERVER["REMOTE_ADDR"]; 
 	    $gb=$this->ipbans;
 	    unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);unset($gb['NOTSPAM'][$ip]);
-	    file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>");
+	    file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>", LOCK_EX);
 	    $this->logm('Login ok.');
 	}
 
@@ -2825,7 +2906,7 @@ class BanYourAss {
 	        { // Ban expired, user can try to login again.
 	            $this->logm('Ban lifted.');
 	            unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);unset($gb['NOTSPAM'][$ip]);
-	            file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>");
+	            file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>", LOCK_EX);
 	            return true; // Ban has expired, user can login.
 	        }
 	        return false; // User is banned.
@@ -2839,7 +2920,7 @@ class BanYourAss {
    		{
             $this->logm('Ban lifted.');
             unset($gb['FAILURES'][$ip]); unset($gb['BANS'][$ip]);unset($gb['NOTSPAM'][$ip]);
-            file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>");
+            file_put_contents($this->IPBANS_FILENAME, "<?php\n\$IPBANS=".var_export($gb,true).";\n?>", LOCK_EX);
             return true; // Ban has expired, user can login.
 	   	}
 	}
@@ -2952,7 +3033,7 @@ class Init {
 				$config.="\$theme='".$this->theme."';\n";
 				$config.="\$gzip='".$this->gzip."';\n";
 				$config.="\$siteBase='".MU_BASE_URL."';\n?>";
-				file_put_contents('config.php', utf8_encode($config));
+				file_put_contents('config.php', $config);
 			}
 			$this->mkhtaccess();
 			$this->mkjs();
@@ -3136,8 +3217,8 @@ class Init {
 								@mkdir($memberDirUp);
 								$memberDir = MU_MEMBER.md5($login.SECURITY_SALT);
 								@mkdir($memberDir);
-								file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX);
-								file_put_contents($memberDir.DS.'index.html', GOTO_INDEX);
+								file_put_contents($memberDirUp.DS.'index.html', GOTO_INDEX, LOCK_EX);
+								file_put_contents($memberDir.DS.'index.html', GOTO_INDEX, LOCK_EX);
 								$avatar=$this->checkUpload($memberDirUp,1,$login);
 								$this->members->addMember($login,$password,$email,Tools::clean($signature),$site,$birthday,$avatar);
 								setCookie('CookiePassword', md5($password), time() + (3600 * 24 * 30));
@@ -3291,30 +3372,34 @@ class Init {
 				$this->gzip=$gzip?$gzip:false;
 				$config ="<?\n"; 
 				$config .=TM."\n";
-				$config .="\$uforum='".$this->uforum."';\n";
+				$config .="\$uforum='".htmlentities(strip_tags($this->uforum),ENT_NOQUOTES,'UTF-8')."';\n";
 				$config .="\$lang='".$this->lang."';\n";
-				$config .="\$metaDesc='".$this->metaDesc."';\n";
+				$config .="\$metaDesc='".htmlentities(strip_tags($this->metaDesc),ENT_NOQUOTES,'UTF-8')."';\n";
 				$config .="\$nbrMsgIndex='".abs($this->nbrMsgIndex)."';\n";
 				$config .="\$nbMsgTopic='".abs($this->nbMsgTopic)."';\n";
 				$config .="\$nbrMb='".abs($this->nbrMb)."';\n";
-				$config .="\$extensionsAutorises='".$this->extStr."';\n";
+				$config .="\$extensionsAutorises='".htmlentities(strip_tags($this->extStr),ENT_NOQUOTES,'UTF-8')."';\n";
 				$config .="\$maxAvatarSize='".$this->maxAvatarSize."';\n";
 				$config .="\$forumMode='".$this->forumMode."';\n";
 				$config .="\$quoteMode='".$this->quoteMode."';\n";
-				$config .="\$siteUrl='".$this->siteUrl."';\n";
-				$config .="\$siteName='".$this->siteName."';\n";
-				$config .="\$subtitle='".$this->subtitle."';\n";
+				$config .="\$siteUrl='".htmlentities(strip_tags($this->siteUrl),ENT_NOQUOTES,'UTF-8')."';\n";
+				$config .="\$siteName='".htmlentities(strip_tags($this->siteName),ENT_NOQUOTES,'UTF-8')."';\n";
+				$config .="\$subtitle='".htmlentities(strip_tags($this->subtitle),ENT_NOQUOTES,'UTF-8')."';\n";
 				$config .="\$theme='".$this->theme."';\n";
 				$config .="\$gzip='".$this->gzip."';\n";
 				$config .="\$siteBase='".MU_BASE_URL."'\n?>";
-				file_put_contents('config.php', utf8_encode($config));
-				if(empty($message) && file_exists(MU_THREAD.'welcome.txt')) @unlink(MU_THREAD.'welcome.txt');
-				else {
-					file_put_contents(MU_THREAD.'welcome.txt', stripslashes($message));
+				file_put_contents('config.php', $config, LOCK_EX);
+				if(empty($message) && file_exists(MU_THREAD.'welcome.txt')) {@unlink(MU_THREAD.'welcome.txt');}
+				elseif(!empty($message)) {
+					@chmod(MU_THREAD.'welcome.txt', 0755);
+					file_put_contents(MU_THREAD.'welcome.txt', htmlentities(strip_tags($message),ENT_NOQUOTES,'UTF-8'),LOCK_EX);
+
 				}
-				if(empty($rules) && file_exists(MU_THREAD.'rules.txt')) @unlink(MU_THREAD.'rules.txt');
-				else {
-					file_put_contents(MU_THREAD.'rules.txt', stripslashes($rules));
+				if(empty($rules) && file_exists(MU_THREAD.'rules.txt')) {@unlink(MU_THREAD.'rules.txt');}
+				elseif(!empty($rules)) {
+					@chmod(MU_THREAD.'rules.txt', 0755);
+					file_put_contents(MU_THREAD.'rules.txt', htmlentities(strip_tags($rules),ENT_NOQUOTES,'UTF-8'),LOCK_EX);
+					
 				}
 				if (empty($this->errors)) {
 					$this->session->setMsg(MSG_DATA_REC);
@@ -3569,7 +3654,7 @@ class Init {
 		if (!file_exists('config.php') || !file_exists(MU_MEMBER) || !file_exists(MU_MEMBER.'members.dat')) {
 			$config="<?";
 			$config.=TM."\n";
-			$config.="\$uforum='[b]&micro;[/b]Forum';\n";
+			$config.="\$uforum='[b]µ[/b]Forum';\n";
 			$config.="\$lang='fr';";
 			$config.="\$metaDesc='Lightweight bulletin board without sql';\n";
 			$config.="\$nbrMsgIndex=15;\n";
@@ -3580,12 +3665,12 @@ class Init {
 			$config.="\$forumMode=1;\n";
 			$config.="\$quoteMode=1;\n";
 			$config.="\$siteUrl='".MU_BASE_URL."';\n";
-			$config.="\$siteName='&micro;Forum';\n";
+			$config.="\$siteName='µForum';\n";
 			$config.="\$theme='default';\n";
 			$config.="\$subtitle='Le Forum sans BDD';\n";
 			$config.="\$gzip='0';\n";
 			$config.="\$siteBase='".MU_BASE_URL."'\n;?>";
-			file_put_contents('config.php', utf8_encode($config));
+			file_put_contents('config.php', $config, LOCK_EX);
 
 			$errors='';
 			$errors.= (is_dir(MU_THEMES))? sprintf("&#10004;&nbsp;".MKTHEME.".\n") : sprintf("&#10008;&nbsp;".ERROR_MKTHEME." .\n");
@@ -3602,7 +3687,7 @@ class Init {
 
 			if (!file_exists(MU_MEMBER.'members.dat')) {
 				$this->members = new Members();
-				@file_put_contents(MU_MEMBER.'members.dat', serialize($this->members),LOCK_EX);
+				@file_put_contents(MU_MEMBER.'members.dat', serialize($this->members), LOCK_EX);
 			}
 
 			$this->errors = $errors;
@@ -4136,9 +4221,9 @@ class Template extends Init {
 		$buf.='<h1>'.FORUM_RULES.'</h1>
 	          <div class="Box">';
 		if(!$rtxt=@file_get_contents(MU_THREAD.'rules.txt')) {
-			$buf.= FORUM_RULES_TXT;
+			$buf.= BBCHelper::decode(FORUM_RULES_TXT);
 		} else {
-			$buf .= BBCHelper::decode(nl2br($rtxt)).'</div>';
+			$buf .= BBCHelper::decode($rtxt).'</div>';
 		}
 		return $buf;
 	}
