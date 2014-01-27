@@ -4134,7 +4134,6 @@ class Template extends Init {
 						include(MU_THEMES.$this->theme.DS.$this->template['template'].'.php');
 					}
 				}
-
 				# Récuperation de la bufférisation
 				$output = ob_get_clean();
 				$output = Tools::correctAccents($output);
@@ -4179,6 +4178,9 @@ class Template extends Init {
 	private function _compress($buffer) {
 		if (is_file(MU_URL_THEMES.$this->theme.'/css/userconfig.php')) {
 			require_once(MU_URL_THEMES.$this->theme.'/css/userconfig.php');
+			if (isset($this->cVals) && isset($this->cVals[$this->cStyle]) && isset($userconfig)) {
+				$this->cVals[$this->cStyle] = array_merge($this->cVals[$this->cStyle],(array)$userconfig);
+			}
 		}
 		// A décommenter pour utiliser des variables dans le css
 		// Les variables seront du type : +MAVARIABLE+
