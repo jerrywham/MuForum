@@ -5919,7 +5919,7 @@ END;
 	public function showRules() {
 		$string =<<<END
 <?php include(dirname(__FILE__).'/header.php');
-\$this->rulesText();
+echo \$this->rulesText();
 include(dirname(__FILE__).'/footer.php'); ?>
 END;
 		if (!is_file(MU_THEMES.$this->theme.DS.'showRules.php')) {
