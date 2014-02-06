@@ -64,7 +64,7 @@ date_default_timezone_set('Europe/Paris');
 /*
 * Version de µForum
 */
-define('VERSION','2.6');
+define('VERSION','2.7');
 
 $trademarkBlock = '
 # ------------------ BEGIN LICENSE BLOCK ------------------
@@ -102,11 +102,9 @@ if (version_compare(PHP_VERSION, '5.3', '<')) {
 	Tools::loadlang('fr');
     exit(PHP_VERIF);
 }
-
-# ---------------- CLASSES STATIQUES-------------------
-/**
-* Outils
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSES STATIQUES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Tools {
 	/**
 	 * Génère un mot de passe aléatoire
@@ -421,45 +419,7 @@ class Tools {
 			★ Méta description pour le SEO.[/c]",
 			'WELCOME_TXT' => "<b><i>Bienvenue sur µforum</i></b> <br /> <br />Ce forum multithread est basé sur des fichiers uniquement (pas de base de données sql).  <br /><ins><b>Il intègre plusieurs fonctionnalités :</b></ins> <i>(★ = Nouveauté)</i> <br /> <br /><pre>✔ Gestion des membres par login / mot de passe (par cookies). <br />✔ 4 niveaux d'utilisateurs : Administrateur, Modérateur, Membre, Anonyme. <br />✔ Mode privé / public, pour autoriser les non-membres. <br />✔ Liste des membres. <br />✔ Profil utilisateur (+ édition). <br />✔ Messagerie privée entre les membres. <br />✔ Upload d'avatar et de pièces jointes (avec filtre d'extensions). <br />✔ Smileys et BBCodes (ajout automatique des balises fermantes manquantes). <br />★ Coupure des chaines trop longues sans couper les phrases ! <br />✔ Skins. <br />✔ Liens automatiques. <br />★ Html5 et css3 (Bootstrap de twitter). <br />✔ Affichage des connectés. <br />✔ Coloration syntaxique du code. <br />✔ Gestion des options d'administration. <br />✔ Système simple de sauvegarde et restauration. (revu) <br />★ Captcha lors de l'inscription. <br />★ Protection des mails, sur la liste des membres, pour contrer le spam.    <br />★ Indicateur de message (Status Icône).   <br />★ Date de naissance + Âge affiché si celle-ci renseignée. <br />★ Date picker (Inscription et édition du profil).  <br />★ Méta description pour le SEO.<br />&nbsp;</pre>&nbsp;</div>",
 			'FORUM_RULES' => 'Règles du forum',
-			'FORUM_RULES_TXT' => '[b][u]Conditions d\'utilisation des forums[/u][/b]
-
-[b]Propos racistes[/b] :
-Les propos racistes ne sont pas tolérés sur le forum, sous aucune forme.
-
-[b]Propos agressifs, vulgaires & injurieux[/b] :
-Merci d\'utiliser un langage correct et respectable sur le forum, tout abus sera sanctionné.
-
-[b]Propos diffamatoires[/b] :
-Les propos diffamatoires ne sont pas tolérés sur le forum.
-
-[b]Piratage & Hacking[/b] :
-Il est interdit d\'inciter au piratage et au hacking sur le forum, par quelque biais que ce soit.
-
-[b]Charme & Pornographie[/b] :
-La pornographie n\'est pas tolérée sur le forum. Des textes ou images évoquant l\'érotisme ou la nudité sont acceptés uniquement sur les topics clairement identifiés comme pouvant héberger ce type de contenu, et créés par des administrateurs du forum.
-
-[b]Freepost[/b] :
-Le freepost (« parler pour ne rien dire ») est toléré, mais merci de ne pas en abuser de manière systématique.
-
-[b]Signature dans les messages[/b] :
-Les signatures affichées dans vos messages sont tolérées, à partir du moment où elles ne vont pas à l\'encontre de la bonne lisibilité du forum. Si un modérateur vous demande de la modifier ou de la réduire, merci de le faire. Les signatures répondent aux mêmes règles que les messages en terme de modération.
-
-[b]Discussions politiques[/b] :
-Les discussions tournant autour de la politique sont acceptées, à partir du moment où vous faites preuve d\'ouverture d\'esprit, que vous n\'entravez pas les débats, et que vous ne faites pas de propagande systématique.
-
-[b]Discussions sur les religions[/b] :
-Les discussions axées sur la religion sont tolérées à partir du moment où elles sont posées, et respectueuses de toutes les opinions et de tous les cultes. Le prosélytisme n\'est en aucun cas toléré sur le forum.
-
-[b]Langage SMS & Majuscule[/b]s :
-[u]Le langage SMS est à proscrire[/u]. Merci d\'utiliser un français correct et de ne pas abuser d\'abréviations. Merci aussi de faire autant que possible attention à l\'orthographe, à la grammaire et à la ponctuation.
-Inversement, merci aux intégristes de la langue française de ne pas agresser les internautes ayant une orthographe bancale, et de les aider cordialement. Merci de ne pas rédiger vos titres et messages en majuscules.
-
-[b]Multi-Comptes[/b] :
-L\'utilisation de plusieurs comptes est à éviter, merci donc de n\'utiliser qu\'un seul compte.
-
-[b]Publicité[/b] :
-La publicité n\'est pas acceptée sur les forums, que ce soit pour des sites commerciaux ou personnels. Après un certain temps passé sur les forums, vous pouvez évoquer vos blogs ou sites persos, si ses évocations restent dans le sujet des topics auxquels vous participez. Si un topic dédié à la publicité existe, vous pouvez y faire la votre.
-Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le système pyramidal ne sont en aucun cas tolérés sur les forums. Merci donc de ne pas les relayer.',
+			'FORUM_RULES_TXT' => '[b][u]Conditions d\'utilisation des forums[/u][/b]'."\n\n".'[b]Propos racistes[/b] :'."\n".'Les propos racistes ne sont pas tolérés sur le forum, sous aucune forme.'."\n\n".'[b]Propos agressifs, vulgaires & injurieux[/b] :'."\n".'Merci d\'utiliser un langage correct et respectable sur le forum, tout abus sera sanctionné.'."\n\n".'[b]Propos diffamatoires[/b] :'."\n".'Les propos diffamatoires ne sont pas tolérés sur le forum.'."\n\n".'[b]Piratage & Hacking[/b] :'."\n".'Il est interdit d\'inciter au piratage et au hacking sur le forum, par quelque biais que ce soit.'."\n\n".'[b]Charme & Pornographie[/b] :'."\n".'La pornographie n\'est pas tolérée sur le forum. Des textes ou images évoquant l\'érotisme ou la nudité sont acceptés uniquement sur les topics clairement identifiés comme pouvant héberger ce type de contenu, et créés par des administrateurs du forum.'."\n\n".'[b]Freepost[/b] :'."\n".'Le freepost (« parler pour ne rien dire ») est toléré, mais merci de ne pas en abuser de manière systématique.'."\n\n".'[b]Signature dans les messages[/b] :'."\n".'Les signatures affichées dans vos messages sont tolérées, à partir du moment où elles ne vont pas à l\'encontre de la bonne lisibilité du forum. Si un modérateur vous demande de la modifier ou de la réduire, merci de le faire. Les signatures répondent aux mêmes règles que les messages en terme de modération.'."\n\n".'[b]Discussions politiques[/b] :'."\n".'Les discussions tournant autour de la politique sont acceptées, à partir du moment où vous faites preuve d\'ouverture d\'esprit, que vous n\'entravez pas les débats, et que vous ne faites pas de propagande systématique.'."\n\n".'[b]Discussions sur les religions[/b] :'."\n".'Les discussions axées sur la religion sont tolérées à partir du moment où elles sont posées, et respectueuses de toutes les opinions et de tous les cultes. Le prosélytisme n\'est en aucun cas toléré sur le forum.'."\n\n".'[b]Langage SMS & Majuscule[/b]s :'."\n".'[u]Le langage SMS est à proscrire[/u]. Merci d\'utiliser un français correct et de ne pas abuser d\'abréviations. Merci aussi de faire autant que possible attention à l\'orthographe, à la grammaire et à la ponctuation.'."\n".'Inversement, merci aux intégristes de la langue française de ne pas agresser les internautes ayant une orthographe bancale, et de les aider cordialement. Merci de ne pas rédiger vos titres et messages en majuscules.'."\n\n".'[b]Multi-Comptes[/b] :'."\n".'L\'utilisation de plusieurs comptes est à éviter, merci donc de n\'utiliser qu\'un seul compte.'."\n\n".'[b]Publicité[/b] :'."\n".'La publicité n\'est pas acceptée sur les forums, que ce soit pour des sites commerciaux ou personnels. Après un certain temps passé sur les forums, vous pouvez évoquer vos blogs ou sites persos, si ses évocations restent dans le sujet des topics auxquels vous participez. Si un topic dédié à la publicité existe, vous pouvez y faire la votre.'."\n".'Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le système pyramidal ne sont en aucun cas tolérés sur les forums. Merci donc de ne pas les relayer.',
 			'INFORMATION' => 'Information',
 			'PARAMS' => 'Paramètres',
 			'GENERAL_PARAM' => 'Paramètres Généraux',
@@ -713,6 +673,7 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 			'MSG_PRIVATE_REC' => 'Le message a bien été envoyé',
 			'MSG_IF_NOT_SPAMMER' => 'Si vous n\'êtes pas un robot',
 			'CLICK_HERE' => 'cliquez ici',
+			'MSG_DEL_THREAD'=> 'Confirmez-vous la suppression de cette catégorie principale ?',
 
 			# Confirmations
 			'MKTHEME' => 'Création du répertoire de thèmes',
@@ -730,6 +691,7 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 			'MSG_DATA_REC' => 'Données enregistrées avec succès',
 			'MSG_DATA_DEL' => 'Données supprimées avec succès',
 			'MSG_FILE_DEL' => 'Le fichier a été supprimé',
+			'MSG_MAIN_THREAD_DELETED' => 'Le forum a été supprimé avec succès',
 			'MSG_COME_BACK_IN' => 'Revenez nous voir dans',
 			'MSG_MIN_OR_NOT' => 'minutes ou pas...',
 
@@ -768,6 +730,8 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 			'ERROR_FILE_NOTFOUND' => 'Le fichier cible est introuvable',
 			'ERROR_CAT_TITLE' => 'Le nom de la catégorie ne peut pas être vide',
 			'ERROR_CAT_TYPE' => 'La catégorie principale est erronée',
+			'ERROR_MAIN_THREAD_NOT_EMPTY' => 'Le forum que vous souhaitez supprimer n\'est pas vide',
+			'ERROR_MAIN_THREAD_NOT_DELETED' => 'Une erreur est survenue. Le forum n\'a pas été supprimé.',
 			'PAGE_NOT_FOUND' => 'La page que vous demandez n\'existe pas ou n\'existe plus',
 			'ERROR_INVALID_BIRTHDAY' => 'Format de date de naissance invalide',
 
@@ -969,9 +933,9 @@ Les sites qui proposent des ventes ou quoi que ce soit en rapport avec le systè
 		return htmlspecialchars($string, REPLACE_FLAGS, CHARSET);
 	}
 }
-/**
-* BBCode
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE BBCode -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class BBCHelper {
 
 	private static $searchopentags = '%(\[(([\*a-zA-Z0-9-]*))(=.*?)?\])%m';
@@ -1243,9 +1207,9 @@ class BBCHelper {
 		return str_replace(array('<b>','<i>','<ins>','<pre>','<code>','</b>','</i>','</ins>','</pre>','</code>','<br />','&nbsp;','</div>','<blockquote>',WROTE,'</blockquote>'), array('[b]','[i]','[u]','[c]','','[/b]','[/i]','[/u]','[/c]','',"\n",' ','','[q=',']','[/q]'), stripslashes($msg));
 	}
 }
-/**
-* Mise en forme des dates
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES DATES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class MuDate {
 	/**
 	 * Méthode qui retourne la date en Français
@@ -1281,8 +1245,9 @@ class MuDate {
 	    return $interval->y;
 	}
 }
-
-# ---------------- CLASSES ----------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE DEBUG -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 * Cette classe permet de sécuriser le debugage PHP dans vos scripts (locaux
 * et distant).
@@ -1717,9 +1682,9 @@ if (DEBUG == 1) {
 	  }
 	}
 }
-/**
-* Sessions
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES SESSIONS -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Session {
 
 	public $MsgId;
@@ -1789,6 +1754,9 @@ class Session {
 		return false;
 	}
 } 
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DU CAPTCHA -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 * CAPTCHA
 * D'après LionWiki 3.2.9, (c) Adam Zivner, licensed under GNU/GPL v2 (Plugin Captcha)
@@ -2015,10 +1983,9 @@ class Captcha {
 		return $html;
 	}
 }
-/**
-*
-* SAUVEGARDE LES OBJETS
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE SAUVEGARDE DES OBJETS -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class SaveObj {
 	public $name= '';
 	public function __construct() {}
@@ -2047,10 +2014,9 @@ class SaveObj {
 		return date('Ym', $time).DS.$time;
 	}
 }
-/**
- *
- * Gestion des membres 
- */
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES MEMBRES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Members extends SaveObj {
 
 	public $members=array();
@@ -2148,10 +2114,9 @@ class Members extends SaveObj {
 		return array(0,0,0);
 	}
 }
-/**
-*
-* CLASSE GLOBALE DE GESTION DU FORUM
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE GLOBALE DE GESTION DU FORUM -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Forum extends SaveObj {
 	public $name;
 	public $topics=array();
@@ -2341,9 +2306,9 @@ class Forum extends SaveObj {
 		$this->topics = $tmp;
 	}
 }
-/**
- * CLASSES DE GESTION DES THREADS
- */
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES THREADS (FORUMS PRINCIPAUX) -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Threads extends SaveObj {
 
 	private $categories = array('main'=>array(),'sub'=>array());
@@ -2377,6 +2342,31 @@ class Threads extends SaveObj {
 		else{if(array_key_exists($type, $this->categories)) {
 			return $this->categories[$type];
 		}}
+	}
+	public function isNotEmpty($thread) {
+		if(isset($this->categories['main'][$thread]) && isset($this->categories['sub'][$thread]) && !empty($this->categories['sub'][$thread]) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function delMainThread($thread) {
+		if (isset($this->categories['main'][$thread])) {
+			unset($this->categories['main'][$thread]);
+		}
+		if (isset($this->categories['sub'][$thread])) {
+			unset($this->categories['sub'][$thread]);
+		}
+		if (in_array($thread,$this->catPositions['main']) ) {
+			unset($this->catPositions['main'][array_search($thread,$this->catPositions['main'])]);
+		}
+		if (isset($this->catPositions['sub'][$thread])) {
+			unset($this->catPositions['sub'][$thread]);
+		}
+		//On supprime l'objet forum pour ne pas le stoquer dans le fichier de threads
+		$this->forum = null;
+		$this->SaveObj($this);
+		return true;
 	}
 	public function delThread($thread,$subcat) {
 		$stat = new Stat();
@@ -2568,10 +2558,9 @@ class Threads extends SaveObj {
 		$this->saveObj($this);
 	}
 }
-/**
-*
-* CLASSE DE GESTION DES DISCUSSIONS
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES DISCUSSIONS (TOPICS) -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Topic extends SaveObj {
 	public $title;
 	public $time;
@@ -2706,10 +2695,9 @@ class Topic extends SaveObj {
 		}
 	}
 }
-/**
-*
-* STATISTIQUES (Online)
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE STATISTIQUES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Stat extends saveObj {
 	public $name;
 	public $conn=array();
@@ -2766,10 +2754,9 @@ class Stat extends saveObj {
 			return unserialize(file_get_contents(MU_MEMBER.'stats.dat'));
 	}
 }
-/**
-*
-* INSCRIPTION DES MESSAGES PRIVÉS DES MEMBRES
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES MESSAGES PRIVES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Messages extends saveObj {
 	public $mess=array();
 	public $name;
@@ -2926,9 +2913,9 @@ class BanYourAss {
 	}
 }
 # ------------ FIN FONCTION DE BANNISSEMENT -----------
-/**
-* Initialisation du forum
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DES DONNEES -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Init {
 	public $MainError;
 	public $errors;
@@ -3055,17 +3042,17 @@ class Init {
 		$this->stat = unserialize($s);
 		$Ban = new BanYourAss();
 
-		/**
-		*
-		* GET & POST
+		/*
+			GET & POST
+			Seuls les index présents dans ce tableau seront pris en compte et traités. Les autres seront simplement ignorés.
 		*/
-		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum','rules','viewrules');
+		$gets=array('thread','topic','action','logout','memberlist','login','password','editprofil','email','birthday','site','signature','titre','message','threadID','topicID','postID','deluser','delfile','switchuser','thread','delforum','delpost','editpost','style','theme','gzip','private','delprivate','mpTo','backup','restore','read','conf','uftitle','nbmess','nbmessTopic','nbmb','maxav','exts','fmode','anonymous','qmode','postit','ufsite','uflang','ufsitename','ufsubtitle','ufmetadesc','rc','ntitle','pid','wco','register','page','searchMember','qid','ans','notspam','replypost','newcat','newcatsubtitle','editcat','editcatsubtitle','editcatposition','delmainthread','newmaincat','newcat','newcatsubtitle','newcatmaincat','editmaincat','editmaincatposition','editcat','editcatsubtitle','editcatposition','editcatmaincat','position','catid','maincatid','oldposition','id','viewforum','rules','viewrules');
 
 		foreach($gets as $o) {
 			$$o=(isset($_GET[$o]) && is_string($_GET[$o]))?$_GET[$o]:'';
 			if(!$$o) $$o=(isset($_POST[$o]) && is_string($_POST[$o]))?$_POST[$o]:'';
 		}
-
+		// L'utilisateur s'est vraiment trompé et ne doit pas être banni
 		if (isset($notspam) && $notspam == $Ban->notSpamCode() && $Ban->notSpamCode() !== false) {
 			$Ban->liftBan($_SERVER['REMOTE_ADDR']);
 			$this->delCookies();
@@ -3112,9 +3099,8 @@ class Init {
 		$this->loginForCookie = str_replace(array("=",",",";","\t","\r","\n","\013","\014"),'',base64_encode($this->cLogin));
 		if($topic && !$editpost && !empty($this->loginForCookie)) setCookie('uFread'.$topic.$this->loginForCookie,1,time()+2592000);
 
-		/**
-		*
-		* TEST DU MOT DE PASSE
+		/*
+			TEST DU MOT DE PASSE
 		*/
 		if (!empty($this->cLogin) && !empty($this->cPass)) {
 			list($this->isMember,$goodpass,$this->isAdmin)=$this->members->checkMember($this->cLogin,$this->cPass);
@@ -3142,18 +3128,17 @@ class Init {
 				}
 			}
 		} else { $this->isMember=0;$this->isAdmin=0;$this->isOwner=0;}
-		/**
-		*
-		* DÉCONNEXION
+		/*
+			DÉCONNEXION
 		*/
 		if ($this->isMember && $logout) {
 			$this->delCookies();
 			header('Location: index.php');
 			exit();
 		}
-		/**
-		 * Choix du style
-		 */
+		/*
+			CHOIX DU STYLE
+		*/
 		if($style) { 
 			setCookie('CookieStyle',$style,time()+(3600*24*30)); 
 			$this->cStyle=$style; 
@@ -3163,9 +3148,9 @@ class Init {
 			header('Location: index.php'.$url);
 			exit();
 		}
-		/**
-		 * Suppression MP
-		 */
+		/*
+			SUPPRESSION D'UN MP
+		*/
 		if($delprivate) { 
 			unlink(MU_MEMBER.md5($this->cLogin.SECURITY_SALT).'/'.$this->cLogin.'.mp'); 
 			$this->haveMP=0;
@@ -3184,9 +3169,8 @@ class Init {
 				}
 			}
 		}
-		/**
-		*
-		* DIFFÉRENTES ACTIONS
+		/*
+			DIFFÉRENTES ACTIONS
 		*/
 		switch ($action) {
 			case 'enter':
@@ -3209,9 +3193,17 @@ class Init {
 					if (!isset($birth[2])) {
 						$this->errors .= ERROR_INVALID_BIRTHDAY;
 					} else {
+						$rec = false;
 						if (!checkdate($birth[1], $birth[0], $birth[2])) {
-							$this->errors .= ERROR_INVALID_BIRTHDAY;
-						} else {	
+							if (!checkdate($birth[0], $birth[1], $birth[2])) {
+								$this->errors .= ERROR_INVALID_BIRTHDAY;
+							} else {
+								$rec = true;
+							}
+						} else {
+							$rec= true;
+						}
+						if ($rec) {	
 							if((preg_match('/(^[0-9a-zA-Z_\.-]{1,}@[0-9a-zA-Z_\-]{1,}\.[0-9a-zA-Z_\-]{2,}$)/', $email)) && (strlen($login)<13)) {
 								$memberDirUp = MU_UPLOAD.md5(SECURITY_SALT.$login);
 								@mkdir($memberDirUp);
@@ -3256,9 +3248,17 @@ class Init {
 					if (!isset($birth[2])) {
 						$this->errors .= ERROR_INVALID_BIRTHDAY;
 					} else {
+						$rec = false;
 						if (!checkdate($birth[1], $birth[0], $birth[2])) {
-							$this->errors .= ERROR_INVALID_BIRTHDAY;
+							if (!checkdate($birth[0], $birth[1], $birth[2])) {
+								$this->errors .= ERROR_INVALID_BIRTHDAY;
+							} else {
+								$rec = true;
+							}
 						} else {
+							$rec= true;
+						}
+						if($rec) {
 							$this->members->setMember($this->cLogin,$email,$signature,$site,$birthday,$avatar);
 						}
 					}
@@ -3420,7 +3420,27 @@ class Init {
 					header('Location: index.php#msgFlash');
 					exit();
 				}
-			break;
+				break;
+			case 'delmainthread':
+				if ($this->isAdmin && $delmainthread != '') {
+					if ($this->threads->isNotEmpty($delmainthread)){
+						$this->session->setMsg(ERROR_MAIN_THREAD_NOT_EMPTY,'error');
+						header('Location: index.php#msgFlash');
+						exit();
+					} else {
+						if ($this->threads->delMainThread($delmainthread)) {
+							$this->session->setMsg(MSG_MAIN_THREAD_DELETED);
+							header('Location: index.php#msgFlash');
+							exit();
+						} else {
+							$this->session->setMsg(ERROR_MAIN_THREAD_NOT_DELETED,'error');
+							header('Location: index.php#msgFlash');
+							exit();
+						}
+					}
+					
+				}
+				break;
 			case 'newthread':
 				if ($this->isAdmin) {
 					if (!empty($newcat)) {
@@ -3442,7 +3462,7 @@ class Init {
 						exit();
 					}
 				}
-			break;
+				break;
 			case 'editmainthread':
 				if ($this->isAdmin) {
 					if (!empty($editmaincat)) {
@@ -3458,7 +3478,7 @@ class Init {
 						exit();
 					}
 				}
-			break;
+				break;
 			case 'editthread':
 				if ($this->isAdmin) {
 					if (!empty($editcat)) {
@@ -3475,7 +3495,7 @@ class Init {
 						exit();
 					}
 				}
-			break;
+				break;
 			case 'editpost':
 				if($topicID && $action=='editpost' && $postID && $message!='' && is_file(MU_THREAD.$this->whichDir($topicID).'.dat')) {
 					if($s = implode('', file(MU_THREAD.$this->whichDir($topicID).'.dat'))) {
@@ -3492,7 +3512,7 @@ class Init {
 						}
 					}
 				}
-			break;
+				break;
 		}// Fin du switch
 		if (!empty($this->errors)) {
 			$this->session->setMsg($this->errors,'error');
@@ -3500,9 +3520,8 @@ class Init {
 			exit();
 		}
 
-		/**
-		*
-		* TÂCHES ADMIN
+		/*
+			TÂCHES ADMIN
 		*/
 		if($topic && $ntitle) { 
 			if($this->cLogin == $this->threads->forum->getPostAuth($topic)){
@@ -3646,9 +3665,8 @@ class Init {
 		setcookie('CookiePassword',NULL,-1);
 		setcookie('CookieLogin',NULL,-1);
 	}
-	/**
-	*
-	* INSTALLATEUR
+	/*
+	# ------------	INSTALLATEUR ------------
 	*/
 	private function mkressources() {
 		if (!file_exists('config.php') || !file_exists(MU_MEMBER) || !file_exists(MU_MEMBER.'members.dat')) {
@@ -3708,9 +3726,8 @@ class Init {
 		}
 		return $return;
 	}
-	/**
-	*
-	* CRÉATION DES FICHIERS .HTACCESS
+	/*
+		CRÉATION DES FICHIERS .HTACCESS
 	*/
 	private function mkhtaccess() {
 		$s = $_SERVER['SCRIPT_NAME'];
@@ -3741,9 +3758,8 @@ class Init {
 		}	
 	}
 
-	/**
-	*
-	* CRÉATION DES FICHIERS JS
+	/*
+		CRÉATION DES FICHIERS JS
 	*/
 	private function mkjs() {
 		if(!file_exists(MU_JS.'scripts.js')) {
@@ -3762,9 +3778,8 @@ class Init {
 		}	
 	} 
 
-	/**
-	*
-	* CRÉATION DES FEUILLES DE STYLE (css)
+	/*
+		CRÉATION DES FEUILLES DE STYLE (css)
 	*/
 	private function mkcss() {
 
@@ -3782,9 +3797,8 @@ class Init {
 		}
 	}
 
-	/**
-	*
-	* ÉXÉCUTE LA SAUVEGARDE
+	/*
+		ÉXÉCUTE LA SAUVEGARDE
 	*/
 	private function do_backup($source, $destination) {
 	    $msg='';
@@ -3838,9 +3852,8 @@ class Init {
 	    header('location: index.php?conf=1');
 		exit();
 	}
-	/**
-	*
-	* RESTAURATION D'UN FICHIER DE SAUVEGARDE
+	/*
+		RESTAURATION D'UN FICHIER DE SAUVEGARDE
 	*/
 	private function restore_forum() {
 		$error='';
@@ -3887,9 +3900,8 @@ class Init {
 		exit();
 
 	}
-	/**
-	*
-	* VÉRIFIE L'ENVOI D'AVATAR
+	/*
+		VÉRIFIE L'ENVOI D'AVATAR
 	*/
 	private function checkUpload($dir,$type=false,$login='') {
 		if (empty($login)) $login = $this->cLogin;
@@ -3930,9 +3942,9 @@ class Init {
 		}
 	}
 }
-/**
-* Mise en forme du forum
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- CLASSE DE GESTION DE L'AFFICHAGE -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Template extends Init {
 
 	private $aThemes=array();
@@ -4176,15 +4188,17 @@ class Template extends Init {
 	 * Modifications Cyril MAGUIRE.
 	 */
 	private function _compress($buffer) {
+		/*  Utilisation de variables dans le css
+			Les variables seront du type : +MAVARIABLE+
+			Pour les rechercher dans la css, rechercher un +
+			Possibilité d'utiliser ses propres variables et son propre style via un fichier userconfig.php
+		*/
 		if (is_file(MU_URL_THEMES.$this->theme.'/css/userconfig.php')) {
 			require_once(MU_URL_THEMES.$this->theme.'/css/userconfig.php');
 			if (isset($this->cVals) && isset($this->cVals[$this->cStyle]) && isset($userconfig)) {
 				$this->cVals[$this->cStyle] = array_merge($this->cVals[$this->cStyle],(array)$userconfig);
 			}
 		}
-		// A décommenter pour utiliser des variables dans le css
-		// Les variables seront du type : +MAVARIABLE+
-		// Pour les rechercher dans la css, rechercher un +
 		if (isset($this->cVals) && isset($this->cVals[$this->cStyle])) {
 			$variables_css = $this->cVals[$this->cStyle];
 			// On remplace les variables par leur valeur
@@ -4204,8 +4218,8 @@ class Template extends Init {
 		 
 			return $buffer;
 	}
-	/**
-	* TEXTE D'ACCUEIL
+	/*
+		TEXTE D'ACCUEIL
 	*/
 	public function welcomeText() {
 		$buf='<!-- Welcome text -->';
@@ -4218,8 +4232,8 @@ class Template extends Init {
 		}
 		return $buf;
 	}
-	/**
-	* REGLES DU FORUM
+	/*
+		REGLES DU FORUM
 	*/
 	public function rulesText() {
 		$buf='<!-- Rules text -->';
@@ -4232,9 +4246,9 @@ class Template extends Init {
 		}
 		return $buf;
 	}
-	/**
-	 * PAGINATION
-	 */
+	/*
+		PAGINATION
+	*/
 	private function pagination($perPage, $page, $pages) {
 			$url = Tools::getURLParams();
 			# on supprime le n° de page courante dans l'url
@@ -4271,8 +4285,8 @@ class Template extends Init {
 
 			return $pagination;
 	}
-	/**
-	* LISTE LES FICHIERS ENVOYÉS DANS LE PROFIL DE L'UTILISATEUR
+	/*
+		LISTE LES FICHIERS ENVOYÉS DANS LE PROFIL DE L'UTILISATEUR
 	*/
 	private function listFiles() {
 			$dir=MU_UPLOAD.md5(SECURITY_SALT.$this->cLogin).'/';
@@ -4418,9 +4432,9 @@ class Template extends Init {
 		$f['stats'] = $stats;
 		return $f;
 	}
-	/**
-	 * INITIALISATION DES VARIABLES DU FORMULAIRE DE SOUSCRIPTION
-	 */
+	/*
+		INITIALISATION DES VARIABLES DU FORMULAIRE DE SOUSCRIPTION
+	*/
 	private function setRegistrationForm($form=array()) {
 		$nav = Tools::getUserAgent();
 		//input($label, $name, $value, $type, $placeholder, $maxlength, $readonly, $class, $icon, $require,onclick)
@@ -4432,9 +4446,9 @@ class Template extends Init {
 		$form['signature'] = Tools::textarea(SIGNATURE, 'signature', '', '10', '2', SIGNATURE_MSG, '150', '', 'signature width-70');
 		return $form;
 	}
-	/**
-	 * INITIALISATION DES VARIABLES DU FORMULAIRE D'EDITION DU PROFIL
-	 */
+	/*
+		INITIALISATION DES VARIABLES DU FORMULAIRE D'EDITION DU PROFIL
+	*/
 	private function setEditProfilForm($form=array()) {
 		$mb=$this->members->getMember($this->cLogin);
 		$form['avatar'] = ($mb->pic!='')? '<img src="'.Tools::base64_encode_image($mb->pic,$mb->extension).'" alt="'.AVATAR.'"/>':Tools::img('avatar','img-polaroid');
@@ -4446,9 +4460,9 @@ class Template extends Init {
 		$form['signature'] = Tools::textarea(SIGNATURE, 'signature', $mb->quote, '10', '2', SIGNATURE_MSG, '150', '', 'signature width-70');
 		return $form;
 	}
-	/**
-	 * INITIALISATION DES VARIABLES DU FIL D'ARIANE
-	 */
+	/*
+		INITIALISATION DES VARIABLES DU FIL D'ARIANE
+	*/
 	private function setBreadcrumbs() {
 		$form=array();
 		$url = Tools::getURLParams();
@@ -4492,7 +4506,7 @@ class Template extends Init {
 		}
 		$t['stats'] = array('lastOn'=>$lastOn,'by'=>$by);
 		$t['aMainPositions'] = $this->threads->getMainCatsPositions();
-		$t['cats'] = $this->threads->getMainCats();
+		$t['cats'] = array_merge(array(null=> ' '),$this->threads->getMainCats());
 		$t['aSubPositions'] = $this->threads->getSubCatsPositions();
 		$t['threads'] = $this->threads->getallThreads('all');
 		return $t;
@@ -4773,10 +4787,10 @@ class Template extends Init {
 			}
 		}
 	}
-	/********************************************************
-	 * VOUS POUVEZ MODIFIER LES LIGNES CI-DESSOUS
-	 * POUR PERSONNALISER LE THEME
-	 ********************************************************/
+	/*****************************************************************************************************************
+	 * POUR PERSONNALISER LE THEME DUPLIQUEZ LE DOSSIER THEMES/DEFAULT, RENOMMEZ LA COPIE AINSI CRÉÉE
+	 * PUIS MODIFIEZ LES FICHIERS QU'ELLE CONTIENT. LE CHOIX DU THEME SERA REGLE VIA L'ADMINISTRATION
+	 *****************************************************************************************************************/
 	public function e404() {
 		$string =<<<END
 <?php header("HTTP/1.0 404 Not Found");
@@ -5274,6 +5288,17 @@ END;
 					</p>
 				</form>
 			</div>
+			<div class="Box">
+			<h2 class="forms-section"><?php echo DEL_MAIN_CAT?></h2>
+
+				<form id="formulaire-delmain" action="index.php#bottom" method="post" class="forms forms-columnar">
+					<input type="hidden" name="action" value="delmainthread" />
+					<p class="forms-inline"><?php echo Tools::select(MAIN_CAT_TITLE, 'delmainthread', \$t['cats'], '', false, '', true)?></p>
+					<p>
+						<button type="submit" class="btn btn-green" onclick="return confirm('<?php echo MSG_DEL_THREAD;?>');"><i class="icon-right-hand"></i> <?php echo SEND?></button>
+					</p>
+				</form>
+			</div>
 			<div class="Box">		
 			<h2 class="forms-section"><?php echo ADD_CAT?></h2>
 
@@ -5291,7 +5316,8 @@ END;
 			<div class="Box">
 			<h2 class="forms-section"><?php echo EDIT_MAIN_CAT?></h2>
 
-				<?php foreach (\$t['cats'] as \$id => \$cat) {?>
+				<?php foreach (\$t['cats'] as \$id => \$cat) {
+					if (\$id !== '') {?>
 
 				<form id="formulaire-editmain" action="index.php#bottom" method="post" class="forms forms-columnar">
 					<input type="hidden" name="action" value="editmainthread" />
@@ -5310,7 +5336,7 @@ END;
 				</form>
 				<p>&nbsp;</p>
 				<hr/>
-				<?php } ?>
+				<?php }} ?>
 
 			</div>
 			<div class="Box">
@@ -5927,9 +5953,9 @@ END;
 		} 
 	}
 }
-/**
-* INITIALISATION
-*/
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+# ---------------- INITIALISATION DE L'APPLICATION -------------------
+# ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 header('Content-Type: text/html; charset='.CHARSET);
 new Template();
 ?>
